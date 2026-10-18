@@ -379,7 +379,7 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
           <label class="switch" id="impRemoveWrap"><input type="checkbox" id="impRemove"> Also remove students who aren't in the file (their attendance is deleted)</label>
           <p class="small" style="margin:0">Drag a CSV file anywhere onto this page, or choose one:</p>
           <label class="fld"><span>Choose a CSV file</span><input type="file" id="csvFile" accept=".csv,.tsv,.txt,.json,text/csv,application/json"></label>
-          <label class="fld"><span>…or paste CSV text</span><textarea id="csvText" rows="8" spellcheck="false" placeholder="class,name,student_id,email,row,seat"></textarea></label>
+          <label class="fld"><span>…or paste CSV text</span><textarea id="csvText" rows="8" spellcheck="false" placeholder="class,name,email,row,seat"></textarea></label>
           <div class="row"><button class="btn primary" id="importBtn" type="button">Import</button></div>
         </div>
       </div>
@@ -406,11 +406,11 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
 #rows,6
 #seats_per_row,8
 #aisles,4
-class,name,student_id,email,row,seat,2026-10-13,2026-10-15
-Calculus I – Section 01,Ana Garza,20480100,ana@example.edu,1,1,P,A
-Calculus I – Section 01,Luis Pérez,20480137,luis@example.edu,1,2,E,P
-Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
-        <p class="small muted">One row per student. Student fields come first — <code>class</code>, <code>name</code> (required; or <code>first name</code> + <code>last name</code>), <code>student_id</code>, <code>email</code>, <code>row</code>, <code>seat</code> — then one column per attendance date: <b>P</b> present (or blank), <b>A</b> absent, <b>E</b> excused.</p>
+class,name,email,row,seat,2026-10-13,2026-10-15
+Calculus I – Section 01,Ana Garza,ana@example.edu,1,1,P,A
+Calculus I – Section 01,Luis Pérez,luis@example.edu,1,2,E,P
+Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
+        <p class="small muted">One row per student. Student fields come first — <code>class</code>, <code>name</code> (required; or <code>first name</code> + <code>last name</code>), <code>email</code>, <code>row</code>, <code>seat</code> — then one column per attendance date: <b>P</b> present (or blank), <b>A</b> absent, <b>E</b> excused.</p>
         <ul class="small muted" style="padding-left:18px;margin-bottom:0">
           <li>Leaving <code>row</code> and <code>seat</code> blank (or leaving those columns out) places the student in the next open seat, front row first — so a plain roster export works.</li>
           <li>Row 1 is the front row. Seat 1 is on the left as students face the front. Older files with a single <code>seat</code> column like <code>A1</code> or <code>1-1</code> still import.</li>
@@ -444,7 +444,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
 <section class="view" id="view-history" aria-label="Attendance history" hidden>
   <div class="toolbar">
     <label class="fld" style="flex:1 1 240px"><span>Find student <kbd>/</kbd></span>
-      <input type="search" id="hSearch" placeholder="Type a name, ID, or email" autocomplete="off" aria-describedby="hCount"></label>
+      <input type="search" id="hSearch" placeholder="Type a name or email" autocomplete="off" aria-describedby="hCount"></label>
     <span class="small muted" id="hCount" style="align-self:flex-end;padding-bottom:8px"></span>
     <label class="fld"><span>Jump to date <kbd>G</kbd> for calendar</span><select id="hJump" aria-label="Jump to a recorded date"></select></label>
     <label class="fld"><span>Add a date</span><input type="date" id="hAddDate"></label>
@@ -469,7 +469,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
         <label class="fld"><span>Template title</span><input type="text" id="tplTitle"></label>
         <label class="fld"><span>Subject</span><input type="text" id="tplSubject"></label>
         <label class="fld"><span>Message</span><textarea id="tplBody" rows="10"></textarea></label>
-        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{sid}</code></p>
+        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code></p>
         <div class="row">
           <button class="btn primary" id="tplSave" type="button">Save template</button>
           <button class="btn danger" id="tplDel" type="button">Delete</button>
@@ -541,7 +541,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
     <h4>Getting started</h4>
     <p>Type the class name and pick a class date at the top. Then switch to <b>Edit seats</b> to arrange the room and fill in the roster, or use <b>Manage data</b> to load a CSV. Demo data is included so you can try things out; replace it by editing, importing, or choosing <b>Start an empty class</b>.</p>
     <h4>Several classes in one file</h4>
-    <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Back up all classes</b> saves everything, rooms included, in one .json file. Saved data belongs to this app's web address in this browser; if the address changes (a renamed or moved file), <b>Manage data → Recover data</b> lists data saved under the old address, plus an automatic copy from each of the last 7 days, and can bring any of it back. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by ID, then email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
+    <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Back up all classes</b> saves everything, rooms included, in one .json file. Saved data belongs to this app's web address in this browser; if the address changes (a renamed or moved file), <b>Manage data → Recover data</b> lists data saved under the old address, plus an automatic copy from each of the last 7 days, and can bring any of it back. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
     <h4>Choosing the class date</h4>
     <p>The date bar under the tabs shows which day you're working on. It appears on every view that uses a date. Its badge says <b>Today</b> in green. Any other day turns the bar amber (past) or blue (future) with a ⚠ warning, and while you're marking seats or drafting emails an amber frame surrounds the whole window, so you can't miss that you're working on another day. The chips jump to <b>Today</b> or a recent class date; red numbers show how many were absent that day. Use ‹ and › to step one day, click the date to open a large calendar (arrow keys move by day and week, <kbd>PgUp</kbd>/<kbd>PgDn</kbd> by month, <kbd>Enter</kbd> picks, <kbd>Esc</kbd> or clicking elsewhere closes it), press <b>Go to today</b>, or tap one of the recent class dates. Keyboard: <kbd>[</kbd> previous day, <kbd>]</kbd> next day, <kbd>T</kbd> today, <kbd>U</kbd> unlock.</p>
     <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
@@ -557,7 +557,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
     </ul>
     <h4>Editing seats</h4>
     <ul>
-      <li>Select a seat to enter a first name, last name, student ID, and email, then press <b>Save seat</b>. Students are removed only in <b>Manage data</b>: the roster's <b>Remove</b> button asks whether to <b>drop</b> them (off the chart, attendance, and emails, with their past attendance kept under Dropped students, where they can be restored) or <b>delete</b> them completely. Seats can't be cleared from the Classroom view, so a stray click there never removes anyone.</li>
+      <li>Select a seat to enter a first name, last name, and email, then press <b>Save seat</b>. Students are removed only in <b>Manage data</b>: the roster's <b>Remove</b> button asks whether to <b>drop</b> them (off the chart, attendance, and emails, with their past attendance kept under Dropped students, where they can be restored) or <b>delete</b> them completely. Seats can't be cleared from the Classroom view, so a stray click there never removes anyone.</li>
       <li>Drag a student onto another seat to move them (or swap if the seat is taken). Without a mouse, enter a row and seat number under <b>Move / swap with</b>.</li>
       <li>Under <b>Room layout</b>, choose the <b>Room shape</b>. <b>Tables / pods</b> draws each table with its seats around it (numbered clockwise from top-left); set the number of tables, seats per table, and how many tables sit side by side. Seats are then named “Table 3, Seat 2” everywhere. Switching shape keeps everyone where they fit and offers to move anyone else into open seats; attendance is never lost.</li>
       <li>For a <b>Rows</b> room, set rows and seats per row. To add an aisle, click the faint <b>+</b> between two seat columns at the top of the chart; click <b>×</b> to remove it. You can have as many aisles as the room needs. Shrinking is refused if it would remove assigned students; empty seats stay available for later.</li>
@@ -565,7 +565,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
     <h4>Instructor view</h4>
     <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
     <h4>Manage data</h4>
-    <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, student ID, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
+    <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
     <h4>Attendance history</h4>
     <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
     <h4>Emails</h4>
@@ -610,7 +610,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the cell without moving</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last date in the row</td></tr>
       <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Top / bottom of the column</td></tr>
-      <tr><td><kbd>/</kbd> then type</td><td>Show only matching students. Each word you type matches the start of a name, ID, or email word, so “ana g” finds Ana Garza; accents are optional.</td></tr>
+      <tr><td><kbd>/</kbd> then type</td><td>Show only matching students. Each word you type matches the start of a name or email word, so “ana g” finds Ana Garza; accents are optional.</td></tr>
       <tr><td><kbd>↓</kbd> / <kbd>Enter</kbd> in search</td><td>Jump into the grid at the first match</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Reset the view: clear the search, remove the cursor and highlights, scroll back to the top-left. The selected date doesn't change.</td></tr>
     </table>
@@ -765,7 +765,7 @@ function demo() {
     const k = 'demo' + i;
     const parts = n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(' ');
     const [first, last] = n.split(' ');
-    s.students[k] = { name: n, first, last, sid: String(20480100 + i * 37), email: parts[0] + '.' + parts[parts.length - 1] + '@example.edu' };
+    s.students[k] = { name: n, first, last, email: parts[0] + '.' + parts[parts.length - 1] + '@example.edu' };
     s.seats[spots[i]] = k;
   });
   s.days = [2, 4];                                       // demo class meets Tue/Thu
@@ -844,6 +844,7 @@ function fixClass(c) {
   if (!Array.isArray(c.days)) c.days = [];                 // meeting weekdays, 0 = Sunday; empty = any day
   if (!Array.isArray(c.sheets)) c.sheets = [];             // printed sign-in sheets
   for (const st of Object.values(c.students)) {            // first and last names are stored separately
+    delete st.sid;                                         // student IDs are no longer kept
     if (typeof st.first === 'string' && typeof st.last === 'string') continue;
     const sp = splitName(st.name || ''); st.first = sp.first; st.last = sp.last; st.name = fullName(sp.first, sp.last) || st.name || '';
     if (sp.unsure) st.nameCheck = true;
@@ -1548,7 +1549,7 @@ function seatEl(lab, edit) {
     if (!edit) b.tabIndex = -1;
   } else if (edit) {
     b.className = 'seat edit' + (selected === lab ? ' sel' : '');
-    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm">${esc(s.name)}</span><span class="st">${esc(s.sid || 'no ID')}</span>`;
+    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm">${esc(s.name)}</span><span class="st">${s.email ? '' : 'no email'}</span>`;
     b.setAttribute('aria-label', `${seatName(lab)}, ${s.name}${selected === lab ? ', selected' : ''}`);
     b.draggable = true;
   } else {
@@ -1627,14 +1628,13 @@ function renderSide() {
 function editCard() {
   if (!selected || !parseLabel(selected) || parseLabel(selected).r >= S.rows || parseLabel(selected).c >= S.cols) {
     selected = null;
-    return `<div class="card"><h3>Seat</h3><p class="small muted" style="margin:0">Select a seat to name it, assign a student ID, or move it. Drag a student onto another seat to move or swap.</p></div>`;
+    return `<div class="card"><h3>Seat</h3><p class="small muted" style="margin:0">Select a seat to name it, set an email, or move it. Drag a student onto another seat to move or swap.</p></div>`;
   }
-  const s = S.students[S.seats[selected]] || { first: '', last: '', sid: '', email: '' };
+  const s = S.students[S.seats[selected]] || { first: '', last: '', email: '' };
   return `<div class="card"><h3>${seatName(selected)}</h3><form id="seatForm" class="stack" autocomplete="off">
     <div class="row" style="flex-wrap:nowrap">
       <label class="fld" style="flex:1"><span>First name</span><input type="text" id="eName" value="${esc(s.first)}" style="width:100%"></label>
       <label class="fld" style="flex:1"><span>Last name</span><input type="text" id="eLast" value="${esc(s.last)}" style="width:100%"></label></div>
-    <label class="fld"><span>Student ID</span><input type="text" id="eSid" value="${esc(s.sid)}"></label>
     <label class="fld"><span>Email</span><input type="email" id="eEmail" value="${esc(s.email)}"></label>
     <div class="row"><button class="btn primary" type="submit">Save seat</button></div>
     <p class="small muted" style="margin:0">To remove a student who dropped, use <b>Manage data</b>.</p>
@@ -1674,7 +1674,7 @@ function layoutCard() {
 function bindEdit() {
   $('#seatForm')?.addEventListener('submit', e => {
     e.preventDefault();
-    saveSeat(selected, $('#eName').value.trim(), $('#eLast').value.trim(), $('#eSid').value.trim(), $('#eEmail').value.trim());
+    saveSeat(selected, $('#eName').value.trim(), $('#eLast').value.trim(), $('#eEmail').value.trim());
   });
   $('#moveForm')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -1701,18 +1701,14 @@ function removeStudent(k) {
   delete S.students[k];
   for (const d of Object.values(S.attendance)) delete d[k];
 }
-function saveSeat(lab, first, last, sid, email) {
-  if (!first && !last && !sid && !email) return toast('Enter a name. To remove a student, use Manage data.', true);
+function saveSeat(lab, first, last, email) {
+  if (!first && !last && !email) return toast('Enter a name. To remove a student, use Manage data.', true);
   if (!first && !last) return toast('Enter a first or last name.', true);
   if (!emailOk(email)) return toast('That email address doesn\'t look valid.', true);
   const cur = S.seats[lab];
-  if (sid) {
-    const dup = Object.entries(S.seats).find(([l, k]) => k !== cur && S.students[k]?.sid === sid);
-    if (dup) return toast(`Student ID ${sid} is already assigned to ${seatName(dup[0])}.`, true);
-  }
   let k = cur;
   if (!k) { k = uid(); S.seats[lab] = k; }
-  const st = S.students[k] = { ...(S.students[k] || {}), sid, email };
+  const st = S.students[k] = { ...(S.students[k] || {}), email }; delete st.sid;
   setNames(st, first, last); delete st.nameCheck;
   commit(); toast(`${seatName(lab)} saved.`);
 }
@@ -1785,10 +1781,9 @@ function renderTables() {
 /* ---------- roster & history ---------- */
 let rosterEdit = null;                                     // student being edited in the roster
 /* Shared checks for a student's details (seat editor and roster). Returns a message, or '' when fine. */
-function studentProblem(k, first, last, sid, email) {
+function studentProblem(k, first, last, email) {
   if (!first && !last) return 'Enter a first or last name.';
   if (!emailOk(email)) return 'That email address doesn\'t look valid.';
-  if (sid) { const dup = Object.entries(S.students).find(([o, st]) => o !== k && !st.dropped && st.sid === sid); if (dup) return `Student ID ${sid} already belongs to ${dup[1].name}.`; }
   return '';
 }
 function renderRoster() {
@@ -1802,24 +1797,23 @@ function renderRoster() {
       <td class="act"><button type="button" class="btn" data-nswap="${k}" title="Move the first word of the last name into the first name">⇄</button>
         <button type="button" class="btn primary" data-nok="${k}">Looks right</button></td></tr>`).join('')}</tbody></table>
     ${check.length > 1 ? '<div class="row" style="margin-top:8px"><button type="button" class="btn" id="nameOkAll">Confirm all as shown</button></div>' : ''}</div>` : '';
-  h += list.length ? `<p class="small muted" style="margin-top:0">${list.length} student${list.length === 1 ? '' : 's'} · ${isTables() ? `${S.rows} tables × ${S.cols} seats` : `${S.rows} rows × ${S.cols} seats`}</p><div class="table-wrap"><table><thead><tr><th title="${unitWord()} · seat">Seat</th><th>Last name</th><th>First name</th><th>ID</th><th>Email</th><th></th></tr></thead><tbody>${
+  h += list.length ? `<p class="small muted" style="margin-top:0">${list.length} student${list.length === 1 ? '' : 's'} · ${isTables() ? `${S.rows} tables × ${S.cols} seats` : `${S.rows} rows × ${S.cols} seats`}</p><div class="table-wrap"><table><thead><tr><th title="${unitWord()} · seat">Seat</th><th>Last name</th><th>First name</th><th>Email</th><th></th></tr></thead><tbody>${
     list.map(x => x.k === rosterEdit
       ? `<tr class="redit" data-rrow="${x.k}"><td class="c nw" title="${unitWord()} ${x.row}, Seat ${x.seat}">${x.row} · ${x.seat}</td>
-        <td colspan="5"><div class="reform">
+        <td colspan="4"><div class="reform">
           <label>Last name<input type="text" data-rf="last" value="${esc(x.s.last)}"></label>
           <label>First name<input type="text" data-rf="first" value="${esc(x.s.first)}"></label>
-          <label>Student ID<input type="text" data-rf="sid" value="${esc(x.s.sid)}"></label>
           <label class="wide">Email<input type="email" data-rf="email" value="${esc(x.s.email)}"></label>
           <div class="rbtns"><button type="button" class="btn primary" data-rsave="${x.k}">Save</button><button type="button" class="btn" data-rcancel>Cancel</button></div>
         </div></td></tr>`
-      : `<tr data-rrow="${x.k}"><td class="c nw" title="${unitWord()} ${x.row}, Seat ${x.seat}">${x.row} · ${x.seat}</td><td>${esc(x.s.last)}${x.s.nameCheck ? ' <span class="pill E" title="Check this name">?</span>' : ''}</td><td>${esc(x.s.first)}</td><td>${esc(x.s.sid)}</td><td class="em">${esc(x.s.email)}</td>
+      : `<tr data-rrow="${x.k}"><td class="c nw" title="${unitWord()} ${x.row}, Seat ${x.seat}">${x.row} · ${x.seat}</td><td>${esc(x.s.last)}${x.s.nameCheck ? ' <span class="pill E" title="Check this name">?</span>' : ''}</td><td>${esc(x.s.first)}</td><td class="em">${esc(x.s.email)}</td>
       <td class="act"><button type="button" class="btn" data-redit="${x.k}" aria-label="Edit ${esc(x.s.name)}">Edit</button> <button type="button" class="btn danger" data-rm="${x.k}" aria-label="Remove ${esc(x.s.name)}">Remove</button></td></tr>`).join('')}</tbody></table></div>
-    <p class="small muted" style="margin:6px 0 0">Click <b>Edit</b> (or double-click a row) to change a student's name, ID, or email. <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. Seats are changed in Classroom → Edit seats.</p>`
+    <p class="small muted" style="margin:6px 0 0">Click <b>Edit</b> (or double-click a row) to change a student's name or email. <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. Seats are changed in Classroom → Edit seats.</p>`
     : '<p class="muted small">No students yet. Add them in Edit seats or import a CSV.</p>';
   if (dropped.length) h += `<h3 style="margin:18px 0 8px">Dropped students (${dropped.length})</h3>
     <p class="small muted" style="margin-top:0">Not on the chart, in attendance, or in emails. Their past attendance is kept here.</p>
-    <div class="table-wrap"><table><thead><tr><th>Name</th><th>ID</th><th>Dropped</th><th>Last attended</th><th class="c">Abs.</th><th></th></tr></thead><tbody>${
-    dropped.map(x => `<tr><td>${esc(x.s.name)}</td><td>${esc(x.s.sid)}</td><td>${esc(shortDate(x.s.dropped.on))}</td><td>${x.last ? esc(shortDate(x.last)) : '<span class="muted">—</span>'}</td><td class="c">${x.abs}</td>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Dropped</th><th>Last attended</th><th class="c">Abs.</th><th></th></tr></thead><tbody>${
+    dropped.map(x => `<tr><td>${esc(x.s.name)}</td><td>${esc(x.s.email)}</td><td>${esc(shortDate(x.s.dropped.on))}</td><td>${x.last ? esc(shortDate(x.last)) : '<span class="muted">—</span>'}</td><td class="c">${x.abs}</td>
       <td class="act"><button type="button" class="btn" data-restore="${x.k}" aria-label="Restore ${esc(x.s.name)}">Restore</button>
       <button type="button" class="btn danger" data-purge="${x.k}" aria-label="Delete ${esc(x.s.name)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
   const box = $('#roster'); box.innerHTML = h;
@@ -1843,7 +1837,7 @@ function renderRoster() {
   box.querySelectorAll('[data-redit]').forEach(b => b.addEventListener('click', () => startEdit(b.dataset.redit)));
   box.querySelectorAll('tr[data-rrow]:not(.redit)').forEach(r => r.addEventListener('dblclick', e => {
     if (e.target.closest('button')) return;
-    const td = e.target.closest('td'), field = ['', 'last', 'first', 'sid', 'email'][td ? td.cellIndex : 0];
+    const td = e.target.closest('td'), field = ['', 'last', 'first', 'email'][td ? td.cellIndex : 0];
     startEdit(r.dataset.rrow, field);
   }));
   box.querySelector('[data-rcancel]')?.addEventListener('click', () => { rosterEdit = null; renderRoster(); });
@@ -1851,9 +1845,9 @@ function renderRoster() {
   if (er) {
     const k = er.dataset.rrow, val = f => er.querySelector(`[data-rf="${f}"]`).value.trim();
     const saveRow = () => {
-      const msg = studentProblem(k, val('first'), val('last'), val('sid'), val('email'));
+      const msg = studentProblem(k, val('first'), val('last'), val('email'));
       if (msg) return toast(msg, true);
-      const st = S.students[k]; setNames(st, val('first'), val('last')); st.sid = val('sid'); st.email = val('email'); delete st.nameCheck;
+      const st = S.students[k]; setNames(st, val('first'), val('last')); delete st.sid; st.email = val('email'); delete st.nameCheck;
       rosterEdit = null; commit(); toast(`${st.name} updated.`);
       box.querySelector(`[data-redit="${k}"]`)?.focus();
     };
@@ -2001,11 +1995,11 @@ function renderHistory() {
   if (!list.length || !dates.length) { const f = $('#hFocus'); f.innerHTML = ''; f.classList.remove('on'); }
   if (!list.length) { box.innerHTML = hq && everyone.length ? `<p class="muted">No students match “${esc(histFilter.trim())}”. Press <kbd>Esc</kbd> to reset the view.</p>` : '<p class="muted">No students yet.</p>'; return; }
   if (!dates.length) { box.innerHTML = '<p class="muted">No dates recorded yet. Take attendance in the Classroom view, or add a date above.</p>'; return; }
-  let h = `<div class="table-wrap"><table><thead><tr><th class="sticky">Student</th><th>${unitWord()}</th><th>Seat</th><th>ID</th><th>Absent</th><th>Excused</th>${
+  let h = `<div class="table-wrap"><table><thead><tr><th class="sticky">Student</th><th>${unitWord()}</th><th>Seat</th><th>Absent</th><th>Excused</th>${
     dates.map(d => `<th class="date c${d === S.date ? ' cur' : ''}"><button type="button" data-date="${d}" title="Open ${esc(longDate(d))} in Classroom">${esc(shortDate(d))}</button><button type="button" class="del" data-del="${d}" aria-label="Delete ${esc(longDate(d))}" title="Delete this date">×</button></th>`).join('')}</tr></thead><tbody>`;
   list.forEach(x => {
     const sts = dates.map(d => getStatus(d, x.k));
-    h += `<tr><td class="sticky">${esc(x.s.name)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td>${esc(x.s.sid)}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
+    h += `<tr><td class="sticky">${esc(x.s.name)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
       sts.map((st, j) => `<td class="c${dates[j] === S.date ? ' cur' : ''}"><button type="button" class="pill ${st} hcell" data-k="${x.k}" data-d="${dates[j]}" aria-label="${esc(x.s.name)}, ${esc(longDate(dates[j]))}: ${STATUS[st]}. Press to change.">${st}</button></td>`).join('')}</tr>`;
   });
   h += '</tbody></table></div>';
@@ -2084,9 +2078,9 @@ function resetHist() {
 /* History search: filters rows as you type. Kept for the session, not saved. */
 let histFilter = '';
 const fold = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-/* Every typed word must match the start of a word in the student's name, ID, or email ("ana g" → Ana Garza). */
+/* Every typed word must match the start of a word in the student's name or email ("ana g" → Ana Garza). */
 function matchStudent(x, query) {
-  const words = fold(`${x.s.name} ${x.s.sid} ${x.s.email}`).split(/[^a-z0-9]+/).filter(Boolean);
+  const words = fold(`${x.s.name} ${x.s.email}`).split(/[^a-z0-9]+/).filter(Boolean);
   return fold(query).split(/[^a-z0-9]+/).filter(Boolean).every(t => words.some(w => w.startsWith(t)));
 }
 $('#hSearch').addEventListener('input', e => { histFilter = e.target.value; renderHistory(); });
@@ -2176,10 +2170,10 @@ function buildCSV(scope = 'class') {
     syncStore();
     const classes = Object.values(STORE.classes).sort(byName);
     const dates = [...new Set(classes.flatMap(c => Object.keys(c.attendance).filter(isDate)))].sort();
-    rows.push(['class', 'last_name', 'first_name', 'student_id', 'email', 'row', 'seat', ...dates]);
+    rows.push(['class', 'last_name', 'first_name', 'email', 'row', 'seat', ...dates]);
     classes.forEach(c => Object.entries(c.seats).filter(([, k]) => c.students[k]).sort((a, b) => seatOrder(a[0]) - seatOrder(b[0])).forEach(([lab, k]) => {
       const p = parseLabel(lab), st = c.students[k];
-      rows.push([c.className, st.last, st.first, st.sid, st.email, p.r + 1, p.c + 1, ...dates.map(d => c.attendance[d] ? (c.attendance[d][k] || 'P') : '')]);
+      rows.push([c.className, st.last, st.first, st.email, p.r + 1, p.c + 1, ...dates.map(d => c.attendance[d] ? (c.attendance[d][k] || 'P') : '')]);
     }));
     return rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
   }
@@ -2188,9 +2182,9 @@ function buildCSV(scope = 'class') {
   rows.push(['#class', cname], ...(isTables()
       ? [['#shape', 'tables'], ['#tables', S.rows], ['#seats_per_table', S.cols], ['#tables_across', S.tablesAcross || 3]]
       : [['#rows', S.rows], ['#seats_per_row', S.cols], ['#aisles', S.aisles.join(' ')]]),
-    ['class', 'last_name', 'first_name', 'student_id', 'email', isTables() ? 'table' : 'row', 'seat', ...dates]);
+    ['class', 'last_name', 'first_name', 'email', isTables() ? 'table' : 'row', 'seat', ...dates]);
   if (blank) rows.push([cname, 'Garza', 'Ana', '12345678', 'student@example.edu', '1', '1'], [cname, 'Hernández García', 'Diego', '12345679', 'another@example.edu', '', '']);
-  else assigned().forEach(x => rows.push([cname, x.s.last, x.s.first, x.s.sid, x.s.email, x.row, x.seat, ...dates.map(d => getStatus(d, x.k))]));
+  else assigned().forEach(x => rows.push([cname, x.s.last, x.s.first, x.s.email, x.row, x.seat, ...dates.map(d => getStatus(d, x.k))]));
   return rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 function download(name, text, type) {
@@ -2237,10 +2231,10 @@ function readCSV(text) {
     if (c0.startsWith('#')) meta[c0.slice(1).trim().toLowerCase()] = (rows[i][1] ?? '').trim(); else break;
   }
   const header = rows[i];
-  if (!header) throw new Error('No header row found (expected class,name,student_id,email,row,seat,…).');
+  if (!header) throw new Error('No header row found (expected class,name,email,row,seat,…).');
   const h = header.map(hnorm);
   const col = key => h.findIndex(x => HDR[key].includes(x));
-  const c = { cls: col('cls'), row: col('row'), seat: col('seat'), name: col('name'), first: col('first'), last: col('last'), sid: col('sid'), email: col('email') };
+  const c = { cls: col('cls'), row: col('row'), seat: col('seat'), name: col('name'), first: col('first'), last: col('last'), sid: -1, email: col('email') };   // a student ID column is recognized but ignored
   if (c.name < 0 && c.first < 0 && c.last < 0) throw new Error('The header row needs a "name" column (or "first name" and "last name").');
   const used = new Set(Object.values(c).filter(j => j >= 0));
   const dateCols = [], ignored = [], seen = new Map(), errs = [];
@@ -2317,8 +2311,8 @@ function planRoom(P, g, room, useMeta) {
   return { R, C, shp, across, A, added, errs, differs };
 }
 /* Update roster (merge) into an existing class.
-   Match each file row to a student by student ID, then email, then name (accents and case ignored).
-   Matched: fill in any non-blank name/ID/email, move to the file's seat if it's free, apply non-blank P/A/E marks.
+   Match each file row to a student by email, then name (accents and case ignored). A student ID column is ignored.
+   Matched: fill in any non-blank name/email, move to the file's seat if it's free, apply non-blank P/A/E marks.
    New: added at the file's seat if free, otherwise the next open seat (adding rows if needed).
    Blank cells never erase anything. Students not in the file are kept unless removeMissing. */
 function mergeGroup(P, items, cls, room, removeMissing) {
@@ -2348,11 +2342,11 @@ function mergeGroup(P, items, cls, room, removeMissing) {
     let k = (sid && bySid.get(sid)) || (email && byEmail.get(email.toLowerCase())) || null;
     if (!k && name) {
       const n = nkey(name);
-      if (byName.has(n) && byName.get(n) === null) { errs.push(`Line ${line}: “${name}” matches more than one student. Add a student_id column so they can be told apart.`); continue; }
+      if (byName.has(n) && byName.get(n) === null) { errs.push(`Line ${line}: “${name}” matches more than one student. Add an email column so they can be told apart.`); continue; }
       k = byName.get(n) || null;
     }
     if (k && seen.has(k)) { errs.push(`Line ${line}: ${name || students[k].name} appears more than once in the file.`); continue; }
-    if (!k && !name) { errs.push(`Line ${line}: no student in the class has ID “${sid || email}”, and the row has no name to add them.`); continue; }
+    if (!k && !name) { errs.push(`Line ${line}: no student in the class has the email “${email}”, and the row has no name to add them.`); continue; }
     const marks = {};
     for (const [j, d] of dateCols) {
       const v = (row[j] || '').trim().toUpperCase(); if (!v) continue;
@@ -2523,7 +2517,7 @@ function renderTemplates(force) {
   updateTplState();
 }
 function fill(str, x) {
-  const map = { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: x.s.sid };
+  const map = { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: '' };
   return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m);
 }
 function b64(s) { const bytes = new TextEncoder().encode(s); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
@@ -2580,7 +2574,7 @@ function renderDrafts() {
         <button type="button" class="stp" data-step="-1" aria-label="Lower the absence count to ${absMin - 1}" title="Fewer absences" ${absMin <= 1 ? 'disabled' : ''}>−</button>${chip}
         <button type="button" class="stp" data-step="1" aria-label="Raise the absence count to ${absMin + 1}" title="More absences" ${absMin >= maxAbs ? 'disabled' : ''}>+</button></span>`;
     }).join('')}</div>
-    <div class="row"><input type="text" id="rSearch" placeholder="Search name, email, or ID" value="${esc(emailFilter)}" aria-label="Search students" style="flex:1">
+    <div class="row"><input type="text" id="rSearch" placeholder="Search name or email" value="${esc(emailFilter)}" aria-label="Search students" style="flex:1">
       <button type="button" class="btn" data-sel="visible" ${visUnsel ? '' : 'disabled'}>Select all shown</button>
       <button type="button" class="btn" data-sel="none" ${sel.length ? '' : 'disabled'}>Clear selection</button></div>
     <div class="rcount"><span><b>${sel.length}</b> selected${hiddenSel ? ` · <span style="color:var(--excused)">${hiddenSel} not shown</span>` : ''}${noE.length ? ` · <span style="color:var(--absent)">${noE.length} without email</span>` : ''}</span><span class="muted">Showing ${vis.length} of ${all.length} · Shift-click selects a range</span></div>
@@ -2951,7 +2945,7 @@ function renderImportMode() {
   document.querySelectorAll('[data-imode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.imode === m)));
   $('#impRemoveWrap').hidden = m !== 'merge';
   $('#impModeNote').innerHTML = m === 'merge'
-    ? 'Matches students by ID, then email, then name. Updates their details, adds new students in open seats, and applies any P/A/E marks in the file. <b>Seats and attendance history are kept</b>; blank cells change nothing.'
+    ? 'Matches students by email, then name. Updates their details, adds new students in open seats, and applies any P/A/E marks in the file. <b>Seats and attendance history are kept</b>; blank cells change nothing.'
     : '<span style="color:var(--excused)">The file becomes the class\'s whole roster, seating, and attendance. Anything not in the file is removed.</span>';
 }
 document.querySelectorAll('[data-imode]').forEach(b => b.addEventListener('click', () => { S.importMode = b.dataset.imode; save(); renderImportMode(); }));
