@@ -496,9 +496,15 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
       <label class="fld"><span>Date columns</span><input type="number" id="shCols" min="1" max="20" value="8"></label>
       <label class="fld"><span>Blank rows for late adds</span><input type="number" id="shExtra" min="0" max="20" value="3"></label>
       <span class="small muted" id="shFit" style="align-self:flex-end;padding-bottom:8px"></span></div>
+    <div class="row">
+      <label class="fld"><span>Row height (points)</span><input type="number" id="shRowH" min="12" max="32" step="0.5" value="19"></label>
+      <label class="switch" style="align-self:flex-end;padding-bottom:8px"><input type="checkbox" id="shFit1"> Fit everyone on one page</label>
+      <span class="small muted" id="shRowInfo" style="align-self:flex-end;padding-bottom:8px"></span></div>
     <p class="small" id="shSummary" style="margin:0"></p>
     <div id="shWarn"></div>
-    <div class="row"><button class="btn primary" type="submit">Download PDF</button><button class="btn" type="button" id="shCancel">Cancel</button></div>
+    <div class="row"><button class="btn primary" type="submit">Download PDF</button>
+      <button class="btn" type="button" id="shNoPdf" title="Add the sheet to Sheet view without printing">Create without PDF</button>
+      <button class="btn" type="button" id="shCancel">Cancel</button></div>
   </form>
 </dialog>
 <dialog id="rmDlg" aria-labelledby="rmTitle">
@@ -532,7 +538,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
     <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
     <h4>List view and sign-in sheets</h4>
     <p>In Classroom, switch <b>Seating chart | List</b> (or press <kbd>L</kbd>). The list is sorted by last name, the same order as the printed sign-in sheet. <b>One date</b> shows P / A / E buttons for the selected date; <b>Sheet</b> shows every date on one printed sheet side by side, so you can enter a filled sheet in one pass (sheet columns stay editable on past dates). <b>Start everyone as Present | Absent</b> decides what an unrecorded date means: with Absent, mark the students who initialed; your first mark records the date with everyone else absent. Unrecorded dates are shown dimmed.</p>
-    <p><b>Sign-in sheet PDF…</b> makes a printable sheet (landscape or portrait): last name, first name, then date columns, either printed with the class's next meeting dates or left blank for students to write in. Each sheet is numbered; pick it in Sheet mode to transcribe it (for a blank sheet, set each column's date there). <b>Download again</b> re-prints a sheet.</p>
+    <p><b>Sign-in sheet PDF…</b> makes a printable sheet (landscape or portrait): last name, first name, then date columns, either printed with the class's next meeting dates or left blank for students to write in. Each sheet is numbered; pick it in Sheet mode to transcribe it (for a blank sheet, set each column's date there), and <b>PDF</b> prints it again. Choose the row height, or <b>Fit everyone on one page</b>. Sheet mode doesn't need a printed sheet: <b>Recent class dates</b> is always available, and <b>Create without PDF</b> makes a sheet just for entering attendance.</p>
     <h4>Taking attendance</h4>
     <ul>
       <li>Every assigned seat starts as <b>Present</b> for the selected date — you only mark exceptions.</li>
@@ -1055,15 +1061,25 @@ function listMark(d, k, st) {
   if (!S.attendance[d]) { const day = S.attendance[d] = {}; if (S.listStart === 'A') assigned().forEach(x => day[x.k] = 'A'); }
   setStatus(d, k, st); return true;
 }
+/* Sheet mode works without printing anything: "Recent class dates" is always available, and sheets can be made
+   in the dialog without downloading a PDF. */
+function recentDates(n = 8) {
+  const days = S.days || [], out = [];
+  if (days.length) { let x = S.date; for (let i = 0; i < 120 && out.length < n; i++) { if (days.includes(dateObj(x).getDay())) out.unshift(x); x = shiftDate(x, -1); } }
+  else { const rec = Object.keys(S.attendance).filter(d => isDate(d) && d <= S.date).sort(); if (!rec.includes(S.date)) rec.push(S.date); out.push(...rec.slice(-n)); }
+  return out;
+}
 function curSheet() {
   const sh = S.sheets || [];
-  return sh.find(x => x.id === S.sheetSel) || sh[sh.length - 1] || null;
+  if (S.sheetSel !== '__recent') { const hit = sh.find(x => x.id === S.sheetSel) || (S.sheetSel ? null : sh[sh.length - 1]); if (hit) return hit; }
+  return { id: '__recent', virtual: true, blank: false, dates: recentDates(), n: 0 };
 }
 const sheetLabel = sh => {
+  if (sh.virtual) return `Recent class dates${sh.dates.length ? ` · ${shortDate(sh.dates[0])} – ${shortDate(sh.dates[sh.dates.length - 1])}` : ''}`;
   const ds = sh.dates.filter(Boolean);
   const range = sh.blank ? `${sh.dates.length} blank date${sh.dates.length === 1 ? '' : 's'}${ds.length ? `, ${ds.length} filled in` : ''}`
     : ds.length ? `${shortDate(ds[0])} – ${shortDate(ds[ds.length - 1])}` : '';
-  return `Sheet ${sh.n} · ${range}`;
+  return `Sheet ${sh.n} · ${range}${sh.printed === false ? ' · not printed' : ''}`;
 };
 function renderList() {
   if (S.classView !== 'list') return;
@@ -1093,19 +1109,15 @@ function renderOneDate(list) {
 function renderSheetGrid(list) {
   const sh = curSheet(), box = $('#list');
   box.classList.remove('locked');
-  const sheets = S.sheets || [];
-  $('#sheetCtl').innerHTML = sheets.length ? `<select id="sheetSel" aria-label="Sign-in sheet">${sheets.slice().reverse().map(x => `<option value="${x.id}" ${sh && x.id === sh.id ? 'selected' : ''}>${esc(sheetLabel(x))}</option>`).join('')}</select>
-    <button type="button" class="btn" id="sheetAgain" title="Download this sheet's PDF again">Download again</button>` : '';
-  $('#sheetSel')?.addEventListener('change', e => { S.sheetSel = e.target.value; listFocus.i = null; commit(); });
+  const sheets = S.sheets || [], recent = { id: '__recent', virtual: true, dates: recentDates(), n: 0 };
+  $('#sheetCtl').innerHTML = `<select id="sheetSel" aria-label="Sheet">${[recent, ...sheets.slice().reverse()].map(x => `<option value="${x.id}" ${x.id === sh.id ? 'selected' : ''}>${esc(sheetLabel(x))}</option>`).join('')}</select>
+    ${sh.virtual ? '' : '<button type="button" class="btn" id="sheetAgain" title="Download this sheet as a PDF">PDF</button>'}
+    <button type="button" class="btn" id="sheetNew" title="Make a new sheet, with or without a PDF">＋ New sheet</button>`;
+  $('#sheetSel').addEventListener('change', e => { S.sheetSel = e.target.value; listFocus.i = null; commit(); });
   $('#sheetAgain')?.addEventListener('click', () => downloadSheet(curSheet()));
-  if (!sh) {
-    box.innerHTML = `<p class="muted">No sign-in sheets yet for this class. Use <b>Sign-in sheet PDF…</b> to print one; when students have initialed it, come back here to enter the whole sheet at once.</p>
-      <div class="row"><button type="button" class="btn primary" id="sheetNow">Make a sign-in sheet</button></div>`;
-    $('#sheetNow').addEventListener('click', openSheetDialog);
-    return;
-  }
+  $('#sheetNew').addEventListener('click', openSheetDialog);
   const cols = sh.dates;
-  box.innerHTML = `<p class="small muted" style="margin-top:0">${sh.blank ? 'This sheet was printed without dates: set the date above each column as you enter it. ' : ''}Blank boxes on paper are absences${S.listStart === 'A' ? ' — with “Start everyone as Absent”, mark the initialed boxes present' : ' — mark them A'}. Columns stay editable here even on past dates.</p>
+  box.innerHTML = `<p class="small muted" style="margin-top:0">${sh.blank ? 'This sheet was printed without dates: set the date above each column as you enter it. ' : ''}${sh.virtual ? `The last ${sh.dates.length} class days up to ${esc(shortDate(S.date))}. ` : ''}Blank boxes on paper are absences${S.listStart === 'A' ? ' — with “Start everyone as Absent”, mark the initialed boxes present' : ' — mark them A'}. Columns stay editable here even on past dates.</p>
     <div class="table-wrap sheet-wrap" style="max-height:none"><table><thead><tr><th class="sticky">Last name</th><th>First name</th>${cols.map((d, i) => {
       const rec = d && S.attendance[d];
       if (sh.blank) return `<th class="sd" data-col="${i}"><input type="date" data-setd="${i}" value="${d || ''}" aria-label="Date for column ${i + 1}">${d ? `<span class="rec">${rec ? '✓ recorded' : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span>` : '<span class="rec">set a date</span>'}</th>`;
@@ -1228,9 +1240,12 @@ function pdfFit(str, size, bold, max) {
   return enc + ell;
 }
 const pdfEsc = enc => enc.replace(/[\\()]/g, '\\$&');
-const SHEET = { M: 36, headH: 30, rowH: 19, minCol: 44 };
+const SHEET = { M: 36, top: 24, headH: 30, rowH: 19, minRow: 12, maxRow: 32, minCol: 44 };
 const sheetDims = o => o === 'portrait' ? { W: 612, H: 792 } : { W: 792, H: 612 };      // US Letter, in points
-const sheetPerPage = o => Math.floor((sheetDims(o).H - SHEET.M - 44 - SHEET.headH - SHEET.M - 14) / SHEET.rowH);
+const sheetTableTop = o => sheetDims(o).H - SHEET.top - 34;                            // title, one note line, then the table
+const sheetRowSpace = o => sheetTableTop(o) - SHEET.headH - (SHEET.M + 14);
+const sheetPerPage = (o, rowH = SHEET.rowH) => Math.max(1, Math.floor(sheetRowSpace(o) / rowH));
+const fitRowH = (o, rows) => Math.max(SHEET.minRow, Math.min(SHEET.maxRow, Math.floor(sheetRowSpace(o) / Math.max(rows, 1) * 10) / 10));
 /* Column widths for a list of students: names sized to the longest (within limits), dates share the rest. */
 function sheetLayout(people, cols, orient) {
   const lw = Math.max(...people.map(x => pdfW(winAnsi(x.last), 10, true)), 50), fw = Math.max(...people.map(x => pdfW(winAnsi(x.first), 10, false)), 50);
@@ -1240,8 +1255,9 @@ function sheetLayout(people, cols, orient) {
   return { lastW, firstW, n, colW: avail / n, maxCols };
 }
 function sheetPdf(title, sh, people, extra) {
-  const { W, H } = sheetDims(sh.orient), { M, headH, rowH } = SHEET, L = sheetLayout(people, sh.dates.length, sh.orient), cols = sh.dates.slice(0, L.n);
-  const tableTop = H - M - 44, perPage = sheetPerPage(sh.orient);
+  const { W, H } = sheetDims(sh.orient), { M, headH } = SHEET, rowH = sh.rowH || SHEET.rowH, L = sheetLayout(people, sh.dates.length, sh.orient), cols = sh.dates.slice(0, L.n);
+  const tableTop = sheetTableTop(sh.orient), perPage = sheetPerPage(sh.orient, rowH);
+  const fs = rowH >= 17 ? 10 : rowH >= 14.5 ? 9 : 8;                 // name size follows the row height
   const rows = [...people, ...Array(extra).fill({ last: '', first: '' })];
   const pages = []; for (let i = 0; i < Math.max(rows.length, 1); i += perPage) pages.push(rows.slice(i, i + perPage));
   const f = n => (Math.round(n * 100) / 100).toString();
@@ -1252,9 +1268,9 @@ function sheetPdf(title, sh, people, extra) {
   const xs = [M, M + L.lastW, M + L.lastW + L.firstW]; cols.forEach((_, i) => xs.push(xs[2] + (i + 1) * L.colW));
   const content = pages.map((pg, pi) => {
     let o = '';
-    o += T(M, H - M - 14, pdfFit(title, 15, true, W - 2 * M - 260), 15, true);
-    o += TR(W - M, H - M - 14, `Sign-in sheet · Sheet ${sh.n}${range}`, 10, false, 0.25);
-    o += T(M, H - M - 31, winAnsi('Initial the box for each class you attend. Sign only for yourself.'), 9, false, 0.35);
+    o += T(M, H - SHEET.top - 13, pdfFit(title, 15, true, W - 2 * M - 260), 15, true);
+    o += TR(W - M, H - SHEET.top - 13, `Sign-in sheet · Sheet ${sh.n}${range}`, 10, false, 0.25);
+    o += T(M, H - SHEET.top - 26, winAnsi('Initial the box for each class you attend. Sign only for yourself.'), 9, false, 0.35);
     const top = tableTop, bottom = top - headH - pg.length * rowH;
     o += `0.88 g ${f(M)} ${f(top - headH)} ${f(W - 2 * M)} ${headH} re f\n`;
     pg.forEach((_, r) => { if (r % 2) o += `0.95 g ${f(M)} ${f(top - headH - (r + 1) * rowH)} ${f(W - 2 * M)} ${rowH} re f\n`; });
@@ -1268,9 +1284,9 @@ function sheetPdf(title, sh, people, extra) {
       } else o += T(xs[2] + i * L.colW + 3, top - 9, winAnsi('Date'), 7, false, 0.45);
     });
     pg.forEach((p, r) => {
-      const y = top - headH - (r + 1) * rowH + rowH / 2 - 3.5;
-      if (p.last) o += T(M + 6, y, pdfFit(p.last, 10, true, L.lastW - 10), 10, true);
-      if (p.first) o += T(xs[1] + 6, y, pdfFit(p.first, 10, false, L.firstW - 10), 10, false);
+      const y = top - headH - (r + 1) * rowH + rowH / 2 - fs * 0.35;
+      if (p.last) o += T(M + 6, y, pdfFit(p.last, fs, true, L.lastW - 10), fs, true);
+      if (p.first) o += T(xs[1] + 6, y, pdfFit(p.first, fs, false, L.firstW - 10), fs, false);
     });
     o += '0.25 G 0.6 w\n';
     for (let r = 0; r <= pg.length; r++) { const y = top - headH - r * rowH; o += `${f(M)} ${f(y)} m ${f(W - M)} ${f(y)} l S\n`; }
@@ -1313,7 +1329,7 @@ function openSheetDialog() {
   const hasDays = (S.days || []).length > 0;
   const printed = (S.sheets || []).filter(x => !x.blank).flatMap(x => x.dates).filter(Boolean).sort();
   $('#shStart').value = printed.length ? nextClassDay(shiftDate(printed[printed.length - 1], 1)) : nextClassDay(todayStr());
-  $('#shCols').value = o.cols; $('#shExtra').value = o.extra;
+  $('#shCols').value = o.cols; $('#shExtra').value = o.extra; $('#shRowH').value = o.rowH || SHEET.rowH; $('#shFit1').checked = !!o.fit1;
   sheetDlgMode = hasDays ? o.dates : 'blank'; sheetDlgOrient = o.orient || 'landscape';
   updateSheetDialog(); $('#sheetDlg').showModal();
 }
@@ -1329,7 +1345,10 @@ function updateSheetDialog() {
   let cols = Math.max(1, parseInt($('#shCols').value, 10) || 1); const extra = Math.max(0, Math.min(20, parseInt($('#shExtra').value, 10) || 0));
   $('#shFit').textContent = `Up to ${L.maxCols} fit across the page`;
   cols = Math.min(cols, L.maxCols);
-  const perPage = sheetPerPage(sheetDlgOrient), pages = Math.max(1, Math.ceil((people.length + extra) / perPage));
+  const rowH = sheetRowH(people.length + extra), perPage = sheetPerPage(sheetDlgOrient, rowH), pages = Math.max(1, Math.ceil((people.length + extra) / perPage));
+  $('#shRowH').disabled = $('#shFit1').checked;
+  if ($('#shFit1').checked) $('#shRowH').value = rowH;
+  $('#shRowInfo').textContent = `${(rowH / 72).toFixed(2)} in · ${perPage} rows per page${$('#shFit1').checked && pages > 1 ? ` · too many rows for one page even at ${SHEET.minRow} pt` : ''}`;
   let what = '';
   if (sheetDlgMode === 'print') { const ds = isDate($('#shStart').value) ? classDaysFrom($('#shStart').value, cols) : []; what = ds.length ? `${shortDate(ds[0])} – ${shortDate(ds[ds.length - 1])}` : 'choose a start date'; }
   else what = `${cols} blank date column${cols === 1 ? '' : 's'}`;
@@ -1343,21 +1362,33 @@ function updateSheetDialog() {
 }
 document.querySelectorAll('[data-shd]').forEach(b => b.addEventListener('click', () => { sheetDlgMode = b.dataset.shd; updateSheetDialog(); }));
 document.querySelectorAll('[data-sho]').forEach(b => b.addEventListener('click', () => { sheetDlgOrient = b.dataset.sho; updateSheetDialog(); }));
-['#shStart', '#shCols', '#shExtra'].forEach(id => $(id).addEventListener('input', updateSheetDialog));
+['#shStart', '#shCols', '#shExtra', '#shRowH'].forEach(id => $(id).addEventListener('input', updateSheetDialog));
+$('#shFit1').addEventListener('change', updateSheetDialog);
 $('#shCancel').addEventListener('click', () => $('#sheetDlg').close());
-$('#sheetForm').addEventListener('submit', e => {
-  e.preventDefault();
+/* Row height from the dialog: typed value, or the largest that fits every row on one page. */
+function sheetRowH(rows) {
+  if ($('#shFit1').checked) return fitRowH(sheetDlgOrient, rows);
+  const v = parseFloat($('#shRowH').value);
+  return Math.max(SHEET.minRow, Math.min(SHEET.maxRow, isFinite(v) ? v : SHEET.rowH));
+}
+$('#sheetForm').addEventListener('submit', e => { e.preventDefault(); makeSheet(true); });
+$('#shNoPdf').addEventListener('click', () => makeSheet(false));
+function makeSheet(pdf) {
   const people = sheetPeople(), L = sheetLayout(people.length ? people : [{ last: '', first: '' }], 99, sheetDlgOrient);
   const cols = Math.min(L.maxCols, Math.max(1, parseInt($('#shCols').value, 10) || 1)), extra = Math.max(0, Math.min(20, parseInt($('#shExtra').value, 10) || 0));
   let dates;
   if (sheetDlgMode === 'print') { if (!isDate($('#shStart').value)) return toast('Choose a start date.', true); dates = classDaysFrom($('#shStart').value, cols); }
   else dates = Array(cols).fill(null);
   const n = (S.sheets || []).reduce((m, x) => Math.max(m, x.n), 0) + 1;
-  const sh = { id: uid(), n, made: todayStr(), blank: sheetDlgMode !== 'print', dates, extra, orient: sheetDlgOrient };
+  const rowH = sheetRowH(people.length + extra);
+  const sh = { id: uid(), n, made: todayStr(), blank: sheetDlgMode !== 'print', dates, extra, orient: sheetDlgOrient, rowH, printed: pdf };
   (S.sheets ||= []).push(sh); S.sheetSel = sh.id;
-  S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra, orient: sheetDlgOrient };
-  $('#sheetDlg').close(); commit(); downloadSheet(sh);
-});
+  S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra, orient: sheetDlgOrient, rowH: $('#shFit1').checked ? (S.sheetOpts?.rowH || SHEET.rowH) : rowH, fit1: $('#shFit1').checked };
+  $('#sheetDlg').close();
+  if (S.view === 'classroom' && S.classView === 'list') S.listMode = 'sheet';
+  commit();
+  if (pdf) downloadSheet(sh); else toast(`Sheet ${n} is ready in Sheet view.`);
+}
 $('#sheetPdfBtn').addEventListener('click', openSheetDialog);
 $('#sheetPdfBtn2').addEventListener('click', openSheetDialog);
 
