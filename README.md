@@ -1,0 +1,138 @@
+# Attendance — specification (overview)
+
+Attendance is a browser app for one instructor to take attendance in several classes, keep attendance history, and email students who missed class. It runs entirely on the instructor's device with no server or account.
+
+This document describes the features and the main decisions behind them. It leaves visual styling and fine-grained behavior to whoever builds it. Section 10 lists the choices made for this build as questions to ask before building a new copy.
+
+---
+
+## 1. Principles
+
+- **One file, no dependencies.** The whole app is a single `index.html` that works offline, including when opened straight from disk.
+- **Private by default.** All data stays in the browser's local storage. Nothing leaves the device unless the instructor downloads a file or opens an email draft. Exported files with student data carry a privacy reminder.
+- **Hard to make mistakes.** Every assigned student starts out present, so only exceptions are marked. Days other than today are locked until unlocked. The selected date is always prominent, with a strong warning when it isn't today. Attendance changes can be undone. Destructive actions ask first.
+- **Keyboard and touch friendly.** Every main task can be done with the keyboard, and the controls are large enough for an iPad.
+- **Always dark theme.**
+
+## 2. Core concepts
+
+- **Class:** a course section with a roster, seat assignments, attendance records, meeting days, and printed sign-in sheets. The instructor works in one class at a time and switches between them with a class menu.
+- **Room:** a layout only, made of rows of seats (with aisles) or tables. Each class uses one room, and sections that meet in the same place can share it.
+- **Student:** first name, last name, optional student ID (unique within the class), and optional email.
+- **Attendance:** for each date, each student is Present, Absent, or Excused. A date that has records is a recorded date.
+- **Selected date:** the day being worked on. It defaults to today and is shared across views.
+
+## 3. Taking attendance
+
+### Seating chart
+- The chart shows the room as seat cards with each student's name and status. Clicking a seat, or pressing P, A, or E, sets the status.
+- Rooms can be **rows**, with any number of aisles, or **tables / pods**, with seats numbered clockwise around each table. Seats are named "Row 2, Seat 5" or "Table 3, Seat 2".
+- **Instructor view** turns the chart 180° to match the view from the front of the room.
+- **Edit seats** assigns students to seats, moves or swaps them (by dragging or by seat number), and changes the room layout. Layout changes that would leave students without a seat are refused, or the app offers to move only the students who don't fit. A shared room can't be changed in a way that unseats another class's students. Students can't be removed from this view.
+
+### List
+- The list shows the roster sorted by last name, the same order as the printed sign-in sheet, with P / A / E controls on each row.
+- **One date** mode is for the selected date. **Sheet** mode puts all the dates from one printed sheet side by side, so a filled-in sheet can be entered in one pass.
+- **Start everyone as Present or Absent** sets how an unrecorded date is treated. With Absent, the instructor marks only the students who signed in, and the first mark records the date.
+- The keyboard is fully supported: arrow keys move, P/A/E mark and move to the next student, and typing jumps to a last name.
+
+### Paper sign-in sheets
+- A printable PDF (US Letter, landscape or portrait) with last name, first name, and empty date columns for students to initial. The date columns either show the class's next meeting dates or are left blank for students to write in. Extra blank rows at the bottom cover late adds.
+- Row height is adjustable, with an option to fit every student on one page.
+- Each sheet is numbered and remembered. Sheet mode in the list view picks a sheet to transcribe, and a sheet can be downloaded again. Sheet mode doesn't require printing: "Recent class dates" is always available, and a sheet can be created without a PDF.
+- The app generates the PDF itself, with no library.
+
+### Dates
+- A prominent date bar is always visible on the views that use a date. It has previous/next day buttons, a large calendar, a Today button, and shortcuts to recent class dates.
+- Previous and next step through the class's meeting days. On any day other than today, the bar and the window take on a warning color.
+
+## 4. Attendance history
+
+- A grid with a row for each student and a column for each recorded date. It is editable, stays in sync with the classroom views, and shows absence and excused totals.
+- Clicking anywhere in a row selects it, and the selected row and column are highlighted.
+- Students can be found by searching name, ID, or email. A date can be found with a jump-to-date list, the calendar, or by stepping between recorded dates. Dates can be added or deleted.
+- Escape resets the view.
+
+## 5. Emails
+
+- **Recipients:** filters show All, Absent today, Excused today, or Absent N+ times (adjustable). The list shows only the filtered students. Students can be searched and selected individually or as a range.
+- **Sending:** either one email with all recipients in **BCC**, or **separate personal emails**. Drafts open in the mail app, download as .eml files, or copy to the clipboard. The app never sends anything itself.
+- **Message editor:** the editor is a live working draft that uses placeholders for first name, name, date, class, seat, and ID. Templates are starting points: editing one changes only the current draft until it is saved as a template. Eleven starter templates, written in an empathetic, supportive tone, cover:
+  missed class check-in · excused absence documentation · repeated absences · missed quiz or exam · several missed classes · excused absence confirmation · missed group work · nearing the attendance limit · missed exam review · welcome back after time away · missed announcement.
+
+## 6. Managing data
+
+- **Classes and rooms:** create, rename, and delete classes; set each class's meeting days; and assign, share, copy, or delete rooms.
+- **Roster:**
+  - **Remove** a student with a choice: **Drop** keeps their history, lists them as dropped with their last day attended, and can be restored; **Delete** erases them completely.
+  - A review step checks first/last name splits when the app had to guess.
+- **CSV import and export:** one row per student, with a class column so files can hold one class or all classes. On import, rows go to the class named in each row, and new class names create classes. Existing classes can either be **updated** (the default: students are matched by ID, email, or name, and seats and history are kept) or **replaced** completely. Files can be dragged onto this view.
+- **Backups:**
+  - a full .json backup of everything
+  - a copy of the app with its data built in, which can be opened on another device to pick up where you left off
+  - a clean copy of the app with no data, safe to host
+
+## 7. CSV format (summary)
+
+```
+class,last_name,first_name,student_id,email,row,seat,2026-10-13,2026-10-15
+Calculus I – Section 01,Garza,Ana,20480100,ana@example.edu,1,1,P,A
+```
+
+- Each date column holds P, A, or E. Within a recorded date, a blank cell means present. A date counts as recorded for a class only if at least one of its students has a mark on it, which lets classes that meet on different days share one file.
+- Single-class files can include optional `#` lines with the room layout.
+- Imports accept common header variations: a single "Name" column (including "Last, First"), US-style dates (10/13/2026), and comma, semicolon, or tab separators. Students without seats are placed in open seats automatically.
+
+## 8. Hosting and offline use
+
+- When hosted (for example on GitHub Pages), a small service worker saves the app so it opens without internet. It always loads the latest version when online and never stores student data.
+- A manifest and icon let it be added to an iPad Home Screen as an app.
+- Data is tied to the app's address in each browser, so moving between devices is done with the backup file or the copy of the app with data built in.
+- **Updates must never lose data.** Publishing a new version leaves saved data alone. The app also protects against address changes and bad data: `…/` and `…/index.html` share data (real data wins over an untouched demo), data saved under any other address on the same site is listed under **Recover data** (with a banner when the app opens with nothing of yours), data that can't be read is kept rather than overwritten, and an automatic copy is kept from each of the last 7 days.
+
+## 9. Help and onboarding
+
+- A Help dialog explains each workflow and lists the keyboard shortcuts.
+- Demo data (one class) is included so the app can be tried right away, and it can be replaced or deleted.
+
+## 10. Questions to ask before building
+
+The answers in italics are the choices made for this build.
+
+**Basics**
+1. What should the app be called? *Attendance.*
+2. One offline file with browser storage, or a server/shared database? *One file, browser storage.*
+3. Theme: dark, light, or follow the system? *Always dark.*
+4. Should demo data be included? *Yes.*
+
+**Taking attendance**
+5. Mark only exceptions (everyone starts present), or mark every student? *Exceptions, with an option to start everyone absent in the list view.*
+6. Which statuses? Is Late needed? *Present, Absent, Excused.*
+7. Lock days other than today against accidental edits? *Yes, until unlocked, with strong visual warnings.*
+8. Seating chart, list, or both? *Both.*
+9. Room shapes needed: rows, tables, curved, U-shape? *Rows with aisles, and tables.*
+10. How are seats numbered? *Row 1 at the front, seat 1 on the students' left; table seats clockwise.*
+11. Should there be paper sign-in sheets? With dates printed or blank? Which page orientation? *Yes, PDF; dates printed or blank; landscape or portrait; adjustable row height, with a fit-on-one-page option.*
+
+**Students and classes**
+12. Several classes in one app? Separate room layouts? *Yes; rooms separate from classes and shareable.*
+13. Store first and last names separately? *Yes, with a review step for guessed splits.*
+14. Is student ID required? *Optional, unique within a class.*
+15. How are students removed? Keep their history? *Only from Manage data; drop (keeps history, restorable) or delete.*
+
+**History and email**
+16. Should history be editable? *Yes, synced with the classroom views.*
+17. How should email work: mailto, .eml files, or a sending service? *mailto, .eml, and copy; never sends automatically.*
+18. One BCC email, separate personal emails, or both? *Both.*
+19. Tone and content of the starter templates? *Empathetic and supportive; 11 templates.*
+
+**Data**
+20. Which CSV columns and in what order? *class, last name, first name, ID, email, seat, then dates.*
+21. Should imports into an existing class merge or replace? *Both, with merge as the default.*
+22. Which backup options? *Full .json, a copy of the app with data, and a clean copy of the app.*
+23. Should it work offline when hosted and install to an iPad Home Screen? *Yes.*
+23a. How should the app protect saved data across updates and address changes? *Recover data from other addresses, keep unreadable data, and keep daily automatic copies (last 7).*
+
+**Interaction**
+24. Which keyboard shortcuts, and are single-letter keys acceptable? *Number keys switch views; letters for common actions; single letters work whenever you aren't typing.*
+25. Is undo needed? *For attendance changes.*
