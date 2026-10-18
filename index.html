@@ -1,0 +1,2287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance</title>
+<style>
+:root{
+  --bg:#0e1015;--panel:#161920;--panel2:#1d212a;--panel3:#242935;--line:#2d3340;--text:#e7e9ee;--muted:#9aa2b0;
+  --accent:#86a8f8;--accent-ink:#0e1015;
+  --present:#3fb47a;--present-bg:#14241c;--absent:#ef6a62;--absent-bg:#3a1a1a;--excused:#e0b23a;--excused-bg:#332a10;
+  --aisle:42px;--radius:10px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;margin-right:8px;align-self:center}
+.brand svg{width:26px;height:26px}
+.fld{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.fld.grow{flex:1 1 220px}
+input[type=text],input[type=email],input[type=date],input[type=number],select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color:var(--text);min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea{width:100%;resize:vertical}
+.btn{background:var(--panel3);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:#47506180;background:#2b3140}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--absent);border-color:#5a2a2a}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:flex;gap:4px;padding:8px 16px 0;border-bottom:1px solid var(--line);overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 12px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--accent)}
+#kbdBtn{font-size:13px}
+main{padding:16px;max-width:1400px;margin:0 auto}
+.view[hidden]{display:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{background:var(--panel2);border:0;padding:7px 14px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--muted)}
+.switch input{width:18px;height:18px;accent-color:var(--accent)}
+.classroom{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+@media (max-width:900px){.classroom{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.card+.card{margin-top:12px}
+.chart-wrap{overflow-x:auto;padding-bottom:4px}
+.chart-wrap.not-today{border:2px solid var(--excused);box-shadow:0 0 0 4px #e0b23a1f}
+.chart-wrap.locked .seat:not(.empty){opacity:.6;cursor:not-allowed}
+.datebar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);border-left:8px solid var(--present)}
+.datebar.past{border-left-color:var(--excused);background:#3a2e0c;border-bottom:2px solid var(--excused)}
+.datebar.future{border-left-color:var(--accent);background:#17213d;border-bottom:2px solid var(--accent)}
+.datebar.past .dfull{color:#ffd76e}.datebar.future .dfull{color:#b9cdff}
+.datebar.past .dlabel{border-color:#7a6220;background:#2a2209}.datebar.future .dlabel{border-color:#3b4f86;background:#121a31}
+.dwarn{display:none;font-weight:700;font-size:14px}
+.datebar.past .dwarn{display:inline;color:#ffd76e}.datebar.future .dwarn{display:inline;color:#b9cdff}
+.chip.today-chip{border-color:#2b5c43;color:var(--present);font-weight:600}
+.chip .n{margin-left:5px;font-size:11px;font-weight:700;color:var(--absent)}
+.chip[aria-current=true] .n{color:inherit}
+/* whole-window frame while acting on a day that isn't today */
+body.not-today::after{content:'';position:fixed;inset:0;border:5px solid var(--excused);pointer-events:none;z-index:60}
+body.not-today.future::after{border-color:var(--accent)}
+.dhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;margin-bottom:10px;background:var(--present-bg);border:1px solid #2b5c43}
+.dhead.past{background:#3a2e0c;border:2px solid var(--excused)}
+.dhead.future{background:#17213d;border:2px solid var(--accent)}
+.dhead .big{font-size:18px;font-weight:700}
+.dhead.past .big{color:#ffd76e}.dhead.future .big{color:#b9cdff}
+.datebar[hidden]{display:none}
+.dnav{width:46px;height:46px;font-size:26px;line-height:1;border-radius:12px;background:var(--panel3);border:1px solid var(--line);cursor:pointer;color:var(--text)}
+.dnav:hover{background:#2b3140}
+.dmain{position:relative}
+.dlabel{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 14px;cursor:pointer;text-align:left;color:var(--text)}
+.dlabel:hover{border-color:var(--accent)}
+.dlabel svg{width:26px;height:26px;flex:none}
+.dtext{display:flex;flex-direction:column;line-height:1.15}
+.dweek{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.dfull{font-size:20px;font-weight:700}
+/* calendar popover */
+.cal{position:absolute;top:calc(100% + 8px);left:0;z-index:30;width:min(430px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px #000c;padding:14px}
+.cal[hidden]{display:none}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.cal-title{font-size:19px;font-weight:700}
+.cal-nav{width:44px;height:44px;font-size:24px;line-height:1;border-radius:10px;background:var(--panel3);border:1px solid var(--line);cursor:pointer;color:var(--text)}
+.cal-nav:hover{border-color:var(--accent)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-wd{text-align:center;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:2px 0 4px;font-weight:600}
+.cal-day{position:relative;aspect-ratio:1;min-height:44px;border-radius:10px;border:1px solid transparent;background:var(--panel2);color:var(--text);font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.cal-day:hover{border-color:var(--accent)}
+.cal-day.out{background:transparent;color:#5b6373;font-weight:400}
+.cal-day.today{border:2px solid var(--present);color:var(--present)}
+.cal-day.meet{box-shadow:inset 0 -3px 0 var(--accent)}
+.meet-sw{box-shadow:inset 0 -3px 0 var(--accent);background:var(--panel2)}
+.days{display:inline-flex;gap:3px}
+.days button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;padding:0}
+.days button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cal-day[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.cal-day:focus-visible{outline:3px solid #fff;outline-offset:2px;z-index:1}
+.cal-dot{position:absolute;bottom:5px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--muted)}
+.cal-n{position:absolute;top:3px;right:6px;font-style:normal;font-size:11px;font-weight:700;color:var(--absent)}
+.cal-day[aria-pressed=true] .cal-dot{background:var(--accent-ink)}.cal-day[aria-pressed=true] .cal-n{color:var(--accent-ink)}
+.cal-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.cal-foot .k{display:inline-flex;align-items:center;gap:5px;margin-right:10px}
+.cal-foot .sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+.dbadge{padding:5px 14px;border-radius:99px;font-weight:700;font-size:15px;white-space:nowrap}
+.datebar.today .dbadge{background:var(--present-bg);color:var(--present)}
+.datebar.past .dbadge{background:var(--excused);color:#1a1405}
+.datebar.future .dbadge{background:var(--accent);color:var(--accent-ink)}
+.drec{font-size:13px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.chips .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:5px 11px;cursor:pointer;font-size:13px;color:var(--text)}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-current=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.card.warn{border:2px solid var(--excused);background:#211d10}
+.card.warn h3{color:var(--excused)}
+@media (max-width:700px){.dfull{font-size:17px}.chips{margin-left:0}}
+.room{display:flex;flex-direction:column;gap:12px;min-width:max-content}
+.front{text-align:center;padding:8px;border-radius:8px;background:repeating-linear-gradient(135deg,#232836 0 10px,#1f2430 10px 20px);border:1px solid var(--line);color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.grid{display:grid;row-gap:8px;column-gap:0}
+.hinge{position:relative}
+.tables{display:grid;gap:30px 40px;justify-content:center;padding:4px 0}
+.tbl{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 10px 10px;border:1px dashed #333a47;border-radius:14px}
+.tbl-name{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.tbl-row{display:flex;gap:6px;justify-content:center}
+.tbl-top{align-self:stretch;min-height:22px;border-radius:8px;background:#232836;border:1px solid var(--line)}
+.colnum{text-align:center;font-size:11px;color:var(--muted);font-weight:600;align-self:center}
+.hinge-btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:1px dashed #4a5263;background:var(--panel);color:var(--muted);font-size:15px;line-height:1;cursor:pointer;z-index:2;opacity:.6;padding:0}
+.hinge-btn:hover,.hinge-btn:focus-visible{opacity:1;border-color:var(--accent);color:var(--accent)}
+.hinge-btn.on{opacity:1;border-style:solid;border-color:var(--accent);color:var(--accent);background:#1b2440}
+.aisle{border-left:2px dashed #39404f;border-right:2px dashed #39404f;border-radius:4px;opacity:.7}
+.aisle.label{display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font-size:11px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase}
+.seat{width:96px;min-height:72px;border-radius:var(--radius);border:1px solid var(--line);background:var(--panel2);padding:6px 7px;text-align:left;display:flex;flex-direction:column;gap:1px;cursor:pointer;position:relative;color:var(--text)}
+.seat .lab{font-size:11px;color:var(--muted);font-weight:600}
+.seat .nm{font-size:13px;font-weight:600;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.seat .st{font-size:11px;margin-top:auto;font-weight:600}
+.seat.P{background:var(--present-bg);border-color:#2b5c43}.seat.P .st{color:var(--present)}
+.seat.A{background:var(--absent-bg);border-color:var(--absent)}.seat.A .st{color:var(--absent)}
+.seat.E{background:var(--excused-bg);border-color:var(--excused)}.seat.E .st{color:var(--excused)}
+.seat.empty{background:transparent;border-style:dashed;color:var(--muted)}
+.seat.empty.take{cursor:default}
+.seat.edit{background:var(--panel2);border-color:var(--line)}
+.seat.edit .st{color:var(--muted);font-weight:400}
+.seat.sel{outline:2px solid var(--accent);outline-offset:1px}
+.seat.over{outline:2px dashed var(--accent)}
+.seat[draggable=true]{cursor:grab}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--panel2);border-radius:8px;padding:8px 6px;text-align:center}
+.stat b{display:block;font-size:22px;line-height:1.1}
+.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.stat.p b{color:var(--present)}.stat.a b{color:var(--absent)}.stat.e b{color:var(--excused)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:9px}
+.stack .fld input,.stack .fld select{width:100%}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600}
+.pill.P{background:var(--present-bg);color:var(--present)}.pill.A{background:var(--absent-bg);color:var(--absent)}.pill.E{background:var(--excused-bg);color:var(--excused)}
+ul.plain{list-style:none;padding:0;margin:0}
+ul.plain li{padding:4px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+ul.plain li:last-child{border-bottom:0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:var(--panel)}
+.table-wrap{overflow:auto;max-height:70vh;border:1px solid var(--line);border-radius:10px}
+.table-wrap thead th{position:sticky;top:0;z-index:2}
+.table-wrap .sticky{position:sticky;left:0;background:var(--panel);z-index:1}
+.table-wrap thead .sticky{z-index:3}
+td.c{text-align:center}
+th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
+th.date.cur button{text-decoration:underline}
+th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
+th.date .del:hover{color:var(--absent)}
+th.date.cur,td.cur{background:#1a2030}
+button.hcell{border:0;cursor:pointer;min-width:30px;font:inherit;font-size:12px;font-weight:600}
+button.hcell:hover{filter:brightness(1.3)}
+/* keyboard position in the history grid */
+#roster th,#roster td{padding:6px 7px}
+#roster td.em{white-space:normal;overflow-wrap:anywhere;min-width:120px}
+#roster .act{white-space:nowrap;text-align:right}
+#roster .act .btn{padding:3px 8px;font-size:12.5px}
+#history tbody tr{cursor:pointer}
+#history tbody tr:hover td{background:#1a1f2b}
+#history tr.cur-row td{background:#1a2440}
+#history tr.cur-row td.sticky{background:#253563;color:#fff;font-weight:700;box-shadow:inset 5px 0 0 var(--accent)}
+#history .cur-col{background:#1a2440}
+#history th.cur-col{background:#253563;box-shadow:inset 0 -3px 0 var(--accent)}
+#history th.cur-col button{color:#fff;font-weight:700}
+@keyframes colflash{0%{background:#86a8f8;}100%{}}
+#history .flash{animation:colflash 1.4s ease-out}
+#history .flash button.hcell{animation:none}
+#history tr.cur-row td.cur-col{background:#2c3f78}
+button.hcell:focus{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #86a8f880;transform:scale(1.3);position:relative;z-index:1}
+.hfocus{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-size:14px;min-height:44px}
+.hfocus.on{border:2px solid var(--accent);background:#17213d}
+.hfocus .who{font-size:17px;font-weight:700}
+.hfocus .sep{color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+pre.code{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12.5px}
+.draft{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2)}
+.rchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.rchips .chip b{margin-left:4px;opacity:.75}
+.rchips .chip[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.stepchip{display:inline-flex;align-items:stretch}
+.stepchip .chip{border-radius:0;border-left:0;border-right:0}
+.stepchip .stp{width:30px;background:var(--panel3);border:1px solid var(--line);color:var(--text);cursor:pointer;font-size:16px;font-weight:700;line-height:1;padding:0}
+.stepchip .stp:first-child{border-radius:99px 0 0 99px}.stepchip .stp:last-child{border-radius:0 99px 99px 0}
+.stepchip .stp:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.stepchip .stp:disabled{opacity:.35;cursor:default}
+.rcount{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin:8px 0 6px}
+.rlist{max-height:330px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.rrow{display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+.rrow:last-child{border-bottom:0}
+.rrow:hover{background:var(--panel2)}
+.rrow.on{background:#1a2236}
+.rrow input{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.rrow .who{flex:1;min-width:0}
+.rrow .em{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow .em.none{color:var(--absent)}
+.rrow .tag{font-size:12px;color:var(--muted);white-space:nowrap}
+.note{font-size:13px;border-left:3px solid var(--excused);padding:4px 10px;margin:8px 0;color:#d9cfa8;background:#211d10;border-radius:0 6px 6px 0}
+.draft+.draft{margin-top:10px}
+.draft .body{white-space:pre-wrap;font-size:13.5px;margin:6px 0;max-height:180px;overflow:auto}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;max-width:760px;width:calc(100% - 32px);padding:0}
+dialog::backdrop{background:#000a}
+dialog .hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+dialog .bd{padding:6px 18px 18px;max-height:70vh;overflow:auto}
+dialog h4{margin:16px 0 4px}
+dialog p,dialog li{color:#cdd2db}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--panel3);border:1px solid var(--line);padding:9px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:min(92vw,560px);white-space:pre-line;z-index:50}
+#toast.show{opacity:1}
+#toast.err{border-color:var(--absent)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px}
+#dropOverlay{position:fixed;inset:10px;border:3px dashed var(--accent);border-radius:16px;background:#0e1015d9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:40;pointer-events:none;opacity:0;transition:opacity .12s}
+#dropOverlay.on{opacity:1}
+#dropOverlay b{font-size:22px}
+#dropOverlay span{color:var(--muted)}
+kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:12px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="#86a8f8" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M15 17.5l2 2 4-4"/></svg><span>Attendance</span></div>
+  <label class="fld grow" style="align-self:center">
+    <span class="row" style="flex-wrap:nowrap"><select id="classSel" aria-label="Current class" title="Current class (press C to jump here)" style="flex:1;min-width:0;font-size:16px;font-weight:600"></select>
+    <button class="btn" type="button" id="newClassBtn" title="Add a class">＋ New class</button></span></label>
+  <button class="btn ghost" id="helpBtn" type="button">Help</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Views">
+  <button role="tab" data-view="classroom">Classroom</button>
+  <button role="tab" data-view="history">Attendance history</button>
+  <button role="tab" data-view="emails">Emails</button>
+  <button role="tab" data-view="import">Manage data</button>
+  <button type="button" id="kbdBtn" style="margin-left:auto" title="Keyboard shortcuts">⌨ Shortcuts <kbd>?</kbd></button>
+</nav>
+<div class="datebar today" id="dateBar" role="group" aria-label="Class date">
+  <button class="dnav" type="button" id="dPrev" aria-label="Previous day" title="Previous day ( [ )">‹</button>
+  <div class="dmain">
+    <button class="dlabel" type="button" id="dPick" title="Choose a date from the calendar" aria-haspopup="dialog" aria-expanded="false" aria-controls="cal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span class="dtext"><span class="dweek" id="dWeek"></span><span class="dfull" id="dFull"></span></span>
+    </button>
+    <div class="cal" id="cal" role="dialog" aria-label="Choose class date" hidden></div>
+  </div>
+  <button class="dnav" type="button" id="dNext" aria-label="Next day" title="Next day ( ] )">›</button>
+  <span class="dbadge" id="dBadge" aria-live="polite"></span>
+  <button class="btn primary" type="button" id="dToday" title="Go to today ( T )">Go to today</button>
+  <span class="dwarn" id="dWarn"></span>
+  <span class="drec" id="dRec"></span>
+  <div class="chips" id="dChips"></div>
+</div>
+
+<main>
+<section class="view" id="view-classroom" aria-label="Classroom">
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Mode">
+      <button type="button" data-mode="take">Take attendance</button>
+      <button type="button" data-mode="edit">Edit seats</button>
+    </div>
+    <label class="switch"><input type="checkbox" id="instructorView"> Instructor view</label>
+    <div class="legend" id="legend"><span class="pill P">Present</span><span class="pill A">Absent</span><span class="pill E">Excused</span></div>
+  </div>
+  <div class="classroom">
+    <div class="card chart-wrap"><div class="room" id="room"></div></div>
+    <aside id="side"></aside>
+  </div>
+</section>
+
+<section class="view" id="view-import" aria-label="Manage data" hidden>
+  <div class="card" id="classesCard" style="margin-bottom:16px">
+    <h3>Classes &amp; rooms</h3>
+    <div id="classMgr"></div>
+  </div>
+  <div class="two">
+    <div>
+      <div class="card">
+        <h3>Restore from CSV</h3>
+        <p class="small muted">Rows go to the class named in the file's <b>class</b> column (a new name creates that class); a file without one goes into the class that's open. Other classes and the response templates aren't touched.</p>
+        <div class="stack">
+          <div class="fld"><span>For a class that already exists</span>
+            <div class="seg" role="group" aria-label="Import mode" style="align-self:flex-start">
+              <button type="button" data-imode="merge">Update roster</button>
+              <button type="button" data-imode="replace">Replace everything</button></div></div>
+          <p class="small" id="impModeNote" style="margin:0"></p>
+          <label class="switch" id="impRemoveWrap"><input type="checkbox" id="impRemove"> Also remove students who aren't in the file (their attendance is deleted)</label>
+          <p class="small" style="margin:0">Drag a CSV file anywhere onto this page, or choose one:</p>
+          <label class="fld"><span>Choose a CSV file</span><input type="file" id="csvFile" accept=".csv,.tsv,.txt,.json,text/csv,application/json"></label>
+          <label class="fld"><span>…or paste CSV text</span><textarea id="csvText" rows="8" spellcheck="false" placeholder="class,name,student_id,email,row,seat"></textarea></label>
+          <div class="row"><button class="btn primary" id="importBtn" type="button">Import</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Export</h3>
+        <div class="row">
+          <select id="expScope" aria-label="What to export"><option value="class">This class</option><option value="all">All classes</option></select>
+          <button class="btn" id="exportBtn" type="button">Download CSV</button>
+          <button class="btn primary" id="appExportBtn" type="button">Download app with data (.html)</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="appBlankBtn" type="button">Download app with no data (.html)</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="templateBtn" type="button">Download blank template</button>
+          <button class="btn" id="backupBtn" type="button">Back up all classes (.json)</button>
+        </div>
+        <p class="small muted" style="margin-bottom:0"><b>This class</b> / <b>All classes</b> applies to the CSV and to the app copy. <b>App with data</b> is this whole app with the chosen classes, their rooms, your templates, and your settings built in: open it on any computer and pick up where you left off. It contains student names, IDs, emails, and attendance, so keep it as private as your CSV files. <b>App with no data</b> is a clean copy with nothing built in, safe to put on a website (for example, to use it in Safari on an iPad); bring your classes in with the .json backup. The .json backup holds everything too; restore it by choosing or dropping it above. Nothing leaves this browser unless you download it.</p>
+      </div>
+      <div class="card">
+        <h3>CSV format</h3>
+        <pre class="code">#class,Calculus I – Section 01
+#rows,6
+#seats_per_row,8
+#aisles,4
+class,name,student_id,email,row,seat,2026-10-13,2026-10-15
+Calculus I – Section 01,Ana Garza,20480100,ana@example.edu,1,1,P,A
+Calculus I – Section 01,Luis Pérez,20480137,luis@example.edu,1,2,E,P
+Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
+        <p class="small muted">One row per student. Student fields come first — <code>class</code>, <code>name</code> (required; or <code>first name</code> + <code>last name</code>), <code>student_id</code>, <code>email</code>, <code>row</code>, <code>seat</code> — then one column per attendance date: <b>P</b> present (or blank), <b>A</b> absent, <b>E</b> excused.</p>
+        <ul class="small muted" style="padding-left:18px;margin-bottom:0">
+          <li>Leaving <code>row</code> and <code>seat</code> blank (or leaving those columns out) places the student in the next open seat, front row first — so a plain roster export works.</li>
+          <li>Row 1 is the front row. Seat 1 is on the left as students face the front. Older files with a single <code>seat</code> column like <code>A1</code> or <code>1-1</code> still import.</li>
+          <li>Date headers may be <code>2026-10-13</code> or <code>10/13/2026</code>, as spreadsheets often rewrite them. Comma, semicolon, or tab separators all work.</li>
+          <li>Lines starting with <code>#</code> are optional settings (<code>#aisles</code> lists the seat each aisle follows, separated by spaces, like <code>3 6</code>; leave it empty for none). Other columns are ignored, and you'll be told which.</li>
+          <li><b>class</b> says which class each row belongs to. Rows go to the class with that name; a name that doesn't exist yet becomes a new class. A file without a class column goes into the class that's open. An <b>All classes</b> export lists every class's students in one file.</li>
+          <li>Classes meet on different days, so a date cell is <b>blank</b> for a class that didn't meet that day. A date is recorded for a class only if at least one of its students has a P, A, or E there; within a recorded date, a blank still means present.</li>
+          <li>The <code>#</code> layout lines describe one class's room, so they're included in single-class exports only. Rooms for every class are kept in the full .json backup.</li>
+          <li>The file holds roster, seating, and attendance. Email templates stay in this browser.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Start over</h3>
+        <div class="row">
+          <button class="btn danger" id="emptyBtn" type="button">Clear this class</button>
+          <button class="btn ghost" id="demoBtn" type="button">Add a demo class</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Current roster</h3>
+      <div id="roster"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-history" aria-label="Attendance history" hidden>
+  <div class="toolbar">
+    <label class="fld" style="flex:1 1 240px"><span>Find student <kbd>/</kbd></span>
+      <input type="search" id="hSearch" placeholder="Type a name, ID, or email" autocomplete="off" aria-describedby="hCount"></label>
+    <span class="small muted" id="hCount" style="align-self:flex-end;padding-bottom:8px"></span>
+    <label class="fld"><span>Jump to date <kbd>G</kbd> for calendar</span><select id="hJump" aria-label="Jump to a recorded date"></select></label>
+    <label class="fld"><span>Add a date</span><input type="date" id="hAddDate"></label>
+    <button class="btn" id="hAddBtn" type="button" style="align-self:flex-end">Add date</button>
+    <button class="btn" id="exportBtn2" type="button" style="align-self:flex-end">Download CSV</button>
+    <span class="small muted" style="align-self:flex-end">Click a cell to cycle P → A → E (or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>). Click a date to open it in Classroom. Both views edit the same records.</span>
+  </div>
+  <div class="hfocus" id="hFocus"></div>
+  <div id="history"></div>
+</section>
+
+<section class="view" id="view-emails" aria-label="Emails" hidden>
+  <div class="two">
+    <div class="card">
+      <h3>Response library</h3>
+      <div class="stack">
+        <div class="row">
+          <select id="tplSelect" aria-label="Template" style="flex:1"></select>
+          <button class="btn" id="tplNew" type="button">New</button>
+          <button class="btn" id="tplDup" type="button">Duplicate</button>
+        </div>
+        <label class="fld"><span>Template title</span><input type="text" id="tplTitle"></label>
+        <label class="fld"><span>Subject</span><input type="text" id="tplSubject"></label>
+        <label class="fld"><span>Message</span><textarea id="tplBody" rows="10"></textarea></label>
+        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{sid}</code></p>
+        <div class="row">
+          <button class="btn primary" id="tplSave" type="button">Save template</button>
+          <button class="btn danger" id="tplDel" type="button">Delete</button>
+          <span class="small" id="tplState" style="color:var(--excused)" hidden>● Edited · drafts use this version</span>
+          <button class="btn ghost" id="tplRevert" type="button" hidden title="Go back to the saved template">Revert</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Recipients &amp; drafts</h3>
+      <div id="drafts"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<dialog id="rmDlg" aria-labelledby="rmTitle">
+  <form method="dialog" class="stack" style="padding:18px;max-width:520px">
+    <strong id="rmTitle" style="font-size:17px"></strong>
+    <p class="small" id="rmText" style="margin:0"></p>
+    <div class="row"><button class="btn primary" value="drop" id="rmDrop">Drop (keep attendance)</button>
+      <button class="btn danger" value="delete">Delete completely</button>
+      <button class="btn" value="cancel">Cancel</button></div>
+  </form>
+</dialog>
+<dialog id="ncDlg" aria-labelledby="ncTitle">
+  <form id="ncForm" class="stack" style="padding:18px">
+    <strong id="ncTitle" style="font-size:17px">New class</strong>
+    <label class="fld"><span>Class name</span><input type="text" id="ncName" placeholder="e.g. Calculus II — Section 03" autocomplete="off"></label>
+    <div class="fld"><span>Meets on (optional)</span><div id="ncDays"></div></div>
+    <label class="fld"><span>Classroom</span><select id="ncRoom"></select></label>
+    <p class="small muted" style="margin:0">Sections that meet in the same room can share its layout. Pick “New room” to set up a different one in <b>Edit seats</b>.</p>
+    <div class="row"><button class="btn primary" type="submit">Create class</button><button class="btn" type="button" id="ncCancel">Cancel</button></div>
+  </form>
+</dialog>
+<dialog id="help" aria-labelledby="helpTitle">
+  <div class="hd"><strong id="helpTitle">How Attendance works</strong><button class="btn" type="button" id="helpClose">Close</button></div>
+  <div class="bd">
+    <h4>Getting started</h4>
+    <p>Type the class name and pick a class date at the top. Then switch to <b>Edit seats</b> to arrange the room and fill in the roster, or use <b>Manage data</b> to load a CSV. Demo data is included so you can try things out; replace it by editing, importing, or choosing <b>Start an empty class</b>.</p>
+    <h4>Several classes in one file</h4>
+    <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Back up all classes</b> saves everything, rooms included, in one .json file. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by ID, then email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
+    <h4>Choosing the class date</h4>
+    <p>The date bar under the tabs shows which day you're working on. It appears on every view that uses a date. Its badge says <b>Today</b> in green. Any other day turns the bar amber (past) or blue (future) with a ⚠ warning, and while you're marking seats or drafting emails an amber frame surrounds the whole window, so you can't miss that you're working on another day. The chips jump to <b>Today</b> or a recent class date; red numbers show how many were absent that day. Use ‹ and › to step one day, click the date to open a large calendar (arrow keys move by day and week, <kbd>PgUp</kbd>/<kbd>PgDn</kbd> by month, <kbd>Enter</kbd> picks, <kbd>Esc</kbd> or clicking elsewhere closes it), press <b>Go to today</b>, or tap one of the recent class dates. Keyboard: <kbd>[</kbd> previous day, <kbd>]</kbd> next day, <kbd>T</kbd> today, <kbd>U</kbd> unlock.</p>
+    <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
+    <h4>Taking attendance</h4>
+    <ul>
+      <li>Every assigned seat starts as <b>Present</b> for the selected date — you only mark exceptions.</li>
+      <li>Click a seat to cycle Present → Absent → Excused. With a seat focused you can also press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>.</li>
+      <li>A date is saved to the history as soon as you mark an exception, or press <b>Record date</b> if everyone is present.</li>
+      <li>The summary shows assigned, present, absent, and excused counts for the selected date.</li>
+    </ul>
+    <h4>Editing seats</h4>
+    <ul>
+      <li>Select a seat to enter a name, student ID, and email, then press <b>Save seat</b>. Students are removed only in <b>Manage data</b>: the roster's <b>Remove</b> button asks whether to <b>drop</b> them (off the chart, attendance, and emails, with their past attendance kept under Dropped students, where they can be restored) or <b>delete</b> them completely. Seats can't be cleared from the Classroom view, so a stray click there never removes anyone.</li>
+      <li>Drag a student onto another seat to move them (or swap if the seat is taken). Without a mouse, enter a row and seat number under <b>Move / swap with</b>.</li>
+      <li>Under <b>Room layout</b>, choose the <b>Room shape</b>. <b>Tables / pods</b> draws each table with its seats around it (numbered clockwise from top-left); set the number of tables, seats per table, and how many tables sit side by side. Seats are then named “Table 3, Seat 2” everywhere. Switching shape keeps everyone where they fit and offers to move anyone else into open seats; attendance is never lost.</li>
+      <li>For a <b>Rows</b> room, set rows and seats per row. To add an aisle, click the faint <b>+</b> between two seat columns at the top of the chart; click <b>×</b> to remove it. You can have as many aisles as the room needs. Shrinking is refused if it would remove assigned students; empty seats stay available for later.</li>
+    </ul>
+    <h4>Instructor view</h4>
+    <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
+    <h4>Manage data</h4>
+    <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, student ID, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
+    <h4>Attendance history</h4>
+    <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
+    <h4>Emails</h4>
+    <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload.</p>
+    <p>Keep a library of response templates on the left. On the right, choose recipients. Students absent on the selected date are pre-selected. The filter buttons (<b>All</b>, <b>Absent</b>, <b>Excused</b>, <b>Absent 2+ times</b>) choose which students are listed, and only those students are shown. Picking Absent, Excused, or Absent 2+ times also selects everyone it lists, which you can then trim. Picking All shows the whole class without selecting anyone extra. Use the <b>−</b> and <b>+</b> beside “Absent 2+ times” to change the number (for example, 3+ or 4+); the list and selection update right away and the number is remembered. Search narrows the list further; <kbd>Shift</kbd>-click selects a range. If a selected student is hidden by your search, the count says so.</p>
+    <ul>
+      <li><b>One email (BCC)</b> writes a single message with every selected address on the BCC line, so students can't see each other's addresses. You can put your own address in To. Personal placeholders like <code>{first}</code> become “everyone”.</li>
+      <li><b>Separate emails</b> keeps the personal version: one draft per student with their name filled in.</li>
+    </ul>
+    <p><b>Open in mail app</b> starts an unsent message, <b>Download .eml</b> saves a draft file that Outlook and many other mail apps open as unsent, and <b>Copy</b> puts the text on your clipboard. Nothing is ever sent automatically.</p>
+    <h4 id="kbdHelp">Keyboard shortcuts</h4>
+    <p>Shortcuts work whenever you're not typing in a text box.</p>
+    <table class="small" style="margin-bottom:6px">
+      <tr><th colspan="2">Everywhere</th></tr>
+      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>Classroom, Attendance history, Emails, Manage data</td></tr>
+      <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Previous / next day (in Attendance history: previous / next recorded date)</td></tr>
+      <tr><td><kbd>G</kbd></td><td>Open the calendar to go to any date</td></tr>
+      <tr><td><kbd>T</kbd></td><td>Go to today</td></tr>
+      <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd></td><td>Undo the last attendance change (repeatable)</td></tr>
+      <tr><td><kbd>?</kbd></td><td>Show these shortcuts</td></tr>
+      <tr><td><kbd>C</kbd></td><td>Jump to the class menu (then arrow keys pick a class)</td></tr>
+      <tr><td><kbd>/</kbd></td><td>Attendance history and Emails: jump to the student search box</td></tr>
+      <tr><th colspan="2">Classroom</th></tr>
+      <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></td><td>Move between seats as drawn on screen (skips empty seats while taking attendance)</td></tr>
+      <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark the focused seat Present, Absent, or Excused</td></tr>
+      <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the focused seat (Edit seats: select it)</td></tr>
+      <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last seat in the row (add <kbd>Shift</kbd> for the whole room)</td></tr>
+      <tr><td><kbd>M</kbd></td><td>Switch between Take attendance and Edit seats</td></tr>
+      <tr><td><kbd>V</kbd></td><td>Toggle Instructor view</td></tr>
+      <tr><td><kbd>U</kbd></td><td>Unlock (or re-lock) a date that isn't today</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Edit seats: deselect the seat</td></tr>
+      <tr><th colspan="2">Attendance history</th></tr>
+      <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></td><td>Move between cells (the first arrow press jumps to the selected date's column, or the most recent date). The focused cell, its student, and its date light up, and the line above the grid names them.</td></tr>
+      <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark the cell and move down to the next student, spreadsheet-style</td></tr>
+      <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the cell without moving</td></tr>
+      <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last date in the row</td></tr>
+      <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Top / bottom of the column</td></tr>
+      <tr><td><kbd>/</kbd> then type</td><td>Show only matching students. Each word you type matches the start of a name, ID, or email word, so “ana g” finds Ana Garza; accents are optional.</td></tr>
+      <tr><td><kbd>↓</kbd> / <kbd>Enter</kbd> in search</td><td>Jump into the grid at the first match</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Reset the view: clear the search, remove the cursor and highlights, scroll back to the top-left. The selected date doesn't change.</td></tr>
+    </table>
+    <h4>Where your data lives</h4>
+    <p>Everything saves automatically in this browser's local storage, tied to this file's location. Clearing browser data or moving the file starts fresh, so download a CSV backup now and then.</p>
+  </div>
+</dialog>
+<div id="dropOverlay" aria-hidden="true"><b>Drop CSV to import</b><span>Replaces roster, seating, and attendance after you confirm</span></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script id="embedded-data" type="application/json"></script>
+<script>
+(() => {
+'use strict';
+/* The page exactly as it was loaded, before anything is drawn: used to save a copy of the app with data built in. */
+const PRISTINE = '<!doctype html>\n' + document.documentElement.outerHTML;
+const KEY = 'seat-tracker-v1:' + location.pathname;
+const LIM = { rows: [1, 15], cols: [1, 16] };
+const STATUS = { P: 'Present', A: 'Absent', E: 'Excused' };
+const NEXT = { P: 'A', A: 'E', E: 'P' };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+/* Seats are keyed "row-seat" (1-based), e.g. "1-1" = Row 1, Seat 1. */
+const label = (r, c) => `${r + 1}-${c + 1}`;
+const parseLabel = l => {
+  const t = String(l ?? '').trim();
+  const old = /^([A-Za-z])\s*(\d{1,3})$/.exec(t);              // legacy "A1" style
+  if (old) return { r: old[1].toUpperCase().charCodeAt(0) - 65, c: +old[2] - 1 };
+  const nums = t.match(/\d+/g);
+  if (!nums || nums.length !== 2 || t.replace(/\d+/g, '').replace(/row|seat|[rs]|[\s,\-:/x×.·]/gi, '') !== '') return null;
+  return { r: +nums[0] - 1, c: +nums[1] - 1 };
+};
+const normLabel = l => { const p = parseLabel(l); return p && p.r >= 0 && p.c >= 0 ? label(p.r, p.c) : null; };
+/* In a Tables room the same "N-M" key reads as Table N, Seat M, so records never need converting. */
+const isTables = () => typeof S !== 'undefined' && S.shape === 'tables';
+const unitWord = () => isTables() ? 'Table' : 'Row';
+const seatName = l => { const p = parseLabel(l); return p ? `${unitWord()} ${p.r + 1}, Seat ${p.c + 1}` : String(l); };
+const seatShort = l => { const p = parseLabel(l); return p ? `${unitWord()[0]}${p.r + 1} · S${p.c + 1}` : String(l); };
+const seatOrder = l => { const p = parseLabel(l); return p.r * 100 + p.c; };
+let uidN = 0;
+const uid = () => 's' + Date.now().toString(36) + (uidN++).toString(36) + Math.random().toString(36).slice(2, 6);
+const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s);
+const dateObj = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const longDate = s => isDate(s) ? dateObj(s).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : s;
+const shortDate = s => isDate(s) ? dateObj(s).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : s;
+const emailOk = e => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+function extraTemplates() {   // added in template set v2
+  return [
+    { id: uid(), title: "Missed quiz or exam — make-up plan",
+      subject: "{class}: let's plan your make-up from {date}",
+      body: "Hi {first},\n\nI noticed you weren't in {class} on {date}, when we had our quiz/exam. I hope you're doing okay.\n\nMissing an assessment happens, and I want to make sure it doesn't set you back. Could you reply with a few days and times that work for you this week? We'll find a time for you to take it. If something is making it hard to get to class right now, you're welcome to tell me, and we can plan around it.\n\nIf you'd like to review first, I'm glad to go over the material with you during office hours.\n\nLooking forward to hearing from you," },
+    { id: uid(), title: "Several missed classes — checking on you",
+      subject: "{class}: checking in on you",
+      body: "Hi {first},\n\nI've noticed you haven't been in {class} for a few sessions, most recently on {date}, and I wanted to reach out. You don't owe me an explanation, but I do care about how you're doing.\n\nIf something is going on, whether it's health, family, work, or anything else, please know you're not alone. There are people on campus ready to help, including counseling services and the Dean of Students office. I'm also happy to talk about what would make it easier to get back on track, whether that's a catch-up plan, extra help, or just a quick conversation.\n\nWhenever you're ready, reply to this email or stop by office hours. I'm glad you're in this class.\n\nTake care," },
+    { id: uid(), title: "Excused absence — thanks for letting me know",
+      subject: "{class}: your absence on {date} is excused",
+      body: "Hi {first},\n\nThank you for letting me know about your absence on {date}. I've marked it as excused, so there's nothing more you need to do for it.\n\nI hope everything is okay. When you're ready, you'll find that day's notes and materials posted for the class. If anything is unclear or you'd like help catching up, just reply or stop by office hours. I'm happy to help.\n\nTake good care of yourself," },
+    { id: uid(), title: "Missed group work — catching up with your team",
+      subject: "{class}: catching up on the group work from {date}",
+      body: "Hi {first},\n\nWe missed you in {class} on {date}. Your group worked through that day's activity, and your ideas are a real part of what makes those sessions work.\n\nTo catch up, try working through the activity on your own, then compare notes with your teammates. They're a great resource, and so am I. If any part of it doesn't make sense, bring your questions to office hours and we'll go through them together.\n\nI hope you're doing well, and I look forward to seeing you next class.\n\nBest," },
+    { id: uid(), title: "Nearing the attendance limit — let's make a plan",
+      subject: "{class}: let's talk about a plan together",
+      body: "Hi {first},\n\nI'm reaching out because you were absent again on {date}, and your absences are getting close to the limit in our course attendance policy. I'm not writing to scold you. I want you to succeed in {class}, and I'd rather we talk now, while there's still plenty of time to turn things around.\n\nCould we meet this week, during office hours or at another time that works for you? We'll look at where you stand, what's been getting in the way, and a realistic plan for the rest of the semester. If something outside of class is making attendance hard, please let me know. There may be options and campus support available.\n\nI believe you can do this, and I'm here to help.\n\nWarmly," }
+  ];
+}
+function extraTemplatesV3() {   // added in template set v3
+  return [
+    { id: uid(), title: "Missed exam review — getting ready together",
+      subject: "{class}: getting ready for the exam",
+      body: "Hi {first},\n\nI noticed you weren't in {class} on {date}. That session focused on reviewing for our upcoming exam, so I wanted to make sure you still have everything you need to feel prepared.\n\nThe review materials from that day are posted for the class. Please take a look, and if any topic feels shaky, bring your questions to office hours or reply to this email. We can work through problems together, and even a few minutes of practice can make a big difference.\n\nYou've got this, and I'm here to help.\n\nBest," },
+    { id: uid(), title: "Welcome back after time away",
+      subject: "{class}: welcome back",
+      body: "Hi {first},\n\nI hope you're doing alright. I know you've been away from {class} for a little while, most recently on {date}, and I want you to know you're welcome back whenever you're ready.\n\nComing back after time away can feel overwhelming, so let's take it one step at a time. I'd be glad to meet briefly to go over what you've missed, what's most important to focus on first, and what a manageable catch-up plan could look like. You don't need to do it all at once.\n\nPlease reply with a time that works for you, or stop by office hours. I'm really glad you're here.\n\nWarmly," },
+    { id: uid(), title: "Missed an important announcement",
+      subject: "{class}: an update from class on {date}",
+      body: "Hi {first},\n\nWe missed you in {class} on {date}. I shared an important announcement in class that day, and I didn't want you to miss it:\n\n[Write the announcement here, for example a changed due date, a new assignment, or an exam room change.]\n\nIf you have any questions about it, or about anything else from that day, just reply to this email or stop by office hours. I'm happy to help.\n\nHope to see you next class," }
+  ];
+}
+function defaultTemplates() {
+  return [
+    { id: uid(), title: 'Missed class — check in', subject: '{class}: we missed you on {date}',
+      body: 'Hi {first},\n\nI noticed you weren\'t in {class} on {date}. I hope everything is okay.\n\nPlease review the notes and materials posted for that day, and feel free to reach out or stop by office hours if anything is unclear. I\'m happy to help you catch up.\n\nBest regards,' },
+    { id: uid(), title: 'Excused absence — documentation', subject: '{class}: absence on {date}',
+      body: 'Hi {first},\n\nYou were marked absent from {class} on {date}. If this absence was for an approved reason, please send me any documentation and I\'ll update your record to excused.\n\nIn the meantime, please make sure to review that day\'s materials.\n\nThank you,' },
+    { id: uid(), title: 'Repeated absences — let\'s talk', subject: '{class}: checking in about attendance',
+      body: 'Hi {first},\n\nI noticed you were absent again on {date}, and I want to make sure you have what you need to succeed in {class}. Could we find a time to talk this week, either in office hours or by appointment?\n\nI\'m here to help.\n\nBest,' },
+    ...extraTemplates(),
+    ...extraTemplatesV3()
+  ];
+}
+
+function demo() {
+  const names = ['Ana Garza','Luis Pérez','Mia Thompson','Diego Hernández','Sofia Martínez','Ethan Nguyen','Valeria Ramos','Noah Johnson','Camila Flores','Jacob Castillo','Isabella Vega','Mateo Cantu','Emily Rodríguez','Daniel Salinas','Ximena Treviño','Gabriel Lee','Andrea Villarreal','Lucas Ortiz','Natalia Guerra','Samuel Davis','Renata Chávez','Adrián Morales'];
+  const spots = [];
+  for (let r = 0; r < 5 && spots.length < names.length; r++)
+    for (let c = 0; c < 8 && spots.length < names.length; c++)
+      if ((r + c) % 4 !== 3) spots.push(label(r, c));
+  const s = base();
+  s.className = 'Calculus I — Section 01 (demo)';
+  names.forEach((n, i) => {
+    const k = 'demo' + i;
+    const parts = n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(' ');
+    s.students[k] = { name: n, sid: String(20480100 + i * 37), email: parts[0] + '.' + parts[parts.length - 1] + '@example.edu' };
+    s.seats[spots[i]] = k;
+  });
+  s.attendance['2026-10-13'] = { demo3: 'A', demo10: 'E' };
+  s.attendance['2026-10-15'] = { demo3: 'A', demo7: 'A', demo15: 'E' };
+  return s;
+}
+function base() {
+  return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
+    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 3, bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '' };
+}
+/* ---------- storage: classes + rooms ----------
+   Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
+   While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
+const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
+const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen'];
+const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
+function fixTemplates(g) {
+  if ((g.tplVersion || 1) < 3 && Array.isArray(g.templates)) {   // one-time: add newer starter templates to an existing library
+    const have = new Set(g.templates.map(x => x.title));
+    const add = [...((g.tplVersion || 1) < 2 ? extraTemplates() : []), ...extraTemplatesV3()];
+    add.forEach(x => { if (!have.has(x.title)) g.templates.push(x); });
+    g.tplVersion = 3;
+  }
+}
+function fixRoom(r) {
+  if (!Array.isArray(r.aisles)) { r.aisles = r.aisleAfter > 0 ? [r.aisleAfter] : []; delete r.aisleAfter; }   // older saves had one aisle
+  const b = base(); for (const k of ROOM_KEYS) if (r[k] === undefined || r[k] === null) r[k] = b[k];
+  if (!r.name) r.name = 'Room';
+}
+function fixClass(c) {
+  for (const k of ['students', 'seats', 'attendance']) if (!c[k] || typeof c[k] !== 'object') c[k] = {};
+  if (typeof c.className !== 'string') c.className = '';
+  if (!Array.isArray(c.days)) c.days = [];                 // meeting weekdays, 0 = Sunday; empty = any day
+  const seats = {}; for (const [l, k] of Object.entries(c.seats)) { const n = normLabel(l); if (n) seats[n] = k; }
+  c.seats = seats;
+}
+function storeFromFlat(o, roomName = 'Room 1') {
+  const cid = uid(), rid = uid();
+  return { v: 2, active: cid, classes: { [cid]: { id: cid, roomId: rid, ...pick(o, CLASS_KEYS) } },
+    rooms: { [rid]: { id: rid, name: roomName, ...pick(o, ROOM_KEYS) } }, global: pick(o, GLOBAL_KEYS) };
+}
+function fixStore(st) {
+  if (!st || typeof st !== 'object') return null;
+  if (st.v !== 2) { if (!st.aisles && st.aisleAfter !== undefined) fixRoom(st); st = storeFromFlat(st); }   // single-class save from earlier versions
+  st.classes ||= {}; st.rooms ||= {}; st.global ||= {};
+  const b = base(), g = st.global;
+  for (const k of GLOBAL_KEYS) if (g[k] === undefined || g[k] === null) g[k] = b[k];
+  fixTemplates(g); if (!isDate(g.date)) g.date = todayStr();
+  Object.values(st.rooms).forEach(fixRoom);
+  if (!Object.keys(st.rooms).length) { const rid = uid(); st.rooms[rid] = { id: rid, name: 'Room 1' }; fixRoom(st.rooms[rid]); }
+  const firstRoom = Object.keys(st.rooms)[0];
+  Object.values(st.classes).forEach(c => { fixClass(c); if (!st.rooms[c.roomId]) c.roomId = firstRoom; });
+  if (!Object.keys(st.classes).length) { const cid = uid(); st.classes[cid] = { id: cid, roomId: firstRoom, className: 'My class' }; fixClass(st.classes[cid]); }
+  if (!st.classes[st.active]) st.active = Object.keys(st.classes)[0];
+  return st;
+}
+function load() {
+  try { const t = localStorage.getItem(KEY); return t ? fixStore(JSON.parse(t)) : null; } catch (e) { return null; }
+}
+function flatten(st) {
+  const c = st.classes[st.active], r = st.rooms[c.roomId];
+  return { ...st.global, ...pick(c, CLASS_KEYS), ...pick(r, ROOM_KEYS), classId: c.id, roomId: r.id };
+}
+let STORE = startupStore();
+/* A copy saved with "Download app with data" carries its data in <script id="embedded-data">.
+   First open at a new location: load it. If this location already has saved data, ask once which to keep. */
+function readEmbedded() {
+  try { const t = document.getElementById('embedded-data').textContent.trim(); if (!t) return null; const e = JSON.parse(t); return e && e.store ? e : null; } catch (e) { return null; }
+}
+function startupStore() {
+  const local = load(), emb = readEmbedded();
+  if (!emb) return local || fixStore(storeFromFlat(demo(), 'Demo room'));
+  const builtIn = fixStore(emb.store);
+  if (!builtIn) return local || fixStore(storeFromFlat(demo(), 'Demo room'));
+  builtIn.global.embedSeen = emb.id;
+  const when = new Date(emb.exported).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  const count = st => { const n = Object.keys(st.classes).length; return `${n} class${n === 1 ? '' : 'es'}`; };
+  if (!local) { setTimeout(() => toast(`Loaded the data built into this file (${count(builtIn)}, saved ${when}).`), 300); return builtIn; }
+  if (local.global.embedSeen === emb.id) return local;   // already decided at this location
+  const useBuiltIn = confirm(`This file has data built in: ${count(builtIn)}, saved ${when}.\n\nThis browser also has saved data for this file's location: ${count(local)}.\n\nOK = use the data built into the file (replaces what this browser has here).\nCancel = keep this browser's data.`);
+  if (useBuiltIn) return builtIn;
+  local.global.embedSeen = emb.id; return local;
+}
+let S = flatten(STORE);
+let selected = null;      // seat label selected in edit mode
+let tplSel = S.templates[0]?.id || null;
+
+/* Copy the live view back into the store (current class, its room, shared settings). */
+function syncStore() {
+  STORE.global = pick(S, GLOBAL_KEYS);
+  Object.assign(STORE.classes[S.classId], pick(S, CLASS_KEYS), { roomId: S.roomId });
+  const r = STORE.rooms[S.roomId]; Object.assign(r, pick(S, ROOM_KEYS)); r.aisles = [...(S.aisles || [])];
+  STORE.active = S.classId;
+}
+function save() {
+  syncStore();
+  try { localStorage.setItem(KEY, JSON.stringify(STORE)); }
+  catch (e) { toast('Could not save to browser storage. Download a backup to keep your data.', true); }
+}
+const classesInRoom = rid => Object.values(STORE.classes).filter(c => c.roomId === rid);
+const otherClassesInRoom = rid => classesInRoom(rid).filter(c => c.id !== S.classId);
+const byName = (a, b) => (a.className || a.name || '').localeCompare(b.className || b.name || '', undefined, { numeric: true });
+function roomSummary(r) {
+  return r.shape === 'tables' ? `${r.rows} tables × ${r.cols} seats` : `${r.rows} rows × ${r.cols} seats${r.aisles?.length ? `, ${r.aisles.length} aisle${r.aisles.length === 1 ? '' : 's'}` : ''}`;
+}
+/* Meeting days */
+const WD = [...Array(7)].map((_, i) => new Date(2026, 9, 18 + i));     // Oct 18 2026 is a Sunday
+const wdShort = i => WD[i].toLocaleDateString(undefined, { weekday: 'short' });
+const daysText = days => [...days].sort().map(wdShort).join(', ');
+function dayPicker(days, attr) {
+  return `<span class="days" role="group" aria-label="Meeting days">${WD.map((d, i) =>
+    `<button type="button" ${attr} data-wd="${i}" aria-pressed="${days.includes(i)}" aria-label="${esc(d.toLocaleDateString(undefined, { weekday: 'long' }))}" title="${esc(d.toLocaleDateString(undefined, { weekday: 'long' }))}">${esc(d.toLocaleDateString(undefined, { weekday: 'narrow' }))}</button>`).join('')}</span>`;
+}
+/* Step to the previous/next day this class meets (any day if no schedule is set). */
+function stepDay(d, dir) {
+  const days = S.days || []; let x = d;
+  for (let i = 0; i < 14; i++) { x = shiftDate(x, dir); if (!days.length || days.includes(dateObj(x).getDay())) return x; }
+  return shiftDate(d, dir);
+}
+/* Switch to another class: save this one, then show only that class's data. */
+function switchClass(id) {
+  if (!STORE.classes[id]) return;
+  syncStore(); STORE.active = id; S = flatten(STORE);
+  resetSession(); commit();
+}
+function resetSession() {                                  // view state that belongs to the class being shown
+  selected = null; selDate = null; selAuto = true; emailSel = new Set(); histFilter = ''; histRowKey = null;
+  const hs = $('#hSearch'); if (hs) hs.value = '';
+  undoStack.length = 0;
+}
+function renderClassSel() {
+  const sel = $('#classSel');
+  sel.innerHTML = Object.values(STORE.classes).sort(byName).map(c =>
+      `<option value="${c.id}" ${c.id === S.classId ? 'selected' : ''}>${esc((c.id === S.classId ? S.className : c.className) || 'Untitled class')}</option>`).join('')
+    + '<option disabled>──────────</option><option value="__manage">Manage classes and rooms…</option>';
+}
+function renderClassMgr() {
+  const box = $('#classMgr'); if (!box) return;
+  syncStore();
+  const rooms = Object.values(STORE.rooms).sort(byName), classes = Object.values(STORE.classes).sort(byName);
+  const roomOpts = sel => rooms.map(r => `<option value="${r.id}" ${r.id === sel ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
+  box.innerHTML = `<div class="table-wrap" style="max-height:none"><table>
+      <thead><tr><th>Class</th><th>Meets</th><th>Room</th><th class="c">Students</th><th></th></tr></thead><tbody>${classes.map(c => `<tr>
+        <td><input type="text" data-cname="${c.id}" value="${esc(c.className)}" placeholder="Untitled class" aria-label="Class name" style="width:100%;min-width:150px"></td>
+        <td>${dayPicker(c.days, `data-cday="${c.id}"`)}</td>
+        <td><select data-croom="${c.id}" aria-label="Room for ${esc(c.className || 'class')}">${roomOpts(c.roomId)}</select></td>
+        <td class="c">${Object.keys(c.seats).filter(l => c.students[c.seats[l]]).length}</td>
+        <td style="white-space:nowrap">${c.id === S.classId ? '<span class="pill P">Current</span>' : `<button type="button" class="btn" data-copen="${c.id}">Open</button>`}
+          <button type="button" class="btn danger" data-cdel="${c.id}" ${classes.length < 2 ? 'disabled title="You need at least one class"' : ''}>Delete</button></td></tr>`).join('')}</tbody></table></div>
+    <div class="table-wrap" style="max-height:none;margin-top:12px"><table>
+      <thead><tr><th>Room</th><th>Layout</th><th>Used by</th><th></th></tr></thead><tbody>${rooms.map(r => { const used = classesInRoom(r.id); return `<tr>
+        <td><input type="text" data-rname="${r.id}" value="${esc(r.name)}" aria-label="Room name" style="width:100%;min-width:110px"></td>
+        <td class="small">${esc(roomSummary(r))}</td>
+        <td class="small">${used.length ? used.map(c => esc(c.className || 'Untitled')).join(', ') : '<span class="muted">No classes</span>'}</td>
+        <td style="white-space:nowrap"><button type="button" class="btn" data-rdup="${r.id}">Duplicate</button>
+          <button type="button" class="btn danger" data-rdel="${r.id}" ${used.length ? 'disabled title="A class still uses this room"' : ''}>Delete</button></td></tr>`; }).join('')}</tbody></table></div>
+    <p class="small muted" style="margin-bottom:0">Edit a room's layout from <b>Classroom → Edit seats</b> while one of its classes is open.</p>`;
+  box.querySelectorAll('[data-cname]').forEach(i => i.addEventListener('change', () => {
+    const c = STORE.classes[i.dataset.cname]; c.className = i.value.trim();
+    if (c.id === S.classId) S.className = c.className;
+    commit();
+  }));
+  box.querySelectorAll('[data-rname]').forEach(i => i.addEventListener('change', () => { STORE.rooms[i.dataset.rname].name = i.value.trim() || 'Room'; commit(); }));
+  box.querySelectorAll('[data-copen]').forEach(b => b.addEventListener('click', () => switchClass(b.dataset.copen)));
+  box.querySelectorAll('[data-cdel]').forEach(b => b.addEventListener('click', () => {
+    const c = STORE.classes[b.dataset.cdel], n = Object.keys(c.seats).length;
+    if (!confirm(`Delete “${c.className || 'Untitled class'}” with ${n} student${n === 1 ? '' : 's'} and all of its attendance? Download its CSV first if you might need it. Its room is kept.`)) return;
+    delete STORE.classes[c.id];
+    if (c.id === S.classId) { STORE.active = Object.keys(STORE.classes)[0]; S = flatten(STORE); selected = null; undoStack.length = 0; }
+    commit(); toast('Class deleted.');
+  }));
+  box.querySelectorAll('[data-cday]').forEach(b => b.addEventListener('click', () => {
+    const c = STORE.classes[b.dataset.cday], d = +b.dataset.wd, on = !c.days.includes(d);
+    c.days = on ? [...c.days, d].sort() : c.days.filter(x => x !== d);
+    if (c.id === S.classId) S.days = c.days;
+    commit(); box.querySelector(`[data-cday="${c.id}"][data-wd="${d}"]`)?.focus();
+  }));
+  box.querySelectorAll('[data-croom]').forEach(sel => sel.addEventListener('change', () => moveClassToRoom(sel.dataset.croom, sel.value)));
+  box.querySelectorAll('[data-rdup]').forEach(b => b.addEventListener('click', () => {
+    const r = STORE.rooms[b.dataset.rdup], rid = uid();
+    STORE.rooms[rid] = { ...r, id: rid, aisles: [...(r.aisles || [])], name: r.name + ' (copy)' }; commit(); toast('Room duplicated.');
+  }));
+  box.querySelectorAll('[data-rdel]').forEach(b => b.addEventListener('click', () => {
+    const r = STORE.rooms[b.dataset.rdel]; if (classesInRoom(r.id).length) return;
+    if (!confirm(`Delete the room “${r.name}”?`)) return;
+    delete STORE.rooms[r.id]; commit(); toast('Room deleted.');
+  }));
+}
+/* Give a class a different room. Students who don't fit are offered open seats; attendance is never touched. */
+function moveClassToRoom(cid, rid) {
+  syncStore();
+  const c = STORE.classes[cid], r = STORE.rooms[rid];
+  const fits = l => { const p = parseLabel(l); return p && p.r < r.rows && p.c < r.cols; };
+  const out = Object.keys(c.seats).filter(l => !fits(l)).sort((x, y) => seatOrder(x) - seatOrder(y));
+  if (out.length) {
+    const free = []; for (let i = 0; i < r.rows; i++) for (let j = 0; j < r.cols; j++) if (!c.seats[label(i, j)]) free.push(label(i, j));
+    if (free.length < out.length) { toast(`“${r.name}” has ${r.rows * r.cols} seats, not enough for ${Object.keys(c.seats).length} students.`, true); return render(); }
+    if (!confirm(`${out.length} student${out.length === 1 ? '' : 's'} in “${c.className || 'this class'}” won't fit “${r.name}”. Move them into open seats? Everyone else keeps their seat number, and attendance is kept.`)) return render();
+    out.forEach((l, i) => { c.seats[free[i]] = c.seats[l]; delete c.seats[l]; });
+  }
+  c.roomId = rid;
+  if (cid === S.classId) { S = flatten(STORE); selected = null; }
+  commit(); toast(`“${c.className || 'Class'}” now uses ${r.name}.`);
+}
+/* Full backup: every class, room, and template in one file. */
+function backupAll() {
+  syncStore();
+  download(`attendance-backup-${todayStr()}.json`, JSON.stringify({ app: 'attendance', exported: new Date().toISOString(), ...STORE }, null, 2), 'application/json');
+}
+function restoreAll(text) {
+  let st;
+  try { st = fixStore(JSON.parse(text)); } catch (e) { st = null; }
+  if (!st) return toast("That file isn't an Attendance backup.", true);
+  const nC = Object.keys(st.classes).length, nR = Object.keys(st.rooms).length;
+  if (!confirm(`Replace everything in this browser with the backup: ${nC} class${nC === 1 ? '' : 'es'}, ${nR} room${nR === 1 ? '' : 's'}, and ${st.global.templates.length} templates?`)) return;
+  delete st.app; delete st.exported;
+  STORE = st; S = flatten(STORE); selected = null; undoStack.length = 0; selDate = null; commit(); toast(`Restored ${nC} class${nC === 1 ? '' : 'es'}.`);
+}
+function commit() { save(); render(); }
+
+let toastT;
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(toastT); toastT = setTimeout(() => t.className = '', err ? 6000 : 2800);
+}
+
+/* ---------- attendance helpers ---------- */
+const getStatus = (date, key) => S.attendance[date]?.[key] || 'P';
+function setStatus(date, key, st) {
+  const d = S.attendance[date] || (S.attendance[date] = {});
+  if (st === 'P') delete d[key]; else d[key] = st;
+}
+function assigned() {
+  return Object.entries(S.seats).filter(([, k]) => S.students[k])
+    .sort((a, b) => seatOrder(a[0]) - seatOrder(b[0])).map(([lab, k]) => { const p = parseLabel(lab); return { lab, k, s: S.students[k], row: p.r + 1, seat: p.c + 1 }; });
+}
+function counts(date) {
+  const list = assigned(); let a = 0, e = 0;
+  list.forEach(x => { const st = getStatus(date, x.k); if (st === 'A') a++; else if (st === 'E') e++; });
+  return { n: list.length, p: list.length - a - e, a, e };
+}
+
+/* ---------- render ---------- */
+function render() {
+  renderClassSel(); renderClassMgr(); renderImportMode();
+  $('#instructorView').checked = !!S.instructorView;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
+  document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
+  document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === S.mode)));
+  $('#legend').style.display = S.mode === 'take' ? '' : 'none';
+  document.title = (S.className ? S.className + ' · ' : '') + 'Attendance';
+  renderDateBar(); renderRoom(); renderSide(); renderRoster(); renderHistory(); renderTemplates(); renderDrafts();
+}
+
+/* ---------- date bar ---------- */
+const unlocked = new Set();            // past/future dates unlocked this session
+let lastToday = todayStr();
+const dayDiff = d => Math.round((dateObj(d) - dateObj(todayStr())) / 86400000);
+const relDay = diff => diff === 0 ? 'today' : diff === -1 ? 'yesterday' : diff === 1 ? 'tomorrow' : diff < 0 ? `${-diff} days ago` : `in ${diff} days`;
+const shiftDate = (d, n) => { const o = dateObj(d); o.setDate(o.getDate() + n); return o.getFullYear() + '-' + pad(o.getMonth() + 1) + '-' + pad(o.getDate()); };
+const isLocked = () => S.mode === 'take' && S.date !== todayStr() && !unlocked.has(S.date);
+function setDate(d) {
+  if (isDate(d) && d !== S.date) { S.date = d; commit(); } else render();
+  if (S.view === 'history' && isDate(d)) histGoTo(d);    // history: bring that date's column into view
+}
+function goToday() { setDate(todayStr()); }
+function lockedNotice() {
+  if (!isLocked()) return false;
+  toast(`${longDate(S.date)} isn't today. Press "Edit this date" to change it, or "Go to today".`, true);
+  const c = $('#lockCard'); if (c) { c.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 260 }); }
+  return true;
+}
+function renderDateBar() {
+  lastToday = todayStr();
+  const bar = $('#dateBar'), diff = dayDiff(S.date), o = dateObj(S.date);
+  const when = diff === 0 ? 'today' : diff < 0 ? 'past' : 'future';
+  bar.hidden = S.view === 'import';                       // every view that acts on a date shows it
+  bar.className = 'datebar ' + when;
+  // Frame the whole window when the date drives what you're doing (marking seats, drafting emails).
+  const framed = diff !== 0 && (S.view === 'emails' || (S.view === 'classroom' && S.mode === 'take'));
+  document.body.classList.toggle('not-today', framed);
+  document.body.classList.toggle('future', framed && diff > 0);
+  $('#dWarn').textContent = diff === 0 ? '' : S.view === 'emails' ? 'Not today — drafts will name this date'
+    : S.view === 'history' ? 'Not today — highlighted column' : diff < 0 ? 'Not today — past records' : 'Not today — future date';
+  $('#dWeek').textContent = o.toLocaleDateString(undefined, { weekday: 'long' });
+  $('#dFull').textContent = o.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+  $('#dPick').setAttribute('aria-label', `Class date: ${longDate(S.date)}, ${relDay(diff)}. Choose another date.`);
+  $('#dBadge').textContent = diff === 0 ? '● Today' : '⚠ ' + relDay(diff)[0].toUpperCase() + relDay(diff).slice(1);
+  $('#dToday').hidden = diff === 0;
+  const offDay = !S.attendance[S.date] && (S.days || []).length && !S.days.includes(dateObj(S.date).getDay());
+  $('#dRec').textContent = S.attendance[S.date] ? '✓ Recorded' : offDay ? `⚠ Not a class day (meets ${daysText(S.days)})` : 'Not recorded yet';
+  $('#dRec').style.color = offDay ? 'var(--excused)' : '';
+  $('#dRec').style.fontWeight = offDay ? '700' : '';
+  const recent = Object.keys(S.attendance).filter(isDate).sort().reverse().filter(d => d !== todayStr()).slice(0, 5);
+  const absN = d => assigned().filter(x => getStatus(d, x.k) === 'A').length;
+  const chip = (d, txt, extra = '') => { const n = absN(d);
+    return `<button type="button" class="chip ${extra}" data-go="${d}" aria-current="${d === S.date}" title="${esc(longDate(d))}${n ? ` · ${n} absent` : ''}">${esc(txt)}${n ? `<span class="n">${n} abs</span>` : ''}</button>`; };
+  $('#dChips').innerHTML = chip(todayStr(), 'Today', 'today-chip') + (recent.length ? '<span class="lbl">Recent</span>' : '') +
+    recent.map(d => chip(d, dateObj(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }))).join('');
+  const wrap = $('#room').parentElement;
+  wrap.classList.toggle('not-today', S.mode === 'take' && diff !== 0);
+  wrap.classList.toggle('locked', isLocked());
+}
+
+function renderRoom() {
+  if (isTables()) return renderTables();
+  const focused = document.activeElement?.dataset?.seat, focusedAisle = document.activeElement?.dataset?.aisle;
+  const room = $('#room'); room.innerHTML = '';
+  const inv = !!S.instructorView, edit = S.mode === 'edit';
+  const cols = [...Array(S.cols).keys()], rows = [...Array(S.rows).keys()];
+  if (inv) { cols.reverse(); rows.reverse(); }
+  // gapAfter(i): the seat number an aisle would follow between displayed columns i and i+1 (or 0 at the edge)
+  const gapAfter = i => i < cols.length - 1 ? Math.min(cols[i], cols[i + 1]) + 1 : 0;
+  const isAisle = b => b > 0 && S.aisles.includes(b);
+  const tracks = [];
+  cols.forEach((c, i) => { tracks.push('96px'); if (gapAfter(i)) tracks.push(isAisle(gapAfter(i)) ? 'var(--aisle)' : '8px'); });
+
+  const front = document.createElement('div');
+  front.className = 'front';
+  front.textContent = inv ? '▼ Front of room — you are here ▼' : '▲ Front of room ▲';
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  grid.style.gridTemplateColumns = tracks.join(' ');
+  grid.setAttribute('role', 'group');
+  grid.setAttribute('aria-label', 'Seating chart' + (inv ? ', instructor view' : ''));
+
+  if (edit) {                                          // Edit seats: seat numbers with +/× between columns to add or remove aisles
+    cols.forEach((c, i) => {
+      const n = document.createElement('div'); n.className = 'colnum'; n.textContent = 'Seat ' + (c + 1); grid.appendChild(n);
+      const b = gapAfter(i); if (!b) return;
+      const h = document.createElement('div'); h.className = 'hinge';
+      const on = isAisle(b);
+      h.innerHTML = `<button type="button" class="hinge-btn${on ? ' on' : ''}" data-aisle="${b}" aria-pressed="${on}"
+        aria-label="${on ? 'Remove' : 'Add'} aisle between seats ${b} and ${b + 1}" title="${on ? 'Remove' : 'Add'} aisle between seats ${b} and ${b + 1}">${on ? '×' : '+'}</button>`;
+      grid.appendChild(h);
+    });
+  }
+  rows.forEach((r, ri) => {
+    cols.forEach((c, i) => {
+      grid.appendChild(seatEl(label(r, c), edit));
+      const b = gapAfter(i); if (!b) return;
+      const a = document.createElement('div'); a.setAttribute('aria-hidden', 'true');
+      if (isAisle(b)) {
+        a.className = 'aisle' + (ri === Math.floor(rows.length / 2) ? ' label' : '');
+        if (ri === Math.floor(rows.length / 2)) a.textContent = 'aisle';
+      }
+      grid.appendChild(a);
+    });
+  });
+  if (inv) { room.append(grid, front); } else { room.append(front, grid); }
+  if (focused) room.querySelector(`[data-seat="${focused}"]`)?.focus();
+  else if (focusedAisle) room.querySelector(`[data-aisle="${focusedAisle}"]`)?.focus();
+}
+
+function seatEl(lab, edit) {
+  const k = S.seats[lab], s = k && S.students[k];
+  const b = document.createElement('button');
+  b.type = 'button'; b.dataset.seat = lab;
+  if (!s) {
+    b.className = 'seat empty' + (edit ? '' : ' take') + (edit && selected === lab ? ' sel' : '');
+    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="st">${edit ? 'Empty — assign' : 'Empty'}</span>`;
+    b.setAttribute('aria-label', `${seatName(lab)}, empty`);
+    if (!edit) b.tabIndex = -1;
+  } else if (edit) {
+    b.className = 'seat edit' + (selected === lab ? ' sel' : '');
+    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm">${esc(s.name)}</span><span class="st">${esc(s.sid || 'no ID')}</span>`;
+    b.setAttribute('aria-label', `${seatName(lab)}, ${s.name}${selected === lab ? ', selected' : ''}`);
+    b.draggable = true;
+  } else {
+    const st = getStatus(S.date, k);
+    b.className = 'seat ' + st;
+    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm">${esc(s.name)}</span><span class="st">${STATUS[st]}</span>`;
+    b.setAttribute('aria-label', `${seatName(lab)}, ${s.name}, ${STATUS[st]}. Press to change.`);
+  }
+  if (edit) {
+    b.addEventListener('click', () => { selected = lab; render(); setTimeout(() => $('#eName')?.focus(), 0); });
+    b.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', lab); e.dataTransfer.effectAllowed = 'move'; });
+    b.addEventListener('dragover', e => { e.preventDefault(); b.classList.add('over'); });
+    b.addEventListener('dragleave', () => b.classList.remove('over'));
+    b.addEventListener('drop', e => { e.preventDefault(); b.classList.remove('over'); const src = e.dataTransfer.getData('text/plain'); if (normLabel(src)) swapSeats(src, lab); });
+  } else if (s) {
+    if (isLocked()) b.setAttribute('aria-label', b.getAttribute('aria-label').replace('Press to change.', 'Locked: not today.'));
+    b.addEventListener('click', () => { if (lockedNotice()) return; snapshot(); setStatus(S.date, k, NEXT[getStatus(S.date, k)]); commit(); });
+    b.addEventListener('keydown', e => {
+      const m = { p: 'P', a: 'A', e: 'E' }[e.key.toLowerCase()];
+      if (m && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); if (lockedNotice()) return; snapshot(); setStatus(S.date, k, m); commit(); }
+    });
+  }
+  return b;
+}
+
+function renderSide() {
+  const side = $('#side');
+  const c = counts(S.date), diff = dayDiff(S.date), locked = isLocked();
+  let h = '';
+  if (S.mode === 'take' && diff !== 0) {
+    h += `<div class="card warn" id="lockCard"><h3>${locked ? '🔒 Not today' : '✎ Editing a ' + (diff < 0 ? 'past' : 'future') + ' date'}</h3>
+      <p class="small" style="margin-top:0">${locked
+        ? `You're viewing <b>${esc(longDate(S.date))}</b>, ${esc(relDay(diff))}. Seats are locked so you don't change the wrong day by mistake.`
+        : `Changes go to <b>${esc(longDate(S.date))}</b>, not today.`}</p>
+      <div class="row">${locked ? '<button class="btn" type="button" id="unlockBtn">Edit this date</button>' : '<button class="btn" type="button" id="relockBtn">Lock again</button>'}
+      <button class="btn primary" type="button" id="toTodayBtn">Go to today</button></div></div>`;
+  }
+  h += `<div class="card"><h3>${esc(shortDate(S.date))} summary</h3><div class="stats">
+    <div class="stat"><b>${c.n}</b><span>Assigned</span></div>
+    <div class="stat p"><b>${c.p}</b><span>Present</span></div>
+    <div class="stat a"><b>${c.a}</b><span>Absent</span></div>
+    <div class="stat e"><b>${c.e}</b><span>Excused</span></div></div></div>`;
+  if (S.mode === 'take') {
+    const rec = !!S.attendance[S.date];
+    const ex = assigned().filter(x => getStatus(S.date, x.k) !== 'P');
+    h += `<div class="card"><h3>${esc(longDate(S.date))}</h3>
+      <p class="small ${rec ? '' : 'muted'}" style="margin-top:0">${rec ? '✓ Recorded in attendance history.' : 'Not recorded yet. Everyone seated counts as present; marking an exception or pressing Record date saves it.'}</p>
+      <div class="row">
+        ${rec ? '' : `<button class="btn primary" type="button" id="recBtn" ${locked ? 'disabled' : ''}>Record date</button>`}
+        <button class="btn" type="button" id="allPBtn" ${ex.length && !locked ? '' : 'disabled'}>Mark everyone present</button>
+        ${rec ? `<button class="btn danger" type="button" id="delDateBtn" ${locked ? 'disabled' : ''}>Delete record</button>` : ''}
+      </div></div>
+      <div class="card"><h3>Exceptions</h3>${ex.length ? '<ul class="plain">' + ex.map(x => `<li><span>${esc(x.s.name)} <span class="muted small">${seatShort(x.lab)}</span></span><span class="pill ${getStatus(S.date, x.k)}">${STATUS[getStatus(S.date, x.k)]}</span></li>`).join('') + '</ul>' : '<p class="small muted" style="margin:0">Everyone present.</p>'}
+      <p class="small muted" style="margin-bottom:0">Click a seat to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>.</p></div>`;
+  } else {
+    h += editCard() + layoutCard();
+  }
+  side.innerHTML = h;
+  if (S.mode === 'take') {
+    $('#unlockBtn')?.addEventListener('click', () => { unlocked.add(S.date); render(); toast(`${longDate(S.date)} unlocked for editing.`); });
+    $('#relockBtn')?.addEventListener('click', () => { unlocked.delete(S.date); render(); });
+    $('#toTodayBtn')?.addEventListener('click', goToday);
+    $('#recBtn')?.addEventListener('click', () => { snapshot(); S.attendance[S.date] = S.attendance[S.date] || {}; commit(); toast('Date recorded.'); });
+    $('#allPBtn')?.addEventListener('click', () => { snapshot(); S.attendance[S.date] = {}; commit(); toast('Everyone marked present. Ctrl/⌘+Z undoes.'); });
+    $('#delDateBtn')?.addEventListener('click', () => {
+      if (confirm(`Delete the attendance record for ${longDate(S.date)}?`)) { snapshot(); delete S.attendance[S.date]; commit(); toast('Record deleted. Ctrl/⌘+Z undoes.'); }
+    });
+  } else bindEdit();
+}
+
+function editCard() {
+  if (!selected || !parseLabel(selected) || parseLabel(selected).r >= S.rows || parseLabel(selected).c >= S.cols) {
+    selected = null;
+    return `<div class="card"><h3>Seat</h3><p class="small muted" style="margin:0">Select a seat to name it, assign a student ID, or move it. Drag a student onto another seat to move or swap.</p></div>`;
+  }
+  const s = S.students[S.seats[selected]] || { name: '', sid: '', email: '' };
+  return `<div class="card"><h3>${seatName(selected)}</h3><form id="seatForm" class="stack" autocomplete="off">
+    <label class="fld"><span>Student name</span><input type="text" id="eName" value="${esc(s.name)}"></label>
+    <label class="fld"><span>Student ID</span><input type="text" id="eSid" value="${esc(s.sid)}"></label>
+    <label class="fld"><span>Email</span><input type="email" id="eEmail" value="${esc(s.email)}"></label>
+    <div class="row"><button class="btn primary" type="submit">Save seat</button></div>
+    <p class="small muted" style="margin:0">To remove a student who dropped, use <b>Manage data</b>.</p>
+  </form>
+  <form id="moveForm" class="stack" style="margin-top:12px" autocomplete="off">
+    <label class="fld"><span>Move / swap with</span>
+      <div class="row">
+        <input type="number" id="mRow" min="1" max="${S.rows}" placeholder="${unitWord()}" aria-label="Move to ${unitWord().toLowerCase()}" style="flex:1" ${S.seats[selected] ? '' : 'disabled'}>
+        <input type="number" id="mSeat" min="1" max="${S.cols}" placeholder="Seat" aria-label="Move to seat" style="flex:1" ${S.seats[selected] ? '' : 'disabled'}>
+        <button class="btn" type="submit" ${S.seats[selected] ? '' : 'disabled'}>Move</button></div></label>
+  </form></div>`;
+}
+
+function layoutCard() {
+  const al = S.aisles.map(b => `${b}–${b + 1}`), t = isTables(), others = otherClassesInRoom(S.roomId);
+  return `<div class="card"><h3>Room layout</h3>
+    <p class="small" style="margin:0 0 10px">Room: <b>${esc(STORE.rooms[S.roomId]?.name || 'Room')}</b>${others.length ? `<br><span style="color:var(--excused)">Shared with ${others.map(c => esc(c.className || 'Untitled')).join(', ')}. Layout changes apply to ${others.length === 1 ? 'both classes' : 'all of them'}.</span>
+      <button type="button" class="btn ghost" id="ownRoom" style="padding:2px 8px;font-size:12px;margin-top:4px">Give this class its own copy</button>` : ''}</p>
+    <form id="layoutForm" class="stack">
+    <label class="fld"><span>Room shape</span><select id="lShape"><option value="rows" ${t ? '' : 'selected'}>Rows</option><option value="tables" ${t ? 'selected' : ''}>Tables / pods</option></select></label>
+    <div class="row" id="lRowsBox" ${t ? 'hidden' : ''}>
+      <label class="fld" style="flex:1"><span>Rows (${LIM.rows[0]}–${LIM.rows[1]})</span><input type="number" id="lRows" min="${LIM.rows[0]}" max="${LIM.rows[1]}" value="${t ? 6 : S.rows}"></label>
+      <label class="fld" style="flex:1"><span>Seats per row (${LIM.cols[0]}–${LIM.cols[1]})</span><input type="number" id="lCols" min="${LIM.cols[0]}" max="${LIM.cols[1]}" value="${t ? 8 : S.cols}"></label>
+    </div>
+    <div class="row" id="lTablesBox" ${t ? '' : 'hidden'}>
+      <label class="fld" style="flex:1"><span>Tables (${LIM.rows[0]}–${LIM.rows[1]})</span><input type="number" id="lTables" min="${LIM.rows[0]}" max="${LIM.rows[1]}" value="${t ? S.rows : 6}"></label>
+      <label class="fld" style="flex:1"><span>Seats per table (1–${LIM.cols[1]})</span><input type="number" id="lSeatsT" min="1" max="${LIM.cols[1]}" value="${t ? S.cols : 4}"></label>
+      <label class="fld" style="flex:1"><span>Tables side by side</span><input type="number" id="lAcross" min="1" max="8" value="${S.tablesAcross || 3}"></label>
+    </div>
+    <div class="row"><button class="btn primary" type="submit">Apply layout</button></div>
+    ${t ? `<p class="small muted" style="margin:0">Seats are numbered clockwise around each table, starting top-left.</p>` : `<p class="small muted" style="margin:0"><b style="color:var(--text)">Aisles:</b> ${al.length ? 'between seats ' + al.join(', ') : 'none'}.
+      Click <b>+</b> between seat columns on the chart to add one, <b>×</b> to remove it.
+      ${al.length ? '<button type="button" class="btn ghost" id="clearAisles" style="padding:2px 8px;font-size:12px">Remove all</button>' : ''}</p>`}
+  </form></div>`;
+}
+
+function bindEdit() {
+  $('#seatForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    saveSeat(selected, $('#eName').value.trim(), $('#eSid').value.trim(), $('#eEmail').value.trim());
+  });
+  $('#moveForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const r = parseInt($('#mRow').value, 10), c = parseInt($('#mSeat').value, 10);
+    if (!(r >= 1) || !(c >= 1)) return toast('Enter both a row number and a seat number.', true);
+    swapSeats(selected, label(r - 1, c - 1));
+  });
+  $('#layoutForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const shape = $('#lShape').value;
+    if (shape === 'tables') applyLayout(parseInt($('#lTables').value, 10), parseInt($('#lSeatsT').value, 10), 'tables', parseInt($('#lAcross').value, 10));
+    else applyLayout(parseInt($('#lRows').value, 10), parseInt($('#lCols').value, 10), 'rows');
+  });
+  $('#ownRoom')?.addEventListener('click', () => {
+    syncStore(); const old = STORE.rooms[S.roomId], rid = uid();
+    STORE.rooms[rid] = { ...old, id: rid, aisles: [...(old.aisles || [])], name: `${S.className || 'Class'} room` };
+    S.roomId = rid; commit(); toast('This class now has its own copy of the room.');
+  });
+  $('#lShape')?.addEventListener('change', e => { const t = e.target.value === 'tables'; $('#lRowsBox').hidden = t; $('#lTablesBox').hidden = !t; });
+  $('#clearAisles')?.addEventListener('click', () => { S.aisles = []; commit(); toast('All aisles removed.'); });
+}
+
+function removeStudent(k) {
+  delete S.students[k];
+  for (const d of Object.values(S.attendance)) delete d[k];
+}
+function saveSeat(lab, name, sid, email) {
+  if (!name && !sid && !email) return toast('Enter a name. To remove a student, use Manage data.', true);
+  if (!name) return toast('A student name is required.', true);
+  if (!emailOk(email)) return toast('That email address doesn\'t look valid.', true);
+  const cur = S.seats[lab];
+  if (sid) {
+    const dup = Object.entries(S.seats).find(([l, k]) => k !== cur && S.students[k]?.sid === sid);
+    if (dup) return toast(`Student ID ${sid} is already assigned to ${seatName(dup[0])}.`, true);
+  }
+  let k = cur;
+  if (!k) { k = uid(); S.seats[lab] = k; }
+  S.students[k] = { name, sid, email };
+  commit(); toast(`${seatName(lab)} saved.`);
+}
+function swapSeats(a, b) {
+  a = normLabel(a); b = normLabel(b);
+  const pb = parseLabel(b);
+  if (!pb || pb.r >= S.rows || pb.c >= S.cols) return toast(`${b ? seatName(b) : 'That seat'} is not in this room (${S.rows} rows × ${S.cols} seats).`, true);
+  if (a === b) return;
+  const ka = S.seats[a], kb = S.seats[b];
+  if (!ka && !kb) return;
+  if (kb) S.seats[a] = kb; else delete S.seats[a];
+  if (ka) S.seats[b] = ka; else delete S.seats[b];
+  selected = b; commit();
+  toast(ka && kb ? `Swapped ${seatName(a)} and ${seatName(b)}.` : `Moved to ${seatName(b)}.`);
+}
+function applyLayout(rows, cols, shape = S.shape || 'rows', across = S.tablesAcross || 3) {
+  const tw = shape === 'tables';
+  if (!(rows >= LIM.rows[0] && rows <= LIM.rows[1])) return toast(`${tw ? 'Tables' : 'Rows'} must be between ${LIM.rows[0]} and ${LIM.rows[1]}.`, true);
+  if (!(cols >= LIM.cols[0] && cols <= LIM.cols[1])) return toast(`Seats per ${tw ? 'table' : 'row'} must be between ${LIM.cols[0]} and ${LIM.cols[1]}.`, true);
+  if (tw && !(across >= 1 && across <= 8)) return toast('Tables side by side must be between 1 and 8.', true);
+  const fits = l => { const p = parseLabel(l); return p.r < rows && p.c < cols; };
+  const lost = Object.keys(S.seats).filter(l => !fits(l)).sort((x, y) => seatOrder(x) - seatOrder(y));
+  for (const c of otherClassesInRoom(S.roomId)) {          // a shared room must still seat every other class
+    const out = Object.keys(c.seats || {}).filter(l => !fits(l));
+    if (out.length) return toast(`Layout not changed: “${c.className || 'Untitled'}” also uses this room and has ${out.length} student${out.length === 1 ? '' : 's'} outside the new layout. Give this class its own copy of the room first.`, true);
+  }
+  let moved = 0;
+  if (lost.length) {
+    // Same shape: never remove students, so refuse (as before). New shape: offer to move only the students who don't fit.
+    if (shape === (S.shape || 'rows')) return toast(`Layout not changed: it would remove students in ${lost.map(seatName).join('; ')}. Move or clear those seats first.`, true);
+    const free = []; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!S.seats[label(r, c)]) free.push(label(r, c));
+    if (free.length < lost.length) return toast(`Layout not changed: ${rows * cols} seats isn't enough for ${assigned().length} students.`, true);
+    if (!confirm(`${lost.length} student${lost.length === 1 ? '' : 's'} won't fit the new layout. Move ${lost.length === 1 ? 'them' : 'them'} into open seats? Everyone else stays put, and all attendance records are kept.`)) return toast('Layout not changed.');
+    lost.forEach((l, i) => { S.seats[free[i]] = S.seats[l]; delete S.seats[l]; });
+    moved = lost.length;
+  }
+  S.shape = shape; S.rows = rows; S.cols = cols; if (tw) S.tablesAcross = across;
+  S.aisles = S.aisles.filter(b => b < cols); selected = null;
+  commit(); toast(moved ? `Layout updated. ${moved} student${moved === 1 ? '' : 's'} moved to open seats.` : 'Layout updated.');
+}
+/* Tables / pods: each table is a block with seats around it, numbered clockwise from top-left. */
+function renderTables() {
+  const focused = document.activeElement?.dataset?.seat;
+  const room = $('#room'); room.innerHTML = '';
+  const inv = !!S.instructorView, edit = S.mode === 'edit', T = S.rows, K = S.cols;
+  const order = [...Array(T).keys()]; if (inv) order.reverse();
+  const wrap = document.createElement('div');
+  wrap.className = 'tables'; wrap.style.gridTemplateColumns = `repeat(${Math.min(S.tablesAcross || 3, T)}, max-content)`;
+  wrap.setAttribute('role', 'group'); wrap.setAttribute('aria-label', 'Seating chart, tables' + (inv ? ', instructor view' : ''));
+  const a = Math.ceil(K / 2);
+  order.forEach(t => {
+    const top = [...Array(a).keys()], bottom = [...Array(K - a).keys()].map(i => K - 1 - i);   // clockwise
+    // Turned 180° (instructor view), the far side shows seats a+1…K left to right and the near side a…1.
+    const rows = inv ? [bottom.slice().reverse(), top.slice().reverse()] : [top, bottom];
+    const blk = document.createElement('div'); blk.className = 'tbl';
+    blk.innerHTML = `<div class="tbl-name">Table ${t + 1}</div>`;
+    const mk = list => { const r = document.createElement('div'); r.className = 'tbl-row'; list.forEach(c => r.appendChild(seatEl(label(t, c), edit))); return r; };
+    if (rows[0].length) blk.appendChild(mk(rows[0]));
+    const surf = document.createElement('div'); surf.className = 'tbl-top'; surf.setAttribute('aria-hidden', 'true'); blk.appendChild(surf);
+    if (rows[1].length) blk.appendChild(mk(rows[1]));
+    wrap.appendChild(blk);
+  });
+  const front = document.createElement('div');
+  front.className = 'front';
+  front.textContent = inv ? '▼ Front of room — you are here ▼' : '▲ Front of room ▲';
+  if (inv) room.append(wrap, front); else room.append(front, wrap);
+  if (focused) room.querySelector(`[data-seat="${focused}"]`)?.focus();
+}
+
+/* ---------- roster & history ---------- */
+function renderRoster() {
+  const list = assigned(), dropped = droppedList();
+  let h = list.length ? `<p class="small muted" style="margin-top:0">${list.length} student${list.length === 1 ? '' : 's'} · ${isTables() ? `${S.rows} tables × ${S.cols} seats` : `${S.rows} rows × ${S.cols} seats`}</p><div class="table-wrap"><table><thead><tr><th>${unitWord()}</th><th>Seat</th><th>Name</th><th>Student ID</th><th>Email</th><th></th></tr></thead><tbody>${
+    list.map(x => `<tr><td class="c">${x.row}</td><td class="c">${x.seat}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.sid)}</td><td class="em">${esc(x.s.email)}</td>
+      <td class="act"><button type="button" class="btn danger" data-rm="${x.k}" aria-label="Remove ${esc(x.s.name)}">Remove</button></td></tr>`).join('')}</tbody></table></div>`
+    : '<p class="muted small">No students yet. Add them in Edit seats or import a CSV.</p>';
+  if (dropped.length) h += `<h3 style="margin:18px 0 8px">Dropped students (${dropped.length})</h3>
+    <p class="small muted" style="margin-top:0">Not on the chart, in attendance, or in emails. Their past attendance is kept here.</p>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>ID</th><th>Dropped</th><th>Last attended</th><th class="c">Abs.</th><th></th></tr></thead><tbody>${
+    dropped.map(x => `<tr><td>${esc(x.s.name)}</td><td>${esc(x.s.sid)}</td><td>${esc(shortDate(x.s.dropped.on))}</td><td>${x.last ? esc(shortDate(x.last)) : '<span class="muted">—</span>'}</td><td class="c">${x.abs}</td>
+      <td class="act"><button type="button" class="btn" data-restore="${x.k}" aria-label="Restore ${esc(x.s.name)}">Restore</button>
+      <button type="button" class="btn danger" data-purge="${x.k}" aria-label="Delete ${esc(x.s.name)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
+  const box = $('#roster'); box.innerHTML = h;
+  box.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => askRemove(b.dataset.rm)));
+  box.querySelectorAll('[data-restore]').forEach(b => b.addEventListener('click', () => restoreStudent(b.dataset.restore)));
+  box.querySelectorAll('[data-purge]').forEach(b => b.addEventListener('click', () => {
+    const st = S.students[b.dataset.purge];
+    if (confirm(`Delete ${st.name} and all of their attendance records? This can't be undone.`)) { deleteStudent(b.dataset.purge); toast(`${st.name} deleted.`); }
+  }));
+}
+/* ---------- removing students ----------
+   Drop: off the chart, attendance, and emails, but history is kept (Manage data → Dropped students) and can be restored.
+   Delete: the student and every attendance mark are gone. */
+function droppedList() {
+  return Object.entries(S.students).filter(([, s]) => s.dropped).map(([k, s]) => {
+    const dates = Object.keys(S.attendance).filter(d => isDate(d) && d <= s.dropped.on).sort();
+    const last = [...dates].reverse().find(d => !S.attendance[d][k]) || null;   // recorded and not absent/excused
+    return { k, s, last, abs: dates.filter(d => S.attendance[d][k] === 'A').length };
+  }).sort((a, b) => a.s.name.localeCompare(b.s.name));
+}
+function askRemove(k) {
+  const st = S.students[k]; if (!st) return;
+  $('#rmTitle').textContent = `Remove ${st.name}?`;
+  $('#rmText').innerHTML = `<b>Drop</b> takes ${esc(st.name)} off the seating chart, attendance, and emails, but keeps their past attendance under <b>Manage data → Dropped students</b>, where you can restore them. <b>Delete completely</b> erases the student and all of their attendance records.`;
+  const dlg = $('#rmDlg'); dlg.returnValue = '';
+  dlg.onclose = () => { if (dlg.returnValue === 'drop') dropStudent(k); else if (dlg.returnValue === 'delete') { deleteStudent(k); toast(`${st.name} deleted.`); } };
+  dlg.showModal(); $('#rmDrop').focus();
+}
+function dropStudent(k) {
+  const st = S.students[k], lab = Object.keys(S.seats).find(l => S.seats[l] === k) || null;
+  if (lab) delete S.seats[lab];
+  st.dropped = { on: todayStr(), seat: lab };
+  if (selected === lab) selected = null;
+  commit(); toast(`${st.name} dropped. Their attendance is kept under Manage data → Dropped students.`);
+}
+function deleteStudent(k) {
+  const lab = Object.keys(S.seats).find(l => S.seats[l] === k);
+  if (lab) { delete S.seats[lab]; if (selected === lab) selected = null; }
+  removeStudent(k); commit();
+}
+function restoreStudent(k) {
+  const st = S.students[k], want = st.dropped?.seat, p = want && parseLabel(want);
+  let lab = p && p.r < S.rows && p.c < S.cols && !S.seats[want] ? want : null;
+  for (let r = 0; !lab && r < S.rows; r++) for (let c = 0; c < S.cols; c++) if (!S.seats[label(r, c)]) { lab = label(r, c); break; }
+  if (!lab) return toast(`There's no open seat for ${st.name}. Add seats in Edit seats first.`, true);
+  delete st.dropped; S.seats[lab] = k;
+  commit(); toast(`${st.name} is back in ${seatName(lab)}.`);
+}
+function renderHistory() {
+  const box = $('#history');
+  const fa = document.activeElement, keep = fa?.classList?.contains('hcell') ? { k: fa.dataset.k, d: fa.dataset.d } : null;
+  const oldWrap = box.querySelector('.table-wrap'), scroll = oldWrap ? [oldWrap.scrollTop, oldWrap.scrollLeft] : null;
+  const everyone = assigned(), dates = Object.keys(S.attendance).filter(isDate).sort();
+  const hq = fold(histFilter.trim());
+  const list = hq ? everyone.filter(x => matchStudent(x, hq)) : everyone;
+  $('#hCount').textContent = hq ? `Showing ${list.length} of ${everyone.length}` : '';
+  if (!$('#hAddDate').value) $('#hAddDate').value = S.date;
+  const absOn = d => everyone.filter(x => getStatus(d, x.k) === 'A').length;
+  $('#hJump').innerHTML = (S.attendance[S.date] ? '' : `<option value="" selected>— ${esc(shortDate(S.date))} not recorded —</option>`) +
+    [...dates].reverse().map(d => { const n = absOn(d);
+      return `<option value="${d}" ${d === S.date ? 'selected' : ''}>${esc(dateObj(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }))}${n ? ` · ${n} absent` : ''}</option>`; }).join('');
+  $('#hJump').disabled = !dates.length;
+  if (!list.length || !dates.length) { const f = $('#hFocus'); f.innerHTML = ''; f.classList.remove('on'); }
+  if (!list.length) { box.innerHTML = hq && everyone.length ? `<p class="muted">No students match “${esc(histFilter.trim())}”. Press <kbd>Esc</kbd> to reset the view.</p>` : '<p class="muted">No students yet.</p>'; return; }
+  if (!dates.length) { box.innerHTML = '<p class="muted">No dates recorded yet. Take attendance in the Classroom view, or add a date above.</p>'; return; }
+  let h = `<div class="table-wrap"><table><thead><tr><th class="sticky">Student</th><th>${unitWord()}</th><th>Seat</th><th>ID</th><th>Absent</th><th>Excused</th>${
+    dates.map(d => `<th class="date c${d === S.date ? ' cur' : ''}"><button type="button" data-date="${d}" title="Open ${esc(longDate(d))} in Classroom">${esc(shortDate(d))}</button><button type="button" class="del" data-del="${d}" aria-label="Delete ${esc(longDate(d))}" title="Delete this date">×</button></th>`).join('')}</tr></thead><tbody>`;
+  list.forEach(x => {
+    const sts = dates.map(d => getStatus(d, x.k));
+    h += `<tr><td class="sticky">${esc(x.s.name)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td>${esc(x.s.sid)}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
+      sts.map((st, j) => `<td class="c${dates[j] === S.date ? ' cur' : ''}"><button type="button" class="pill ${st} hcell" data-k="${x.k}" data-d="${dates[j]}" aria-label="${esc(x.s.name)}, ${esc(longDate(dates[j]))}: ${STATUS[st]}. Press to change.">${st}</button></td>`).join('')}</tr>`;
+  });
+  h += '</tbody></table></div>';
+  box.innerHTML = h;
+  const wrap = box.querySelector('.table-wrap');
+  if (scroll) { wrap.scrollTop = scroll[0]; wrap.scrollLeft = scroll[1]; }
+  const again = keep && box.querySelector(`.hcell[data-k="${keep.k}"][data-d="${keep.d}"]`);
+  if (again) { again.focus({ preventScroll: true }); markHist(again); } else markHist(null);
+}
+$('#history').addEventListener('click', e => {
+  const cellB = e.target.closest('.hcell'), go = e.target.closest('[data-date]'), del = e.target.closest('[data-del]');
+  if (cellB) { const { k, d } = cellB.dataset; snapshot(); setStatus(d, k, NEXT[getStatus(d, k)]); commit(); }
+  else if (go) { S.date = go.dataset.date; S.view = 'classroom'; S.mode = 'take'; commit(); }
+  else if (del) {
+    const d = del.dataset.del;
+    if (confirm(`Delete all attendance for ${longDate(d)}?`)) { snapshot(); delete S.attendance[d]; commit(); toast('Date deleted. Ctrl/⌘+Z undoes.'); }
+  }
+  else {                                                  // anywhere else in a row: select that row (no change to attendance)
+    const tr = e.target.closest('tbody tr'); if (!tr) return;
+    const cells = [...tr.querySelectorAll('.hcell')]; if (!cells.length) return;
+    const td = e.target.closest('td');
+    const pick = td?.querySelector('.hcell')                                     // clicked the space around a mark
+      || cells.find(b => b.dataset.d === histColDate) || cells.find(b => b.dataset.d === S.date) || cells[cells.length - 1];
+    pick.focus({ preventScroll: true }); keepHistVisible(pick); markHist(pick);
+  }
+});
+$('#history').addEventListener('keydown', e => {
+  const cellB = e.target.closest('.hcell'); if (!cellB || e.ctrlKey || e.metaKey || e.altKey) return;
+  const grid = histGrid(), pos = histPos(grid, cellB);
+  const m = { p: 'P', a: 'A', e: 'E' }[e.key.toLowerCase()];
+  if (m) {                                       // mark, then move down like a spreadsheet
+    e.preventDefault(); snapshot(); setStatus(cellB.dataset.d, cellB.dataset.k, m); commit();
+    focusHist(Math.min(pos.r + 1, grid.length - 1), pos.c); return;
+  }
+  const moves = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  if (moves[e.key]) { e.preventDefault(); focusHist(pos.r + moves[e.key][0], pos.c + moves[e.key][1]); }
+  else if (e.key === 'Home') { e.preventDefault(); focusHist(e.shiftKey ? 0 : pos.r, 0); }
+  else if (e.key === 'End') { e.preventDefault(); focusHist(e.shiftKey ? grid.length - 1 : pos.r, grid[0].length - 1); }
+  else if (e.key === 'PageDown') { e.preventDefault(); focusHist(grid.length - 1, pos.c); }
+  else if (e.key === 'PageUp') { e.preventDefault(); focusHist(0, pos.c); }
+});
+/* Go to a date in the history grid: scroll its column into view, flash it, and put the cursor there. */
+let histRowKey = null, histColDate = null;          // last row and column the cursor was on
+$('#hJump').addEventListener('change', e => { if (e.target.value) setDate(e.target.value); });
+function histGoTo(d) {
+  const box = $('#history'), th = box.querySelector(`th [data-date="${d}"]`)?.closest('th');
+  if (!th) {
+    const ds = Object.keys(S.attendance).filter(isDate).sort();
+    if (!ds.length || !box.querySelector('tbody')) return;
+    const near = ds.reduce((a, b) => Math.abs(dateObj(b) - dateObj(d)) < Math.abs(dateObj(a) - dateObj(d)) ? b : a);
+    const info = $('#hFocus'); info.classList.add('on');
+    info.innerHTML = `<span>Nothing is recorded for <b>${esc(longDate(d))}</b>.</span>
+      <button type="button" class="btn" data-hadd="${d}">Add this date</button>
+      <button type="button" class="btn primary" data-hnear="${near}">Go to nearest: ${esc(shortDate(near))}</button>`;
+    info.dataset.note = '1';                              // keep this notice until you move into the grid
+    info.querySelector('[data-hadd]').onclick = () => { snapshot(); S.attendance[d] = {}; commit(); histGoTo(d); toast(`Added ${longDate(d)} with everyone present.`); };
+    info.querySelector('[data-hnear]').onclick = () => setDate(near);
+    return;
+  }
+  const i = th.cellIndex, rows = [...box.querySelectorAll('tbody tr')];
+  const row = rows.find(tr => tr.querySelector(`.hcell[data-k="${histRowKey}"]`)) || rows[0];
+  const cell = row?.cells[i]?.querySelector('.hcell'); if (!cell) return;
+  cell.focus({ preventScroll: true }); keepHistVisible(cell); markHist(cell);
+  box.querySelectorAll('tr').forEach(tr => { const c = tr.cells[i]; if (!c) return; c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); });
+}
+/* Esc in history: back to the fresh view (no search, no cursor, top-left). Leaves the selected date alone. */
+function resetHist() {
+  const had = histFilter || $('#history').contains(document.activeElement) || document.activeElement === $('#hSearch');
+  histFilter = ''; $('#hSearch').value = ''; histRowKey = null; histColDate = null;
+  if ($('#view-history').contains(document.activeElement)) document.activeElement.blur();
+  renderHistory();
+  const wrap = $('#history .table-wrap'); if (wrap) { wrap.scrollTop = 0; wrap.scrollLeft = 0; }
+  markHist(null); window.scrollTo({ top: 0 });
+  if (had) toast('History view reset.');
+}
+/* History search: filters rows as you type. Kept for the session, not saved. */
+let histFilter = '';
+const fold = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+/* Every typed word must match the start of a word in the student's name, ID, or email ("ana g" → Ana Garza). */
+function matchStudent(x, query) {
+  const words = fold(`${x.s.name} ${x.s.sid} ${x.s.email}`).split(/[^a-z0-9]+/).filter(Boolean);
+  return fold(query).split(/[^a-z0-9]+/).filter(Boolean).every(t => words.some(w => w.startsWith(t)));
+}
+$('#hSearch').addEventListener('input', e => { histFilter = e.target.value; renderHistory(); });
+$('#hSearch').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); resetHist(); }
+  else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+    const g = histGrid(); if (!g.length) return;
+    e.preventDefault();
+    const i = g[0].findIndex(b => b.dataset.d === S.date);
+    focusHist(0, i >= 0 ? i : g[0].length - 1);
+  }
+});
+/* Scroll so the cell clears the pinned name column and header row. */
+function keepHistVisible(el) {
+  const wrap = $('#history .table-wrap'); if (!wrap) return;
+  const td = el.closest('td'), stickyW = wrap.querySelector('td.sticky')?.offsetWidth || 0, headH = wrap.querySelector('thead')?.offsetHeight || 0, pad = 10;
+  if (td.offsetLeft - pad < wrap.scrollLeft + stickyW) wrap.scrollLeft = td.offsetLeft - stickyW - pad;
+  else if (td.offsetLeft + td.offsetWidth + pad > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = td.offsetLeft + td.offsetWidth + pad - wrap.clientWidth;
+  if (td.offsetTop - pad < wrap.scrollTop + headH) wrap.scrollTop = td.offsetTop - headH - pad;
+  else if (td.offsetTop + td.offsetHeight + pad > wrap.scrollTop + wrap.clientHeight) wrap.scrollTop = td.offsetTop + td.offsetHeight + pad - wrap.clientHeight;
+  const r = wrap.getBoundingClientRect();
+  if (r.top < 0 || r.bottom > innerHeight) wrap.scrollIntoView({ block: 'nearest' });
+}
+/* Light up the focused cell's row and column, and describe it above the grid. */
+function markHist(cell) {
+  const box = $('#history');
+  box.querySelectorAll('.cur-row').forEach(x => x.classList.remove('cur-row'));
+  box.querySelectorAll('.cur-col').forEach(x => x.classList.remove('cur-col'));
+  const info = $('#hFocus');
+  delete info.dataset.note;
+  if (!cell) {
+    info.classList.remove('on');
+    info.innerHTML = box.querySelector('.hcell') ? '<span class="muted">Click a cell or press an arrow key to move through the grid. <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> mark and move down.</span>' : '';
+    return;
+  }
+  histRowKey = cell.dataset.k; histColDate = cell.dataset.d;
+  const td = cell.closest('td'), tr = td.parentElement, i = td.cellIndex;
+  tr.classList.add('cur-row');
+  box.querySelectorAll('tr').forEach(row => row.cells[i]?.classList.add('cur-col'));
+  const x = assigned().find(a => a.k === cell.dataset.k), d = cell.dataset.d, st = getStatus(d, cell.dataset.k);
+  if (!x) return;
+  info.classList.add('on');
+  info.innerHTML = `<span class="who">${esc(x.s.name)}</span><span class="muted small">${seatShort(x.lab)}</span><span class="sep">·</span>
+    <b>${esc(longDate(d))}</b><span class="pill ${st}">${STATUS[st]}</span>
+    <span class="muted small" style="margin-left:auto"><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> mark &amp; move down · arrows move · <kbd>Space</kbd> cycles</span>`;
+}
+$('#history').addEventListener('focusin', e => { const c = e.target.closest('.hcell'); if (c) markHist(c); });
+$('#history').addEventListener('focusout', e => { if (!e.relatedTarget || !$('#history').contains(e.relatedTarget)) setTimeout(() => { if (!$('#history').contains(document.activeElement) && !$('#hFocus').dataset.note) markHist(null); }); });
+function histGrid() { return [...$('#history').querySelectorAll('tbody tr')].map(tr => [...tr.querySelectorAll('.hcell')]); }
+function histPos(grid, el) { for (let r = 0; r < grid.length; r++) { const c = grid[r].indexOf(el); if (c >= 0) return { r, c }; } return { r: 0, c: 0 }; }
+function focusHist(r, c) {
+  const grid = histGrid(); if (!grid.length || !grid[0].length) return;
+  r = Math.max(0, Math.min(grid.length - 1, r)); c = Math.max(0, Math.min(grid[0].length - 1, c));
+  const el = grid[r][c]; el.focus({ preventScroll: true }); keepHistVisible(el);
+}
+$('#hAddBtn').addEventListener('click', () => {
+  const d = $('#hAddDate').value;
+  if (!isDate(d)) return toast('Pick a date to add.', true);
+  if (S.attendance[d]) return toast(`${longDate(d)} is already in the history.`, true);
+  snapshot(); S.attendance[d] = {}; commit(); toast(`Added ${longDate(d)} with everyone present.`);
+});
+
+/* ---------- CSV ---------- */
+function parseCSV(text, delim) {
+  text = text.replace(/^﻿/, '');
+  if (!delim) {
+    const first = text.split(/\r?\n/).find(l => l.trim() && !l.trim().startsWith('#')) || '';
+    const n = ch => first.split(ch).length - 1;
+    delim = n('\t') > n(',') && n('\t') > n(';') ? '\t' : n(';') > n(',') ? ';' : ',';
+  }
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === delim) { row.push(f); f = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += ch;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+const csvCell = v => { v = String(v ?? ''); return /[",\r\n]/.test(v) || /^\s|\s$/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+function buildCSV(scope = 'class') {
+  const rows = [];
+  if (scope === 'all') {                                   // every class, one row per student, with a class column
+    syncStore();
+    const classes = Object.values(STORE.classes).sort(byName);
+    const dates = [...new Set(classes.flatMap(c => Object.keys(c.attendance).filter(isDate)))].sort();
+    rows.push(['class', 'name', 'student_id', 'email', 'row', 'seat', ...dates]);
+    classes.forEach(c => Object.entries(c.seats).filter(([, k]) => c.students[k]).sort((a, b) => seatOrder(a[0]) - seatOrder(b[0])).forEach(([lab, k]) => {
+      const p = parseLabel(lab), st = c.students[k];
+      rows.push([c.className, st.name, st.sid, st.email, p.r + 1, p.c + 1, ...dates.map(d => c.attendance[d] ? (c.attendance[d][k] || 'P') : '')]);
+    }));
+    return rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  }
+  const blank = scope === 'blank', cname = blank ? 'My class' : S.className;
+  const dates = blank ? [] : Object.keys(S.attendance).filter(isDate).sort();
+  rows.push(['#class', cname], ...(isTables()
+      ? [['#shape', 'tables'], ['#tables', S.rows], ['#seats_per_table', S.cols], ['#tables_across', S.tablesAcross || 3]]
+      : [['#rows', S.rows], ['#seats_per_row', S.cols], ['#aisles', S.aisles.join(' ')]]),
+    ['class', 'name', 'student_id', 'email', isTables() ? 'table' : 'row', 'seat', ...dates]);
+  if (blank) rows.push([cname, 'Student Name', '12345678', 'student@example.edu', '1', '1'], [cname, 'Another Student', '12345679', 'another@example.edu', '', '']);
+  else assigned().forEach(x => rows.push([cname, x.s.name, x.s.sid, x.s.email, x.row, x.seat, ...dates.map(d => getStatus(d, x.k))]));
+  return rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+}
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+const slug = s => (s || 'class').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'class';
+function exportCSV(scope = 'class') {
+  const name = scope === 'all' ? 'all-classes' : slug(S.className);
+  download(`attendance-${name}-${todayStr()}.csv`, '﻿' + buildCSV(scope), 'text/csv;charset=utf-8');
+}
+
+/* Accepts 2026-10-13, 2026/10/13, and the US forms spreadsheets write back: 10/13/2026, 10/13/26. */
+function normDate(t) {
+  t = String(t || '').trim();
+  const ok = (y, m, d) => { const dt = new Date(+y, +m - 1, +d); return dt.getFullYear() === +y && dt.getMonth() === +m - 1 && dt.getDate() === +d ? `${y}-${pad(+m)}-${pad(+d)}` : null; };
+  let m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(t);
+  if (m) return ok(m[1], m[2], m[3]);
+  m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/.exec(t);
+  if (m) return ok(m[3].length === 2 ? '20' + m[3] : m[3], m[1], m[2]);
+  return null;
+}
+const HDR = {
+  cls: ['class', 'course', 'section', 'class name', 'course name', 'course section'],
+  row: ['row', 'row number', 'row no', 'table', 'table number', 'table no', 'pod', 'group'],
+  seat: ['seat', 'seat number', 'seat no', 'seat id', 'seat label'],
+  name: ['name', 'student', 'student name', 'full name'],
+  first: ['first', 'first name', 'given name'],
+  last: ['last', 'last name', 'surname', 'family name'],
+  sid: ['student id', 'id', 'sid', 'student number', 'student no'],
+  email: ['email', 'e mail', 'email address', 'student email']
+};
+const hnorm = s => String(s || '').trim().toLowerCase().replace(/[\s_\-.]+/g, ' ').trim();
+
+/* Read the file: settings lines, header, column positions, date columns. */
+function readCSV(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) throw new Error('The CSV is empty.');
+  const meta = {}; let i = 0;
+  for (; i < rows.length; i++) {
+    const c0 = rows[i][0].trim();
+    if (c0.startsWith('#')) meta[c0.slice(1).trim().toLowerCase()] = (rows[i][1] ?? '').trim(); else break;
+  }
+  const header = rows[i];
+  if (!header) throw new Error('No header row found (expected class,name,student_id,email,row,seat,…).');
+  const h = header.map(hnorm);
+  const col = key => h.findIndex(x => HDR[key].includes(x));
+  const c = { cls: col('cls'), row: col('row'), seat: col('seat'), name: col('name'), first: col('first'), last: col('last'), sid: col('sid'), email: col('email') };
+  if (c.name < 0 && c.first < 0 && c.last < 0) throw new Error('The header row needs a "name" column (or "first name" and "last name").');
+  const used = new Set(Object.values(c).filter(j => j >= 0));
+  const dateCols = [], ignored = [], seen = new Map(), errs = [];
+  header.forEach((x, j) => {
+    if (used.has(j) || !x.trim()) return;
+    const d = normDate(x);
+    if (!d) { ignored.push(x.trim()); return; }
+    if (seen.has(d)) errs.push(`Columns "${seen.get(d)}" and "${x.trim()}" are the same date.`);
+    else { seen.set(d, x.trim()); dateCols.push([j, d]); }
+  });
+  const tableHdr = h.some(x => ['table', 'table number', 'table no', 'pod', 'group'].includes(x));
+  return { meta, c, dateCols, ignored, errs, tableHdr, items: rows.slice(i + 1).map((row, n) => ({ row, line: i + n + 2 })) };
+}
+const cellOf = (row, j) => j >= 0 ? (row[j] || '').trim() : '';
+/* Build one class's students, seats, and attendance from its rows. A date counts only if this class has a mark there. */
+function buildGroup(P, items) {
+  const { c, dateCols } = P, errs = [], students = {}, seats = {}, attendance = {}, sids = new Map(), unseated = [], marked = new Set();
+  let maxR = 0, maxC = 0;
+  for (const { row, line } of items) {
+    let name = cellOf(row, c.name);
+    if (!name) name = [cellOf(row, c.first), cellOf(row, c.last)].filter(Boolean).join(' ');
+    const raw = cellOf(row, c.seat), sid = cellOf(row, c.sid), email = cellOf(row, c.email);
+    if (!name) { if (sid || email) errs.push(`Line ${line}: this student has no name.`); continue; }
+    let lab = null;
+    if (c.row >= 0) {
+      const rr = cellOf(row, c.row);
+      if (rr || raw) {
+        if (!/^\d+$/.test(rr) || !/^\d+$/.test(raw) || +rr < 1 || +raw < 1) { errs.push(`Line ${line}: row "${rr}" and seat "${raw}" must both be whole numbers (or both blank to auto-place).`); continue; }
+        lab = label(+rr - 1, +raw - 1);
+      }
+    } else if (raw) {
+      lab = normLabel(raw);
+      if (!lab) { errs.push(`Line ${line}: "${raw}" isn't a seat. Use separate row and seat columns, or leave it blank to auto-place.`); continue; }
+    }
+    if (lab && seats[lab]) { errs.push(`Line ${line}: seat ${lab.replace('-', '/')} is used more than once.`); continue; }
+    if (sid && sids.has(sid)) { errs.push(`Line ${line}: student ID ${sid} appears more than once.`); continue; }
+    if (!emailOk(email)) errs.push(`Line ${line}: email "${email}" doesn't look valid.`);
+    const k = uid(); students[k] = { name, sid, email }; if (sid) sids.set(sid, line);
+    if (lab) { seats[lab] = k; const p = parseLabel(lab); maxR = Math.max(maxR, p.r + 1); maxC = Math.max(maxC, p.c + 1); }
+    else unseated.push(k);
+    dateCols.forEach(([j, d]) => {
+      const v = (row[j] || '').trim().toUpperCase();
+      if (v) marked.add(d);
+      const st = (v === '' || v === 'P' || v === 'PRESENT') ? 'P' : (v === 'A' || v === 'ABSENT') ? 'A' : (v === 'E' || v === 'EXCUSED') ? 'E' : null;
+      if (st === null) errs.push(`Line ${line}: "${row[j]}" on ${d} should be P, A, or E.`);
+      else if (st !== 'P') (attendance[d] ||= {})[k] = st;
+    });
+  }
+  marked.forEach(d => attendance[d] ||= {});
+  Object.keys(attendance).forEach(d => { if (!marked.has(d)) delete attendance[d]; });
+  return { students, seats, attendance, unseated, maxR, maxC, errs, n: Object.keys(students).length };
+}
+/* Fit a class into its room: read layout lines (single-class files), check bounds, place unseated students. */
+function planRoom(P, g, room, useMeta) {
+  const meta = useMeta ? P.meta : {}, errs = [];
+  const num = (v, fb) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : fb; };
+  const said = useMeta && (meta.shape !== undefined || meta.tables !== undefined || meta.rows !== undefined || meta.seats_per_row !== undefined);
+  const shp = useMeta && ((meta.shape || '').toLowerCase().startsWith('table') || meta.tables !== undefined || (!said && P.tableHdr)) ? 'tables' : said ? 'rows' : (room.shape || 'rows');
+  let R = num(meta.tables ?? meta.rows, Math.max(g.maxR, room.rows)), C = num(meta.seats_per_table ?? meta.seats_per_row ?? meta.cols, Math.max(g.maxC, room.cols));
+  const across = Math.max(1, Math.min(8, num(meta.tables_across, room.tablesAcross || 3)));
+  if (R < LIM.rows[0] || R > LIM.rows[1]) errs.push(`Rows must be ${LIM.rows[0]}–${LIM.rows[1]} (got ${R}).`);
+  if (C < LIM.cols[0] || C > LIM.cols[1]) errs.push(`Seats per row must be ${LIM.cols[0]}–${LIM.cols[1]} (got ${C}).`);
+  if (g.maxR > R || g.maxC > C) errs.push(`Some seats fall outside a ${R} × ${C} layout.`);
+  let added = 0;
+  if (!errs.length && g.unseated.length) {
+    const free = () => { const out = []; for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (!g.seats[label(r, c)]) out.push(label(r, c)); return out; };
+    while (free().length < g.unseated.length && R < LIM.rows[1]) { R++; added++; }
+    const f = free();
+    if (f.length < g.unseated.length) errs.push(`${g.unseated.length} students have no seat, but only ${f.length} seats are free even at ${LIM.rows[1]} rows.`);
+    else g.unseated.forEach((k, n) => g.seats[f[n]] = k);
+  }
+  const rawA = meta.aisles !== undefined ? meta.aisles : meta.aisle_after !== undefined ? meta.aisle_after : null;
+  const A = shp === 'tables' ? [] : rawA === null ? (room.aisles || []).filter(b => b < C) : [...new Set(String(rawA).split(/[\s;|,]+/).map(x => parseInt(x, 10)).filter(b => b > 0 && b < C))].sort((a, b) => a - b);
+  const differs = R !== room.rows || C !== room.cols || shp !== (room.shape || 'rows') || (shp === 'tables' ? across !== (room.tablesAcross || 3) : A.join() !== (room.aisles || []).join());
+  return { R, C, shp, across, A, added, errs, differs };
+}
+/* Update roster (merge) into an existing class.
+   Match each file row to a student by student ID, then email, then name (accents and case ignored).
+   Matched: fill in any non-blank name/ID/email, move to the file's seat if it's free, apply non-blank P/A/E marks.
+   New: added at the file's seat if free, otherwise the next open seat (adding rows if needed).
+   Blank cells never erase anything. Students not in the file are kept unless removeMissing. */
+function mergeGroup(P, items, cls, room, removeMissing) {
+  const { c, dateCols } = P, errs = [], notes = [], conflicts = [];
+  const students = JSON.parse(JSON.stringify(cls.students)), seats = { ...cls.seats }, attendance = JSON.parse(JSON.stringify(cls.attendance));
+  const seatOf = {}; for (const [l, k] of Object.entries(seats)) seatOf[k] = l;
+  const nkey = t => fold(t).replace(/\s+/g, ' ').trim();
+  const bySid = new Map(), byEmail = new Map(), byName = new Map();
+  for (const [k, st] of Object.entries(students)) {
+    if (st.sid) bySid.set(st.sid, k);
+    if (st.email) byEmail.set(st.email.toLowerCase(), k);
+    const n = nkey(st.name); byName.set(n, byName.has(n) ? null : k);          // null = two students share this name
+  }
+  const seen = new Set(), added = [], marked = new Set(), revived = [];
+  let updated = 0, moved = 0, R = room.rows;
+  const C = room.cols, inRoom = l => { const p = parseLabel(l); return p.r < LIM.rows[1] && p.c < C; };
+  for (const { row, line } of items) {
+    let name = cellOf(row, c.name);
+    if (!name) name = [cellOf(row, c.first), cellOf(row, c.last)].filter(Boolean).join(' ');
+    const sid = cellOf(row, c.sid), email = cellOf(row, c.email), raw = cellOf(row, c.seat);
+    if (!name && !sid && !email) continue;
+    if (email && !emailOk(email)) { errs.push(`Line ${line}: email "${email}" doesn't look valid.`); continue; }
+    let lab = null;
+    if (c.row >= 0) {
+      const rr = cellOf(row, c.row);
+      if (rr || raw) { if (!/^\d+$/.test(rr) || !/^\d+$/.test(raw) || +rr < 1 || +raw < 1) { errs.push(`Line ${line}: row "${rr}" and seat "${raw}" must both be whole numbers (or both blank).`); continue; } lab = label(+rr - 1, +raw - 1); }
+    } else if (raw) { lab = normLabel(raw); if (!lab) { errs.push(`Line ${line}: "${raw}" isn't a seat.`); continue; } }
+    let k = (sid && bySid.get(sid)) || (email && byEmail.get(email.toLowerCase())) || null;
+    if (!k && name) {
+      const n = nkey(name);
+      if (byName.has(n) && byName.get(n) === null) { errs.push(`Line ${line}: “${name}” matches more than one student. Add a student_id column so they can be told apart.`); continue; }
+      k = byName.get(n) || null;
+    }
+    if (k && seen.has(k)) { errs.push(`Line ${line}: ${name || students[k].name} appears more than once in the file.`); continue; }
+    if (!k && !name) { errs.push(`Line ${line}: no student in the class has ID “${sid || email}”, and the row has no name to add them.`); continue; }
+    const marks = {};
+    for (const [j, d] of dateCols) {
+      const v = (row[j] || '').trim().toUpperCase(); if (!v) continue;
+      const st = (v === 'P' || v === 'PRESENT') ? 'P' : (v === 'A' || v === 'ABSENT') ? 'A' : (v === 'E' || v === 'EXCUSED') ? 'E' : null;
+      if (!st) { errs.push(`Line ${line}: "${row[j]}" on ${d} should be P, A, or E.`); continue; }
+      marks[d] = st;
+    }
+    if (k) {
+      seen.add(k);
+      if (students[k].dropped) { revived.push({ k, seat: students[k].dropped.seat }); delete students[k].dropped; }   // on the roster again
+      const st = students[k], before = JSON.stringify(st);
+      if (name) st.name = name; if (sid) st.sid = sid; if (email) st.email = email;
+      if (JSON.stringify(st) !== before) updated++;
+      if (lab && lab !== seatOf[k]) {
+        if (!seats[lab] && inRoom(lab)) { if (seatOf[k]) delete seats[seatOf[k]]; seats[lab] = k; seatOf[k] = lab; moved++; const p = parseLabel(lab); R = Math.max(R, p.r + 1); }
+        else conflicts.push(`${st.name} stays in ${seatName(seatOf[k])} (${seatName(lab)} is taken)`);
+      }
+    } else {
+      k = uid(); students[k] = { name, sid, email }; seen.add(k); added.push({ k, lab });
+    }
+    for (const [d, st] of Object.entries(marks)) { marked.add(d); const day = attendance[d] ||= {}; if (st === 'P') delete day[k]; else day[k] = st; }
+  }
+  // seat the new students (and returning dropped students who still have no seat)
+  const later = [];
+  for (const { k, seat } of revived) {                     // back to their old seat if it's still free
+    if (seatOf[k]) continue;
+    if (seat && !seats[seat] && inRoom(seat)) { seats[seat] = k; seatOf[k] = seat; R = Math.max(R, parseLabel(seat).r + 1); }
+    else later.push(k);
+  }
+  if (revived.length) notes.push(`${revived.length} dropped student${revived.length === 1 ? ' is' : 's are'} on this roster again and will be restored.`);
+  for (const a of added) {
+    if (a.lab && !seats[a.lab] && inRoom(a.lab)) { seats[a.lab] = a.k; seatOf[a.k] = a.lab; R = Math.max(R, parseLabel(a.lab).r + 1); }
+    else { if (a.lab) conflicts.push(`${students[a.k].name} goes to an open seat (${seatName(a.lab)} is taken or outside the room)`); later.push(a.k); }
+  }
+  let removed = 0;
+  if (removeMissing) for (const k of Object.keys(students)) if (!seen.has(k)) {
+    removed++; delete students[k]; if (seatOf[k]) delete seats[seatOf[k]];
+    for (const d of Object.values(attendance)) delete d[k];
+  }
+  if (later.length) {
+    const free = () => { const out = []; for (let r = 0; r < R; r++) for (let j = 0; j < C; j++) if (!seats[label(r, j)]) out.push(label(r, j)); return out; };
+    let grow = 0; while (free().length < later.length && R < LIM.rows[1]) { R++; grow++; }
+    const f = free();
+    if (f.length < later.length) errs.push(`${later.length} new students need seats, but only ${f.length} are open even at ${LIM.rows[1]} ${isTables() ? 'tables' : 'rows'}.`);
+    else { later.forEach((k, i) => { seats[f[i]] = k; seatOf[k] = f[i]; }); notes.push(`${later.length} new student${later.length === 1 ? '' : 's'} will be placed in open seats${grow ? ` (adding ${grow} ${grow === 1 ? 'row' : 'rows'})` : ''}.`); }
+  }
+  const ids = new Map();
+  for (const [k, st] of Object.entries(students)) if (st.sid) { if (ids.has(st.sid)) errs.push(`Student ID ${st.sid} would belong to both ${students[ids.get(st.sid)].name} and ${st.name}.`); else ids.set(st.sid, k); }
+  if (added.length && Object.keys(cls.attendance).length) notes.push('New students count as present on earlier dates unless the file marks them.');
+  if (conflicts.length) notes.push(...conflicts.slice(0, 5), ...(conflicts.length > 5 ? [`…and ${conflicts.length - 5} more seat notes.`] : []));
+  const unchanged = Object.keys(cls.students).filter(k => seen.has(k)).length - updated;
+  const kept = Object.keys(cls.students).filter(k => !seen.has(k)).length - removed;
+  return { cls: { students, seats, attendance }, R, errs, notes,
+    stats: { updated, added: added.length, removed, unchanged: unchanged + kept, moved, dates: marked.size } };
+}
+/* Import: rows go to the class named in the "class" column (new names become new classes);
+   a file without that column goes into the open class. */
+function importCSV(text) {
+  const P = readCSV(text);
+  if (P.errs.length) throw new Error(P.errs.join('\n'));
+  syncStore();
+  const groups = new Map();
+  for (const it of P.items) {
+    if (!it.row.some(x => String(x).trim())) continue;
+    const nm = cellOf(it.row, P.c.cls), key = fold(nm);
+    if (!groups.has(key)) groups.set(key, { name: nm, items: [] });
+    groups.get(key).items.push(it);
+  }
+  const named = [...groups.keys()].filter(Boolean);
+  if (named.length > 1 && groups.has('')) throw new Error(`Line ${groups.get('').items[0].line}: the class is blank. When a file has several classes, every row needs its class.`);
+  if (named.length === 1 && groups.has('')) { groups.get(named[0]).items.push(...groups.get('').items); groups.delete(''); }
+  if (!groups.size) groups.set('', { name: '', items: [] });
+  const single = groups.size === 1;
+  const findClass = nm => Object.values(STORE.classes).find(c => fold(c.className) === fold(nm));
+  const plans = [], errs = [], merge = S.importMode !== 'replace', removeMissing = merge && $('#impRemove').checked;
+  for (const [key, grp] of groups) {
+    const name = key ? grp.name : (P.meta.class || '');
+    const target = key ? findClass(grp.name) : STORE.classes[S.classId];
+    if (target && merge) {                                  // update roster: keep seats and history
+      const m = mergeGroup(P, grp.items, target, STORE.rooms[target.roomId], removeMissing);
+      m.errs.forEach(e => errs.push((single ? '' : `${name}: `) + e));
+      plans.push({ name, target, merge: m });
+      continue;
+    }
+    const g = buildGroup(P, grp.items);
+    const room = target ? STORE.rooms[target.roomId] : single ? STORE.rooms[S.roomId] : { shape: 'rows', rows: 6, cols: 8, aisles: [], tablesAcross: 3 };
+    const plan = planRoom(P, g, room, single);
+    const tag = single ? '' : `${name}: `;
+    [...g.errs, ...plan.errs].forEach(e => errs.push(tag + e));
+    plans.push({ name, target, g, plan, shared: target ? classesInRoom(target.roomId).some(c => c.id !== target.id) : false });
+  }
+  if (errs.length) throw new Error(errs.slice(0, 8).join('\n') + (errs.length > 8 ? `\n…and ${errs.length - 8} more.` : ''));
+  const dn = g => { const d = Object.keys(g.attendance).length; return `${g.n} student${g.n === 1 ? '' : 's'}, ${d} date${d === 1 ? '' : 's'}`; };
+  const mline = m => { const st = m.stats, bits = [`${st.updated} updated`, `${st.added} added`];
+    if (st.removed) bits.push(`${st.removed} removed`); bits.push(`${st.unchanged} unchanged`);
+    if (st.moved) bits.push(`${st.moved} moved to new seats`);
+    return bits.join(', ') + (st.dates ? `; marks on ${st.dates} date${st.dates === 1 ? '' : 's'}` : ''); };
+  const lines = plans.map(x => x.merge ? `• Update “${x.target.className || 'Untitled class'}”: ${mline(x.merge)}` : x.target ? `• Replace “${x.target.className || 'Untitled class'}” with ${dn(x.g)}${x.name && x.target.id === S.classId && !groups.has(fold(x.target.className)) && x.name !== x.target.className ? ` (renamed “${x.name}”)` : ''}`
+                                        : `• New class “${x.name}” with ${dn(x.g)}`);
+  const notes = [];
+  plans.forEach(x => { if (x.g && x.g.unseated.length) notes.push(`${x.name || x.target?.className || 'This class'}: ${x.g.unseated.length} student${x.g.unseated.length === 1 ? '' : 's'} without a seat will be placed in open seats${x.plan.added ? ` (adding ${x.plan.added} row${x.plan.added === 1 ? '' : 's'})` : ''}.`); });
+  plans.forEach(x => { if (x.merge) notes.push(...x.merge.notes.map(n => `${x.target.className || 'This class'}: ${n}`)); });
+  if (merge && plans.some(x => x.merge) && single && ['rows', 'seats_per_row', 'tables', 'seats_per_table', 'aisles', 'shape'].some(k => P.meta[k] !== undefined)) notes.push('Update roster keeps the room as it is, so the file\'s layout lines are ignored.');
+  plans.forEach(x => { if (x.target && x.plan && x.plan.differs && x.shared) notes.push(`${x.target.className}: its room is shared and this file needs a different layout, so it gets its own copy of the room.`); });
+  if (P.ignored.length) notes.push(`Ignored column${P.ignored.length === 1 ? '' : 's'}: ${P.ignored.slice(0, 6).join(', ')}${P.ignored.length > 6 ? '…' : ''}.`);
+  if (!confirm(`Import this file?\n\n${lines.join('\n')}` + (notes.length ? '\n\n' + notes.join('\n') : '') + '\n\nOther classes stay as they are.')) return false;
+  let lastId = null;
+  plans.forEach(x => {
+    if (x.merge) {
+      Object.assign(x.target, x.merge.cls);
+      const room = STORE.rooms[x.target.roomId]; if (x.merge.R > room.rows) room.rows = x.merge.R;
+      lastId = x.target.id; return;
+    }
+    const { g, plan } = x;
+    let c = x.target;
+    if (!c) { const id = uid(); c = STORE.classes[id] = { id, className: x.name, days: [], roomId: null }; }
+    let rid = c.roomId;
+    if (!rid || (plan.differs && x.shared)) { rid = uid(); STORE.rooms[rid] = { id: rid, name: `${c.className || x.name || 'Class'} room` }; }
+    Object.assign(STORE.rooms[rid], { shape: plan.shp, rows: plan.R, cols: plan.C, aisles: plan.A, tablesAcross: plan.across });
+    Object.assign(c, { students: g.students, seats: g.seats, attendance: g.attendance, roomId: rid });
+    if (single && x.name) c.className = x.name;
+    lastId = c.id;
+  });
+  if (single) STORE.active = lastId;
+  S = flatten(STORE); resetSession(); commit();
+  if (plans.every(x => x.merge)) {
+    const st = plans.reduce((a, x) => { for (const k in x.merge.stats) a[k] = (a[k] || 0) + x.merge.stats[k]; return a; }, {});
+    toast(`Roster updated: ${st.updated} updated, ${st.added} added${st.removed ? `, ${st.removed} removed` : ''}.` + (single ? '' : ` (${plans.length} classes)`));
+    return true;
+  }
+  const total = plans.reduce((t, x) => t + (x.g ? x.g.n : Object.keys(x.merge.cls.students).length), 0);
+  toast(single ? `Imported ${total} student${total === 1 ? '' : 's'} into “${S.className || 'this class'}”.` : `Imported ${total} students across ${plans.length} classes.`);
+  return true;
+}
+
+/* ---------- emails ---------- */
+function curTpl() { return S.templates.find(t => t.id === tplSel) || S.templates[0] || null; }
+/* The editor's Subject and Message are the working draft the emails use, live. Templates are starting points:
+   picking one loads it; edits stay in the draft until you Save template (or Duplicate to keep them as a new one). */
+function loadWork(t) { S.work = { tpl: t?.id || null, subject: t?.subject || '', body: t?.body || '' }; }
+function ensureWork() { const t = curTpl(); if (!S.work || (S.work.tpl && S.work.tpl !== t?.id)) loadWork(t); }
+function isEdited() {
+  const t = curTpl(); if (!t) return !!(S.work?.subject || S.work?.body);
+  return S.work.subject !== t.subject || S.work.body !== t.body || ($('#tplTitle').value.trim() || 'Untitled') !== t.title;
+}
+function curMsg() {                                    // what the drafts use
+  ensureWork(); const t = curTpl();
+  if (!t && !S.work.subject && !S.work.body) return null;
+  return { title: t?.title || 'Custom message', subject: S.work.subject, body: S.work.body, edited: isEdited() };
+}
+function updateTplState() {
+  const ed = isEdited();
+  $('#tplState').hidden = !ed; $('#tplRevert').hidden = !ed || !curTpl();
+}
+function renderTemplates(force) {
+  const t = curTpl(); tplSel = t?.id || null; ensureWork();
+  $('#tplSelect').innerHTML = S.templates.map(x => `<option value="${x.id}" ${x.id === tplSel ? 'selected' : ''}>${esc(x.title || 'Untitled')}</option>`).join('') || '<option value="">No templates</option>';
+  const ae = force ? null : document.activeElement;  // never overwrite a field you're typing in (unless you just switched templates)
+  if (ae !== $('#tplTitle')) $('#tplTitle').value = t?.title || '';
+  if (ae !== $('#tplSubject')) $('#tplSubject').value = S.work.subject;
+  if (ae !== $('#tplBody')) $('#tplBody').value = S.work.body;
+  ['#tplTitle', '#tplDel', '#tplDup'].forEach(s => $(s).disabled = !t);
+  $('#tplSave').textContent = t ? 'Save template' : 'Save as template';
+  updateTplState();
+}
+function fill(str, x) {
+  const parts = x.s.name.trim().split(/\s+/);
+  const map = { name: x.s.name, first: parts[0] || x.s.name, last: parts[parts.length - 1] || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: x.s.sid };
+  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m);
+}
+function b64(s) { const bytes = new TextEncoder().encode(s); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
+function eml(to, subject, body) {
+  return [`To: ${to}`, `Subject: =?UTF-8?B?${b64(subject)}?=`, 'X-Unsent: 1', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64(body).replace(/.{76}/g, '$&\r\n')].join('\r\n') + '\r\n';
+}
+/* Recipients: a selection set kept for the session. Re-seeded with the day's absences whenever the date changes. */
+let emailSel = new Set(), selDate = null, selAuto = true, lastPick = null, emailMode = 'group', emailFilter = '', emailView = 'absent';
+const absTotal = k => Object.values(S.attendance).filter(d => d[k] === 'A').length;
+function fillGroup(str) {
+  const map = { name: 'everyone', first: 'everyone', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class' };
+  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m);
+}
+const mailAddr = e => encodeURIComponent(e).replace(/%40/g, '@');
+function groupMailto(to, list, subj, body) {
+  return `mailto:${to ? mailAddr(to) : ''}?bcc=${list.map(mailAddr).join(',')}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function groupEml(to, list, subject, body) {
+  return [...(to ? [`To: ${to}`] : []), `Bcc: ${list.join(', ')}`, `Subject: =?UTF-8?B?${b64(subject)}?=`, 'X-Unsent: 1', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64(body).replace(/.{76}/g, '$&\r\n')].join('\r\n') + '\r\n';
+}
+function renderDrafts() {
+  const t = curMsg();
+  if (selDate !== S.date) { selDate = S.date; selAuto = true; lastPick = null; emailView = 'absent'; }
+  if (selAuto) emailSel = new Set(assigned().filter(x => getStatus(S.date, x.k) === 'A').map(x => x.k));   // follow the day's absences until you pick by hand
+  for (const k of [...emailSel]) if (!S.students[k]) emailSel.delete(k);
+  const box = $('#drafts');
+  const fa = document.activeElement, fPick = fa?.dataset?.pick, fFilter = box.contains(fa) ? fa.dataset?.filter : null, fStep = box.contains(fa) ? fa.dataset?.step : null, fId = box.contains(fa) ? fa.id : '', caret = fa?.selectionStart;
+  const oldList = box.querySelector('.rlist'), scroll = oldList ? oldList.scrollTop : 0;
+  const all = assigned();
+  const q = fold(emailFilter.trim());
+  const maxAbs = Math.max(1, ...all.map(x => absTotal(x.k)));
+  const absMin = Math.max(1, Math.min(S.absMin || 2, Math.max(maxAbs, 2)));
+  const groups = [
+    ['all', 'All', all, 'No students yet.'],
+    ['absent', `Absent ${shortDate(S.date)}`, all.filter(x => getStatus(S.date, x.k) === 'A'), `No one was absent on ${longDate(S.date)}.`],
+    ['excused', `Excused ${shortDate(S.date)}`, all.filter(x => getStatus(S.date, x.k) === 'E'), `No one was excused on ${longDate(S.date)}.`],
+    ['repeat', (absMin === 1 ? 'Absent at least once' : `Absent ${absMin}+ times`), all.filter(x => absTotal(x.k) >= absMin), `No one has been absent ${absMin === 1 ? 'yet' : absMin + ' or more times'}.`]
+  ];
+  const view = groups.find(g => g[0] === emailView) || groups[1];
+  const vis = view[2].filter(x => !q || matchStudent(x, q));   // only the filter's students are listed
+  const sel = all.filter(x => emailSel.has(x.k)), withE = sel.filter(x => x.s.email), noE = sel.filter(x => !x.s.email);
+  const visKeys = new Set(vis.map(x => x.k)), hiddenSel = sel.filter(x => !visKeys.has(x.k)).length, visUnsel = vis.filter(x => !emailSel.has(x.k)).length;
+  const dd = dayDiff(S.date), dw = dd === 0 ? 'today' : dd < 0 ? 'past' : 'future';
+  let h = `<div class="dhead ${dw}" id="emailDate"><span class="big">${dd === 0 ? '' : '⚠ '}${esc(longDate(S.date))}</span>
+    <span class="pill ${dd === 0 ? 'P' : 'E'}">${dd === 0 ? 'Today' : esc(relDay(dd))}</span>
+    ${dd === 0 ? '' : `<span class="small" style="flex-basis:100%">Absences and drafts below are for this date, not today.</span>
+      <button type="button" class="btn primary" data-go-today>Go to today</button>
+      <button type="button" class="btn" data-shift="-1">‹ Previous day</button><button type="button" class="btn" data-shift="1">Next day ›</button>`}</div>
+    ${t ? `<p class="small muted" style="margin:0 0 8px">Message: “${esc(t.title)}”${t.edited ? ' <span style="color:var(--excused)">(edited, not saved to template)</span>' : ''}</p>` : ''}`;
+  if (!all.length) { box.innerHTML = h + '<p class="muted">No students yet.</p>'; return; }
+  h += `<div class="rchips" role="group" aria-label="Show students">${groups.map(([id, lbl, list]) => {
+      const chip = `<button type="button" class="chip" data-filter="${id}" aria-pressed="${id === view[0]}" title="${id === 'all' ? 'List every student (your selection is kept)' : 'List and select these students'}">${esc(lbl)}<b>${list.length}</b></button>`;
+      return id !== 'repeat' ? chip : `<span class="stepchip">
+        <button type="button" class="stp" data-step="-1" aria-label="Lower the absence count to ${absMin - 1}" title="Fewer absences" ${absMin <= 1 ? 'disabled' : ''}>−</button>${chip}
+        <button type="button" class="stp" data-step="1" aria-label="Raise the absence count to ${absMin + 1}" title="More absences" ${absMin >= maxAbs ? 'disabled' : ''}>+</button></span>`;
+    }).join('')}</div>
+    <div class="row"><input type="text" id="rSearch" placeholder="Search name, email, or ID" value="${esc(emailFilter)}" aria-label="Search students" style="flex:1">
+      <button type="button" class="btn" data-sel="visible" ${visUnsel ? '' : 'disabled'}>Select all shown</button>
+      <button type="button" class="btn" data-sel="none" ${sel.length ? '' : 'disabled'}>Clear selection</button></div>
+    <div class="rcount"><span><b>${sel.length}</b> selected${hiddenSel ? ` · <span style="color:var(--excused)">${hiddenSel} not shown</span>` : ''}${noE.length ? ` · <span style="color:var(--absent)">${noE.length} without email</span>` : ''}</span><span class="muted">Showing ${vis.length} of ${all.length} · Shift-click selects a range</span></div>
+    <div class="rlist" role="group" aria-label="Students">${vis.length ? vis.map(x => {
+      const st = getStatus(S.date, x.k), on = emailSel.has(x.k), n = absTotal(x.k);
+      return `<label class="rrow${on ? ' on' : ''}"><input type="checkbox" data-pick="${x.k}" ${on ? 'checked' : ''}>
+        <span class="who">${esc(x.s.name)}<span class="em${x.s.email ? '' : ' none'}">${x.s.email ? esc(x.s.email) : 'no email on file'}</span></span>
+        ${st !== 'P' ? `<span class="pill ${st}">${STATUS[st]}</span>` : ''}<span class="tag" title="Total absences">${n ? n + '× abs' : ''}</span><span class="tag">${seatShort(x.lab)}</span></label>`;
+    }).join('') : `<p class="muted small" style="padding:8px 10px;margin:0">${q ? 'No students match your search.' : esc(view[3])}</p>`}</div>
+    <div class="seg" role="group" aria-label="Email style" style="margin:14px 0 10px">
+      <button type="button" data-emode="group" aria-pressed="${emailMode === 'group'}">One email (BCC)</button>
+      <button type="button" data-emode="each" aria-pressed="${emailMode === 'each'}">Separate emails</button></div>`;
+  if (!t) h += '<p class="muted">Write a subject and message on the left to draft emails.</p>';
+  else if (!sel.length) h += '<p class="muted">Select students above to draft an email.</p>';
+  else if (emailMode === 'group') {
+    const subj = fillGroup(t.subject), body = fillGroup(t.body), list = withE.map(x => x.s.email);
+    h += `<div class="draft">
+      <label class="fld"><span>To (optional, e.g. your own address)</span><input type="email" id="bccTo" value="${esc(S.bccTo || '')}" placeholder="you@school.edu"></label>
+      <div class="small" style="margin-top:8px"><b>BCC (${list.length}):</b> <span class="muted">${list.length ? esc(list.join(', ')) : 'none'}</span></div>
+      ${noE.length ? `<div class="note">Left out, no email on file: ${noE.map(x => esc(x.s.name)).join(', ')}</div>` : ''}
+      <div class="small" style="margin-top:6px"><b>Subject:</b> ${esc(subj)}</div><div class="body">${esc(body)}</div>
+      <p class="small muted" style="margin:0 0 8px">Personal placeholders ({first}, {name}) read “everyone” in a group email. Use Separate emails for personal greetings.</p>
+      <div id="longNote"></div>
+      <div class="row">
+        <a class="btn primary" id="gMail" style="text-decoration:none" ${list.length ? '' : 'aria-disabled="true"'}>Open in mail app</a>
+        <button class="btn" type="button" id="gEml" ${list.length ? '' : 'disabled'}>Download .eml</button>
+        <button class="btn" type="button" id="gCopyAddr" ${list.length ? '' : 'disabled'}>Copy BCC list</button>
+        <button class="btn" type="button" id="gCopyMsg">Copy message</button></div></div>`;
+  } else {
+    sel.forEach((x, i) => {
+      const subj = fill(t.subject, x), body = fill(t.body, x);
+      const mailto = x.s.email ? `mailto:${mailAddr(x.s.email)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}` : '';
+      h += `<div class="draft"><div class="row" style="justify-content:space-between"><strong>${esc(x.s.name)}</strong><span class="small muted">${seatShort(x.lab)}${x.s.email ? ' · ' + esc(x.s.email) : ' · no email on file'}</span></div>
+        <div class="small"><b>Subject:</b> ${esc(subj)}</div><div class="body">${esc(body)}</div>
+        <div class="row">${mailto ? `<a class="btn primary" href="${esc(mailto)}" style="text-decoration:none">Open in mail app</a>` : ''}
+        <button class="btn" type="button" data-eml="${i}" ${x.s.email ? '' : 'disabled'}>Download .eml</button>
+        <button class="btn" type="button" data-copy="${i}">Copy</button></div></div>`;
+    });
+  }
+  box.innerHTML = h;
+  const nl = box.querySelector('.rlist'); if (nl) nl.scrollTop = scroll;
+  if (fPick) box.querySelector(`[data-pick="${fPick}"]`)?.focus();
+  else if (fFilter) box.querySelector(`[data-filter="${fFilter}"]`)?.focus();
+  else if (fStep) (box.querySelector(`[data-step="${fStep}"]:not(:disabled)`) || box.querySelector('[data-filter="repeat"]'))?.focus();
+  else if (fId) { const el = box.querySelector('#' + fId); if (el) { el.focus(); try { el.setSelectionRange(caret, caret); } catch (e) {} } }
+
+  box.querySelector('[data-go-today]')?.addEventListener('click', goToday);
+  box.querySelectorAll('[data-shift]').forEach(b => b.addEventListener('click', () => setDate(stepDay(S.date, +b.dataset.shift))));
+  // selection
+  box.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
+    S.absMin = Math.max(1, Math.min(maxAbs, absMin + +b.dataset.step)); save();
+    const n = S.absMin;                                 // switch to this filter and select who matches the new count
+    emailView = 'repeat'; emailSel = new Set(all.filter(x => absTotal(x.k) >= n).map(x => x.k));
+    selAuto = false; lastPick = null; renderDrafts();
+  }));
+  box.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => {
+    const g = groups.find(x => x[0] === b.dataset.filter);
+    emailView = g[0];
+    if (g[0] !== 'all') emailSel = new Set(g[2].map(x => x.k));   // a filter selects what it shows; "All" never selects everyone
+    selAuto = g[0] === 'absent'; lastPick = null; renderDrafts();
+  }));
+  box.querySelectorAll('[data-sel]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.sel === 'none') emailSel.clear(); else vis.forEach(x => emailSel.add(x.k));
+    selAuto = false; lastPick = null; renderDrafts();
+  }));
+  box.querySelectorAll('[data-pick]').forEach(cb => cb.addEventListener('click', e => {
+    const k = cb.dataset.pick, on = cb.checked, keys = vis.map(x => x.k);
+    if (e.shiftKey && lastPick && keys.includes(lastPick)) {
+      const [i0, i1] = [keys.indexOf(lastPick), keys.indexOf(k)].sort((a, b) => a - b);
+      keys.slice(i0, i1 + 1).forEach(x => on ? emailSel.add(x) : emailSel.delete(x));
+    } else on ? emailSel.add(k) : emailSel.delete(k);
+    selAuto = false; lastPick = k; renderDrafts();
+  }));
+  $('#rSearch').addEventListener('input', e => { emailFilter = e.target.value; renderDrafts(); });
+  box.querySelectorAll('[data-emode]').forEach(b => b.addEventListener('click', () => { emailMode = b.dataset.emode; renderDrafts(); }));
+  if (!t || !sel.length) return;
+  if (emailMode === 'group') {
+    const subj = fillGroup(t.subject), body = fillGroup(t.body), list = withE.map(x => x.s.email);
+    const upd = () => {
+      const to = S.bccTo || '', href = groupMailto(to, list, subj, body);
+      const a = $('#gMail'); if (list.length) a.href = href; else a.removeAttribute('href');
+      $('#longNote').innerHTML = href.length > 1900 ? '<div class="note">This message is long enough that some mail apps may cut it off when opened from the button. If anything is missing, use Download .eml, or Copy BCC list and Copy message.</div>' : '';
+    };
+    upd();
+    $('#bccTo').addEventListener('input', e => { S.bccTo = e.target.value.trim(); save(); upd(); });
+    $('#gEml').addEventListener('click', () => download(`group-${slug(S.className)}-${S.date}.eml`, groupEml(S.bccTo, list, subj, body), 'message/rfc822'));
+    $('#gCopyAddr').addEventListener('click', () => copy(list.join(', ')));
+    $('#gCopyMsg').addEventListener('click', () => copy(`Subject: ${subj}\n\n${body}`));
+  } else {
+    box.querySelectorAll('[data-eml]').forEach(b => b.addEventListener('click', () => {
+      const x = sel[+b.dataset.eml];
+      download(`draft-${slug(x.s.name)}-${S.date}.eml`, eml(x.s.email, fill(t.subject, x), fill(t.body, x)), 'message/rfc822');
+    }));
+    box.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+      const x = sel[+b.dataset.copy];
+      copy(`To: ${x.s.email}\nSubject: ${fill(t.subject, x)}\n\n${fill(t.body, x)}`);
+    }));
+  }
+}
+function copy(text) {
+  (navigator.clipboard?.writeText(text) || Promise.reject()).then(() => toast('Copied to clipboard.'), () => {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Copied to clipboard.'); } catch (e) { toast('Copy failed.', true); }
+    ta.remove();
+  });
+}
+
+/* ---------- events ---------- */
+
+/* ---------- calendar popover ---------- */
+let calFocus = null;                                   // the day with keyboard focus (YYYY-MM-DD)
+const ymd = o => o.getFullYear() + '-' + pad(o.getMonth() + 1) + '-' + pad(o.getDate());
+const calIsOpen = () => !$('#cal').hidden;
+function shiftMonth(d, n) {
+  const o = dateObj(d), day = o.getDate();
+  o.setDate(1); o.setMonth(o.getMonth() + n);
+  o.setDate(Math.min(day, new Date(o.getFullYear(), o.getMonth() + 1, 0).getDate()));
+  return ymd(o);
+}
+function openCal() { calFocus = S.date; $('#cal').hidden = false; $('#dPick').setAttribute('aria-expanded', 'true'); renderCal('day'); }
+function closeCal(refocus) {
+  if (!calIsOpen()) return;
+  $('#cal').hidden = true; $('#dPick').setAttribute('aria-expanded', 'false');
+  if (refocus) $('#dPick').focus();
+}
+function renderCal(focusWhat) {
+  const f = dateObj(calFocus), y = f.getFullYear(), m = f.getMonth();
+  const start = new Date(y, m, 1 - new Date(y, m, 1).getDay()), today = todayStr();
+  const absN = d => S.attendance[d] ? assigned().filter(x => getStatus(d, x.k) === 'A').length : 0;
+  const wd = [...Array(7)].map((_, i) => new Date(2026, 9, 18 + i).toLocaleDateString(undefined, { weekday: 'short' }));   // Oct 18 2026 is a Sunday
+  let h = `<div class="cal-head"><button type="button" class="cal-nav" data-cm="-1" aria-label="Previous month">‹</button>
+    <div class="cal-title" aria-live="polite">${esc(new Date(y, m, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }))}</div>
+    <button type="button" class="cal-nav" data-cm="1" aria-label="Next month">›</button></div>
+    <div class="cal-grid">${wd.map(w => `<div class="cal-wd" aria-hidden="true">${esc(w)}</div>`).join('')}`;
+  for (let i = 0; i < 42; i++) {
+    const o = new Date(start); o.setDate(start.getDate() + i);
+    const d = ymd(o), rec = !!S.attendance[d], n = absN(d);
+    const meet = (S.days || []).length && S.days.includes(o.getDay());
+    const cls = ['cal-day', o.getMonth() !== m ? 'out' : '', d === today ? 'today' : '', meet ? 'meet' : ''].join(' ');
+    h += `<button type="button" class="${cls}" data-day="${d}" tabindex="${d === calFocus ? 0 : -1}" aria-pressed="${d === S.date}"
+      aria-label="${esc(longDate(d))}${d === today ? ', today' : ''}${rec ? ', recorded' : ''}${n ? `, ${n} absent` : ''}">${o.getDate()}${n ? `<i class="cal-n">${n}</i>` : rec ? '<i class="cal-dot"></i>' : ''}</button>`;
+  }
+  h += `</div><div class="cal-foot"><span><span class="k"><span class="sw" style="border:2px solid var(--present)"></span>Today</span><span class="k"><i class="cal-dot" style="position:static;margin:0"></i>Recorded</span><span class="k" style="color:var(--absent);font-weight:700">2</span>absent${(S.days || []).length ? `<span class="k" style="margin-left:10px"><span class="sw meet-sw"></span>Class day</span>` : ''}</span>
+    <button type="button" class="btn primary" data-cal-today>Go to today</button></div>`;
+  $('#cal').innerHTML = h;
+  if (focusWhat === 'day') $('#cal').querySelector(`[data-day="${calFocus}"]`)?.focus();
+  else if (focusWhat) $('#cal').querySelector(`[data-cm="${focusWhat}"]`)?.focus();
+}
+$('#dPick').addEventListener('click', () => calIsOpen() ? closeCal(false) : openCal());
+$('#cal').addEventListener('click', e => {
+  const day = e.target.closest('[data-day]'), cm = e.target.closest('[data-cm]');
+  if (day) { closeCal(true); setDate(day.dataset.day); }
+  else if (cm) { calFocus = shiftMonth(calFocus, +cm.dataset.cm); renderCal(cm.dataset.cm); }
+  else if (e.target.closest('[data-cal-today]')) { closeCal(true); goToday(); }
+});
+$('#cal').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); closeCal(true); return; }
+  if (!e.target.closest('[data-day]')) return;
+  const steps = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+  const dow = dateObj(calFocus).getDay();
+  if (steps[e.key]) calFocus = shiftDate(calFocus, steps[e.key]);
+  else if (e.key === 'PageUp') calFocus = shiftMonth(calFocus, e.shiftKey ? -12 : -1);
+  else if (e.key === 'PageDown') calFocus = shiftMonth(calFocus, e.shiftKey ? 12 : 1);
+  else if (e.key === 'Home') calFocus = shiftDate(calFocus, -dow);
+  else if (e.key === 'End') calFocus = shiftDate(calFocus, 6 - dow);
+  else if (e.key.toLowerCase() === 't') calFocus = todayStr();
+  else return;
+  e.preventDefault(); renderCal('day');
+});
+/* Close when you click or tab anywhere outside the calendar. */
+document.addEventListener('pointerdown', e => { if (calIsOpen() && !e.target.closest('#cal, #dPick')) closeCal(false); });
+$('#cal').addEventListener('focusout', e => { if (e.relatedTarget && !e.relatedTarget.closest('#cal, #dPick')) closeCal(false); });
+$('#dPrev').addEventListener('click', () => setDate(stepDay(S.date, -1)));
+$('#dNext').addEventListener('click', () => setDate(stepDay(S.date, 1)));
+$('#dToday').addEventListener('click', goToday);
+$('#dChips').addEventListener('click', e => { const c = e.target.closest('[data-go]'); if (c) setDate(c.dataset.go); });
+/* Global shortcuts. Skipped while typing in a field, and when a seat or cell already handled the key. */
+const typing = el => !!el.closest?.('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]');
+window.addEventListener('keydown', e => {
+  if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || calIsOpen()) return;
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+    if (typing(e.target)) return;                // let text fields keep their own undo
+    e.preventDefault(); undo(); return;
+  }
+  if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
+  const k = e.key;
+  if (k === '?') { e.preventDefault(); openShortcuts(); return; }
+  if (k.toLowerCase() === 'c') { e.preventDefault(); $('#classSel').focus(); return; }
+  const views = { 1: 'classroom', 2: 'history', 3: 'emails', 4: 'import' };
+  if (views[k]) { e.preventDefault(); S.view = views[k]; commit(); return; }
+  if (k === '/' && (S.view === 'history' || S.view === 'emails')) { e.preventDefault(); const f = $(S.view === 'history' ? '#hSearch' : '#rSearch'); f?.focus(); f?.select(); return; }
+  if (S.view === 'import') return;
+  if (k === '[' || k === ']') {
+    e.preventDefault();
+    if (S.view === 'history') {                          // history: hop between recorded dates
+      const ds = Object.keys(S.attendance).filter(isDate).sort();
+      const t = k === '[' ? ds.filter(d => d < S.date).pop() : ds.find(d => d > S.date);
+      if (t) setDate(t); else toast(k === '[' ? 'No earlier recorded dates.' : 'No later recorded dates.');
+    } else setDate(stepDay(S.date, k === '[' ? -1 : 1));
+    return;
+  }
+  if (k.toLowerCase() === 'g') { e.preventDefault(); openCal(); return; }
+  if (k === 'Escape' && S.view === 'history') { e.preventDefault(); resetHist(); return; }
+  if (k.toLowerCase() === 't') { e.preventDefault(); goToday(); return; }
+  if (S.view === 'classroom') {
+    if (k.toLowerCase() === 'v') { e.preventDefault(); S.instructorView = !S.instructorView; commit(); toast(S.instructorView ? 'Instructor view' : 'Student view'); return; }
+    if (k.toLowerCase() === 'm') { e.preventDefault(); S.mode = S.mode === 'take' ? 'edit' : 'take'; if (S.mode === 'take') selected = null; commit(); toast(S.mode === 'take' ? 'Take attendance' : 'Edit seats'); return; }
+    if (k.toLowerCase() === 'u' && S.mode === 'take' && S.date !== todayStr()) { e.preventDefault(); unlocked.has(S.date) ? unlocked.delete(S.date) : unlocked.add(S.date); render(); toast(unlocked.has(S.date) ? `${longDate(S.date)} unlocked for editing.` : 'Locked again.'); return; }
+    if (k.startsWith('Arrow') && !e.target.closest('.seat')) { e.preventDefault(); seatFocusFirst(); return; }
+  }
+  if (S.view === 'history' && k.startsWith('Arrow') && !e.target.closest('.hcell')) { e.preventDefault(); const g = histGrid(); if (g.length) { const i = g[0].findIndex(b => b.dataset.d === S.date); focusHist(0, i >= 0 ? i : g[0].length - 1); } }
+});
+/* Classroom: arrow keys move between seats as drawn on screen (so they follow Instructor view). */
+function seatCells() {
+  const btns = [...$('#room').querySelectorAll('.seat')];
+  return { btns, cols: S.cols, ok: b => S.mode === 'edit' || !b.classList.contains('empty') };
+}
+function seatFocusFirst() { const { btns, ok } = seatCells(); btns.find(ok)?.focus(); }
+/* Edit seats: + / × between seat columns adds or removes an aisle there. */
+$('#room').addEventListener('click', e => {
+  const b = e.target.closest('[data-aisle]'); if (!b) return;
+  const n = +b.dataset.aisle, had = S.aisles.includes(n);
+  S.aisles = had ? S.aisles.filter(x => x !== n) : [...S.aisles, n].sort((x, y) => x - y);
+  commit(); toast(had ? `Aisle removed between seats ${n} and ${n + 1}.` : `Aisle added between seats ${n} and ${n + 1}.`);
+});
+$('#room').addEventListener('keydown', e => {
+  const cur = e.target.closest('.seat'); if (!cur || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (isTables()) return tableKeys(e, cur);
+  const { btns, cols, ok } = seatCells();
+  const i = btns.indexOf(cur), r = Math.floor(i / cols), c = i % cols, rows = btns.length / cols;
+  const moves = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  let target = null;
+  if (moves[e.key]) {
+    const [dr, dc] = moves[e.key]; let rr = r + dr, cc = c + dc;
+    while (rr >= 0 && rr < rows && cc >= 0 && cc < cols) { const b = btns[rr * cols + cc]; if (ok(b)) { target = b; break; } rr += dr; cc += dc; }
+  } else if (e.key === 'Home') target = (e.shiftKey ? btns : btns.slice(r * cols, r * cols + cols)).find(ok);
+  else if (e.key === 'End') target = (e.shiftKey ? btns : btns.slice(r * cols, r * cols + cols)).filter(ok).pop();
+  else if (e.key === 'Escape' && S.mode === 'edit' && selected) { e.preventDefault(); selected = null; render(); return; }
+  else return;
+  e.preventDefault(); target?.focus();
+});
+/* Tables: arrows go to the nearest seat in that direction on screen; Home/End stay within the table (Shift: whole room). */
+function tableKeys(e, cur) {
+  const { btns, ok } = seatCells();
+  const mid = b => { const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  const [x0, y0] = mid(cur), tbl = cur.closest('.tbl');
+  const dirs = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+  let target = null;
+  if (dirs[e.key]) {
+    const [dx, dy] = dirs[e.key]; let best = Infinity;
+    btns.forEach(b => {
+      if (b === cur || !ok(b)) return;
+      const [x, y] = mid(b), along = (x - x0) * dx + (y - y0) * dy, across = Math.abs((x - x0) * dy - (y - y0) * dx);
+      if (along <= 4) return;
+      const score = along + across * 2.5;
+      if (score < best) { best = score; target = b; }
+    });
+  } else if (e.key === 'Home' || e.key === 'End') {
+    const pool = (e.shiftKey ? btns : [...tbl.querySelectorAll('.seat')]).filter(ok).sort((p, q) => seatOrder(p.dataset.seat) - seatOrder(q.dataset.seat));
+    target = e.key === 'Home' ? pool[0] : pool[pool.length - 1];
+  } else if (e.key === 'Escape' && S.mode === 'edit' && selected) { e.preventDefault(); selected = null; render(); return; }
+  else return;
+  e.preventDefault(); target?.focus();
+}
+/* Undo for attendance changes (status marks, record/add/delete date, mark everyone present). */
+const undoStack = [];
+function snapshot() { undoStack.push(JSON.stringify(S.attendance)); if (undoStack.length > 100) undoStack.shift(); }
+function undo() {
+  if (!undoStack.length) return toast('Nothing to undo.');
+  S.attendance = JSON.parse(undoStack.pop()); commit(); toast('Undid the last attendance change.');
+}
+function openShortcuts() { $('#help').showModal(); $('#kbdHelp').scrollIntoView({ block: 'start' }); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });   // keeps "Today" right past midnight
+setInterval(() => { if (lastToday !== todayStr()) render(); }, 60000);
+$('#instructorView').addEventListener('change', e => { S.instructorView = e.target.checked; commit(); });
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { S.view = b.dataset.view; commit(); }));
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.mode; if (S.mode === 'take') selected = null; commit(); }));
+$('#helpBtn').addEventListener('click', () => $('#help').showModal());
+$('#classSel').addEventListener('change', e => {
+  const v = e.target.value;
+  if (v === '__manage') { e.target.value = S.classId; S.view = 'import'; commit(); $('#classesCard').scrollIntoView({ block: 'start' }); return; }
+  switchClass(v);
+});
+$('#newClassBtn').addEventListener('click', () => {
+  syncStore();
+  const cur = STORE.rooms[S.roomId];
+  $('#ncRoom').innerHTML = Object.values(STORE.rooms).sort(byName).map(r => `<option value="${r.id}" ${r.id === S.roomId ? 'selected' : ''}>${esc(r.name)} — ${esc(roomSummary(r))}</option>`).join('')
+    + `<option value="__copy">Copy of ${esc(cur.name)} (separate layout)</option><option value="__new">New room (6 rows × 8 seats)</option>`;
+  $('#ncName').value = ''; ncDays = []; $('#ncDays').innerHTML = dayPicker(ncDays, 'data-ncday');
+  $('#ncDlg').showModal(); $('#ncName').focus();
+});
+$('#ncCancel').addEventListener('click', () => $('#ncDlg').close());
+let ncDays = [];
+$('#ncDays').addEventListener('click', e => {
+  const b = e.target.closest('[data-wd]'); if (!b) return;
+  const d = +b.dataset.wd; ncDays = ncDays.includes(d) ? ncDays.filter(x => x !== d) : [...ncDays, d].sort();
+  $('#ncDays').innerHTML = dayPicker(ncDays, 'data-ncday'); $('#ncDays').querySelector(`[data-wd="${d}"]`)?.focus();
+});
+$('#ncForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#ncName').value.trim();
+  if (!name) { toast('Give the class a name.', true); $('#ncName').focus(); return; }
+  syncStore();
+  let rid = $('#ncRoom').value;
+  if (rid === '__new' || rid === '__copy') {
+    const id = uid(), src = rid === '__copy' ? STORE.rooms[S.roomId] : { shape: 'rows', rows: 6, cols: 8, aisles: [], tablesAcross: 3 };
+    STORE.rooms[id] = { ...src, id, aisles: [...(src.aisles || [])], name: `${name} room` }; rid = id;
+  }
+  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays] };
+  $('#ncDlg').close(); switchClass(cid);
+  toast(`Created “${name}”. Add students in Edit seats or import its CSV.`);
+});
+$('#backupBtn').addEventListener('click', backupAll);
+$('#appExportBtn').addEventListener('click', () => exportApp($('#expScope').value));
+$('#appBlankBtn').addEventListener('click', () => exportApp('none'));
+/* Save this app as a new .html file with data built in (all classes, or just the open one). */
+function exportApp(scope) {
+  const open = '<scr' + 'ipt id="embedded-data" type="application/json">', close = '</scr' + 'ipt>';
+  const a = PRISTINE.indexOf(open), b = a < 0 ? -1 : PRISTINE.indexOf(close, a);
+  if (a < 0 || b < 0) return toast('Could not build the app copy from this page.', true);
+  if (scope === 'none') {                                  // clean copy: empty data slot, nothing from this browser
+    download('index.html', PRISTINE.slice(0, a + open.length) + PRISTINE.slice(b), 'text/html;charset=utf-8');
+    return toast('Saved a clean copy of the app (index.html) with no student data. It is safe to put on a website.');
+  }
+  syncStore();
+  let store = JSON.parse(JSON.stringify(STORE));
+  if (scope !== 'all') {
+    const c = store.classes[S.classId];
+    store = { v: 2, active: c.id, classes: { [c.id]: c }, rooms: { [c.roomId]: store.rooms[c.roomId] }, global: store.global };
+  }
+  store.global.embedSeen = '';
+  const payload = { app: 'attendance', kind: 'embedded', id: uid(), exported: new Date().toISOString(), store };
+  const json = JSON.stringify(payload).replace(/</g, '\\u003c');          // can't close the script tag early
+  const html = PRISTINE.slice(0, a + open.length) + json + PRISTINE.slice(b);
+  const name = scope === 'all' ? 'all-classes' : slug(S.className);
+  download(`attendance-app-${name}-${todayStr()}.html`, html, 'text/html;charset=utf-8');
+  const n = Object.keys(store.classes).length;
+  toast(`Saved the app with ${n} class${n === 1 ? '' : 'es'} built in. It contains student data; keep it private.`);
+}
+$('#kbdBtn').addEventListener('click', openShortcuts);
+$('#helpClose').addEventListener('click', () => $('#help').close());
+$('#exportBtn').addEventListener('click', () => exportCSV($('#expScope').value));
+$('#exportBtn2').addEventListener('click', () => exportCSV('class'));
+$('#templateBtn').addEventListener('click', () => download('attendance-template.csv', '\uFEFF' + buildCSV('blank'), 'text/csv;charset=utf-8'));
+function runImport(text) {
+  if (!text.trim()) return toast('Choose a file or paste CSV text first.', true);
+  try { if (importCSV(text)) { $('#csvText').value = ''; $('#csvFile').value = ''; } }
+  catch (err) { toast('Import failed:\n' + err.message, true); }
+}
+function importFile(f) {
+  if (/\.json$/i.test(f.name)) { const r = new FileReader(); r.onload = () => restoreAll(String(r.result)); r.readAsText(f); return; }
+  if (!/\.(csv|tsv|txt)$/i.test(f.name) && !/^text\//.test(f.type)) return toast(`"${f.name}" isn't a CSV file.`, true);
+  const r = new FileReader();
+  r.onload = () => { $('#csvText').value = r.result; runImport(String(r.result)); };
+  r.onerror = () => toast('Could not read that file.', true);
+  r.readAsText(f);
+}
+$('#csvFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) importFile(f); });
+$('#importBtn').addEventListener('click', () => runImport($('#csvText').value));
+function renderImportMode() {
+  const m = S.importMode === 'replace' ? 'replace' : 'merge';
+  document.querySelectorAll('[data-imode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.imode === m)));
+  $('#impRemoveWrap').hidden = m !== 'merge';
+  $('#impModeNote').innerHTML = m === 'merge'
+    ? 'Matches students by ID, then email, then name. Updates their details, adds new students in open seats, and applies any P/A/E marks in the file. <b>Seats and attendance history are kept</b>; blank cells change nothing.'
+    : '<span style="color:var(--excused)">The file becomes the class\'s whole roster, seating, and attendance. Anything not in the file is removed.</span>';
+}
+document.querySelectorAll('[data-imode]').forEach(b => b.addEventListener('click', () => { S.importMode = b.dataset.imode; save(); renderImportMode(); }));
+
+/* Drag a CSV anywhere onto the visible Manage data view. Seat drag-and-drop carries no files, so it's untouched. */
+const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+const importVisible = () => S.view === 'import';
+let dragDepth = 0;
+const overlay = on => $('#dropOverlay').classList.toggle('on', on);
+window.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); if (importVisible()) { dragDepth++; overlay(true); } });
+window.addEventListener('dragover', e => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = importVisible() ? 'copy' : 'none'; });
+window.addEventListener('dragleave', e => { if (!hasFiles(e) || !importVisible()) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) overlay(false); });
+window.addEventListener('drop', e => {
+  if (!hasFiles(e)) return;
+  e.preventDefault(); dragDepth = 0; overlay(false);               // never let the browser navigate to the file
+  if (!importVisible()) return toast('Open Manage data to drop a CSV.', true);
+  const files = [...e.dataTransfer.files];
+  if (!files.length) return;
+  if (files.length > 1) toast(`Only one file can be imported at a time; using "${files[0].name}".`, true);
+  importFile(files[0]);
+});
+$('#emptyBtn').addEventListener('click', () => {
+  if (!confirm(`Remove all students, seating, and attendance from “${S.className || 'this class'}”? Download a CSV first if you want a backup. Other classes, the room layout, and templates are kept.`)) return;
+  Object.assign(S, { students: {}, seats: {}, attendance: {} }); selected = null; undoStack.length = 0; commit(); toast('Class cleared.');
+});
+$('#demoBtn').addEventListener('click', () => {
+  syncStore();
+  const d = demo(), rid = uid(), cid = uid();
+  STORE.rooms[rid] = { id: rid, name: 'Demo room', ...pick(d, ROOM_KEYS) };
+  STORE.classes[cid] = { id: cid, roomId: rid, ...pick(d, CLASS_KEYS) };
+  switchClass(cid); toast('Demo class added.');
+});
+const discardOk = () => !isEdited() || confirm('Discard your edits to this message?');
+$('#tplSelect').addEventListener('change', e => {
+  if (!discardOk()) { e.target.value = tplSel; return; }
+  tplSel = e.target.value; loadWork(curTpl()); commit(); renderTemplates(true);
+});
+['#tplSubject', '#tplBody'].forEach(sel => $(sel).addEventListener('input', e => {
+  ensureWork(); S.work[sel === '#tplSubject' ? 'subject' : 'body'] = e.target.value;
+  save(); updateTplState(); renderDrafts();            // drafts follow every keystroke
+}));
+$('#tplTitle').addEventListener('input', () => { updateTplState(); renderDrafts(); });
+$('#tplSave').addEventListener('click', () => {
+  let t = curTpl();
+  if (!t) { t = { id: uid(), title: '', subject: '', body: '' }; S.templates.push(t); tplSel = t.id; }
+  t.title = $('#tplTitle').value.trim() || (t.title || 'New response'); t.subject = S.work.subject; t.body = S.work.body; S.work.tpl = t.id;
+  $('#tplSave').blur(); commit(); toast('Template saved.');
+});
+$('#tplRevert').addEventListener('click', () => { loadWork(curTpl()); commit(); renderTemplates(true); toast('Back to the saved template.'); });
+$('#tplNew').addEventListener('click', () => {
+  if (!discardOk()) return;
+  const t = { id: uid(), title: 'New response', subject: '{class}: {date}', body: 'Hi {first},\n\n\n\nBest regards,' };
+  S.templates.push(t); tplSel = t.id; loadWork(t); commit(); renderTemplates(true); $('#tplTitle').focus(); $('#tplTitle').select();
+});
+$('#tplDup').addEventListener('click', () => {           // keeps your current edits as a new template
+  const t = curTpl(); if (!t) return;
+  const c = { id: uid(), title: ($('#tplTitle').value.trim() || t.title) + ' (copy)', subject: S.work.subject, body: S.work.body };
+  S.templates.push(c); tplSel = c.id; loadWork(c); commit(); renderTemplates(true); toast('Saved as a new template.');
+});
+$('#tplDel').addEventListener('click', () => {
+  const t = curTpl(); if (!t || !confirm(`Delete the template “${t.title}”?`)) return;
+  S.templates = S.templates.filter(x => x.id !== t.id); tplSel = S.templates[0]?.id || null;
+  if (S.work?.tpl === t.id) { if (tplSel) loadWork(curTpl()); else S.work.tpl = null; }   // with no templates left, keep the text as a custom message
+  commit(); renderTemplates(true);
+});
+window.addEventListener('storage', e => { if (e.key === KEY) { const st = load(); if (st) { STORE = st; S = flatten(STORE); render(); } } });
+
+save(); render();
+})();
+</script>
+</body>
