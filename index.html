@@ -292,6 +292,7 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
   <button role="tab" data-view="import">Manage data</button>
   <button type="button" id="kbdBtn" style="margin-left:auto" title="Keyboard shortcuts">⌨ Shortcuts <kbd>?</kbd></button>
 </nav>
+<div class="note" id="recoverBar" hidden style="margin:10px 16px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div>
 <div class="datebar today" id="dateBar" role="group" aria-label="Class date">
   <button class="dnav" type="button" id="dPrev" aria-label="Previous day" title="Previous day ( [ )">‹</button>
   <div class="dmain">
@@ -413,6 +414,10 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
           <li>The file holds roster, seating, and attendance. Email templates stay in this browser.</li>
         </ul>
       </div>
+      <div class="card" id="recoverCard">
+        <h3>Recover data</h3>
+        <div id="recoverBox"></div>
+      </div>
       <div class="card">
         <h3>Start over</h3>
         <div class="row">
@@ -481,6 +486,10 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
       <span class="seg" role="group" aria-label="Column dates" style="align-self:flex-start">
         <button type="button" data-shd="print">Print class dates</button>
         <button type="button" data-shd="blank">Leave blank</button></span></div>
+    <div class="fld"><span>Page</span>
+      <span class="seg" role="group" aria-label="Page orientation" style="align-self:flex-start">
+        <button type="button" data-sho="landscape">Landscape</button>
+        <button type="button" data-sho="portrait">Portrait</button></span></div>
     <div class="row" id="shStartRow"><label class="fld"><span>Starting</span><input type="date" id="shStart"></label>
       <span class="small muted" id="shDays" style="align-self:flex-end;padding-bottom:8px"></span></div>
     <div class="row">
@@ -517,13 +526,13 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
     <h4>Getting started</h4>
     <p>Type the class name and pick a class date at the top. Then switch to <b>Edit seats</b> to arrange the room and fill in the roster, or use <b>Manage data</b> to load a CSV. Demo data is included so you can try things out; replace it by editing, importing, or choosing <b>Start an empty class</b>.</p>
     <h4>Several classes in one file</h4>
-    <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Back up all classes</b> saves everything, rooms included, in one .json file. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by ID, then email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
+    <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Back up all classes</b> saves everything, rooms included, in one .json file. Saved data belongs to this app's web address in this browser; if the address changes (a renamed or moved file), <b>Manage data → Recover data</b> lists data saved under the old address, plus an automatic copy from each of the last 7 days, and can bring any of it back. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by ID, then email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
     <h4>Choosing the class date</h4>
     <p>The date bar under the tabs shows which day you're working on. It appears on every view that uses a date. Its badge says <b>Today</b> in green. Any other day turns the bar amber (past) or blue (future) with a ⚠ warning, and while you're marking seats or drafting emails an amber frame surrounds the whole window, so you can't miss that you're working on another day. The chips jump to <b>Today</b> or a recent class date; red numbers show how many were absent that day. Use ‹ and › to step one day, click the date to open a large calendar (arrow keys move by day and week, <kbd>PgUp</kbd>/<kbd>PgDn</kbd> by month, <kbd>Enter</kbd> picks, <kbd>Esc</kbd> or clicking elsewhere closes it), press <b>Go to today</b>, or tap one of the recent class dates. Keyboard: <kbd>[</kbd> previous day, <kbd>]</kbd> next day, <kbd>T</kbd> today, <kbd>U</kbd> unlock.</p>
     <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
     <h4>List view and sign-in sheets</h4>
     <p>In Classroom, switch <b>Seating chart | List</b> (or press <kbd>L</kbd>). The list is sorted by last name, the same order as the printed sign-in sheet. <b>One date</b> shows P / A / E buttons for the selected date; <b>Sheet</b> shows every date on one printed sheet side by side, so you can enter a filled sheet in one pass (sheet columns stay editable on past dates). <b>Start everyone as Present | Absent</b> decides what an unrecorded date means: with Absent, mark the students who initialed; your first mark records the date with everyone else absent. Unrecorded dates are shown dimmed.</p>
-    <p><b>Sign-in sheet PDF…</b> makes a printable landscape sheet: last name, first name, then date columns, either printed with the class's next meeting dates or left blank for students to write in. Each sheet is numbered; pick it in Sheet mode to transcribe it (for a blank sheet, set each column's date there). <b>Download again</b> re-prints a sheet.</p>
+    <p><b>Sign-in sheet PDF…</b> makes a printable sheet (landscape or portrait): last name, first name, then date columns, either printed with the class's next meeting dates or left blank for students to write in. Each sheet is numbered; pick it in Sheet mode to transcribe it (for a blank sheet, set each column's date there). <b>Download again</b> re-prints a sheet.</p>
     <h4>Taking attendance</h4>
     <ul>
       <li>Every assigned seat starts as <b>Present</b> for the selected date — you only mark exceptions.</li>
@@ -605,14 +614,31 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
 const PRISTINE = '<!doctype html>\n' + document.documentElement.outerHTML;
 /* Saved data is tied to the page's location. ".../attendance/" and ".../attendance/index.html" are the same app,
    so both use one key; anything saved under the old exact-path key is copied over once. */
-const KEY = 'seat-tracker-v1:' + location.pathname.replace(/index\.html?$/i, '');
+const PREFIX = 'seat-tracker-v1:', SNAP_PREFIX = 'seat-tracker-v1-snap:', BAD_PREFIX = 'seat-tracker-v1-unreadable:';
+const KEY = PREFIX + location.pathname.replace(/index\.html?$/i, '');
+const HERE = KEY.slice(PREFIX.length);
+/* Is this saved value only the demo class (or empty classes), i.e. nothing the instructor entered? */
+function demoOnly(raw) {
+  try { const o = JSON.parse(raw), cls = o && o.v === 2 ? Object.values(o.classes || {}) : [o];
+    return cls.every(c => /\(demo\)\s*$/.test(c.className || '') || !Object.keys(c.students || {}).length); } catch (e) { return false; }
+}
 try {
-  if (!localStorage.getItem(KEY)) {
-    const base = KEY.slice('seat-tracker-v1:'.length);
-    for (const old of [location.pathname, base + 'index.html', base + 'index.htm']) {
-      const v = old !== base && localStorage.getItem('seat-tracker-v1:' + old);
-      if (v) { localStorage.setItem(KEY, v); break; }
+  // Same app, other spelling of its address (".../" vs ".../index.html"): use whichever has real data.
+  const cur = localStorage.getItem(KEY);
+  if (!cur || demoOnly(cur)) {
+    for (const old of [location.pathname, HERE + 'index.html', HERE + 'index.htm']) {
+      const v = old !== HERE && localStorage.getItem(PREFIX + old);
+      if (v && !demoOnly(v)) { if (cur) localStorage.setItem(SNAP_PREFIX + HERE + ':' + new Date().toISOString().slice(0, 16).replace(':', '-'), cur); localStorage.setItem(KEY, v); break; }
+      if (v && !cur) { localStorage.setItem(KEY, v); break; }
     }
+  }
+  // Daily automatic copy (the state when the app was first opened that day); keep the last 7.
+  const now = localStorage.getItem(KEY);
+  if (now) {
+    const day = new Date(), stamp = day.getFullYear() + '-' + String(day.getMonth() + 1).padStart(2, '0') + '-' + String(day.getDate()).padStart(2, '0');
+    if (!localStorage.getItem(SNAP_PREFIX + HERE + ':' + stamp)) localStorage.setItem(SNAP_PREFIX + HERE + ':' + stamp, now);
+    const mine = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(SNAP_PREFIX + HERE + ':')) mine.push(k); }
+    mine.sort(); while (mine.length > 7) localStorage.removeItem(mine.shift());
   }
 } catch (e) {}
 /* Offline: when served from a web address (e.g. GitHub Pages), a service worker keeps a copy so the app opens without internet. */
@@ -799,8 +825,16 @@ function fixStore(st) {
   if (!st.classes[st.active]) st.active = Object.keys(st.classes)[0];
   return st;
 }
+let loadProblem = false;
 function load() {
-  try { const t = localStorage.getItem(KEY); return t ? fixStore(JSON.parse(t)) : null; } catch (e) { return null; }
+  let t = null;
+  try { t = localStorage.getItem(KEY); } catch (e) { return null; }
+  if (!t) return null;
+  try { const st = fixStore(JSON.parse(t)); if (st) return st; throw new Error('unreadable'); }
+  catch (e) {                                              // keep the unreadable copy so nothing is lost
+    try { localStorage.setItem(BAD_PREFIX + HERE + ':' + new Date().toISOString().slice(0, 16).replace(':', '-'), t); } catch (e2) {}
+    loadProblem = true; return null;
+  }
 }
 function flatten(st) {
   const c = st.classes[st.active], r = st.rooms[c.roomId];
@@ -987,7 +1021,7 @@ function counts(date, stOf = k => getStatus(date, k)) {
 
 /* ---------- render ---------- */
 function render() {
-  renderClassSel(); renderClassMgr(); renderImportMode();
+  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover();
   $('#instructorView').checked = !!S.instructorView;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
@@ -1194,18 +1228,20 @@ function pdfFit(str, size, bold, max) {
   return enc + ell;
 }
 const pdfEsc = enc => enc.replace(/[\\()]/g, '\\$&');
-const SHEET = { W: 792, H: 612, M: 36, headH: 30, rowH: 22, minCol: 44 };
+const SHEET = { M: 36, headH: 30, rowH: 19, minCol: 44 };
+const sheetDims = o => o === 'portrait' ? { W: 612, H: 792 } : { W: 792, H: 612 };      // US Letter, in points
+const sheetPerPage = o => Math.floor((sheetDims(o).H - SHEET.M - 44 - SHEET.headH - SHEET.M - 14) / SHEET.rowH);
 /* Column widths for a list of students: names sized to the longest (within limits), dates share the rest. */
-function sheetLayout(people, cols) {
+function sheetLayout(people, cols, orient) {
   const lw = Math.max(...people.map(x => pdfW(winAnsi(x.last), 10, true)), 50), fw = Math.max(...people.map(x => pdfW(winAnsi(x.first), 10, false)), 50);
   const lastW = Math.min(Math.max(lw + 14, 86), 190), firstW = Math.min(Math.max(fw + 14, 72), 150);
-  const avail = SHEET.W - 2 * SHEET.M - lastW - firstW, maxCols = Math.max(1, Math.floor(avail / SHEET.minCol));
+  const avail = sheetDims(orient).W - 2 * SHEET.M - lastW - firstW, maxCols = Math.max(1, Math.floor(avail / SHEET.minCol));
   const n = Math.max(1, Math.min(cols, maxCols));
   return { lastW, firstW, n, colW: avail / n, maxCols };
 }
 function sheetPdf(title, sh, people, extra) {
-  const { W, H, M, headH, rowH } = SHEET, L = sheetLayout(people, sh.dates.length), cols = sh.dates.slice(0, L.n);
-  const tableTop = H - M - 44, perPage = Math.floor((tableTop - headH - M - 14) / rowH);
+  const { W, H } = sheetDims(sh.orient), { M, headH, rowH } = SHEET, L = sheetLayout(people, sh.dates.length, sh.orient), cols = sh.dates.slice(0, L.n);
+  const tableTop = H - M - 44, perPage = sheetPerPage(sh.orient);
   const rows = [...people, ...Array(extra).fill({ last: '', first: '' })];
   const pages = []; for (let i = 0; i < Math.max(rows.length, 1); i += perPage) pages.push(rows.slice(i, i + perPage));
   const f = n => (Math.round(n * 100) / 100).toString();
@@ -1278,25 +1314,26 @@ function openSheetDialog() {
   const printed = (S.sheets || []).filter(x => !x.blank).flatMap(x => x.dates).filter(Boolean).sort();
   $('#shStart').value = printed.length ? nextClassDay(shiftDate(printed[printed.length - 1], 1)) : nextClassDay(todayStr());
   $('#shCols').value = o.cols; $('#shExtra').value = o.extra;
-  sheetDlgMode = hasDays ? o.dates : 'blank';
+  sheetDlgMode = hasDays ? o.dates : 'blank'; sheetDlgOrient = o.orient || 'landscape';
   updateSheetDialog(); $('#sheetDlg').showModal();
 }
-let sheetDlgMode = 'print';
+let sheetDlgMode = 'print', sheetDlgOrient = 'landscape';
 function updateSheetDialog() {
   const hasDays = (S.days || []).length > 0, people = sheetPeople(), n = (S.sheets || []).reduce((m, x) => Math.max(m, x.n), 0) + 1;
   $('#shClass').textContent = `${S.className || 'This class'} · ${people.length} student${people.length === 1 ? '' : 's'} · Sheet ${n}`;
   document.querySelectorAll('[data-shd]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.shd === sheetDlgMode)); });
+  document.querySelectorAll('[data-sho]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.sho === sheetDlgOrient)); });
   $('#shStartRow').hidden = sheetDlgMode !== 'print';
   $('#shDays').textContent = hasDays ? `Meets ${daysText(S.days)}` : '';
-  const L = sheetLayout(people.length ? people : [{ last: '', first: '' }], 99);
+  const L = sheetLayout(people.length ? people : [{ last: '', first: '' }], 99, sheetDlgOrient);
   let cols = Math.max(1, parseInt($('#shCols').value, 10) || 1); const extra = Math.max(0, Math.min(20, parseInt($('#shExtra').value, 10) || 0));
   $('#shFit').textContent = `Up to ${L.maxCols} fit across the page`;
   cols = Math.min(cols, L.maxCols);
-  const perPage = Math.floor((SHEET.H - SHEET.M - 44 - SHEET.headH - SHEET.M - 14) / SHEET.rowH), pages = Math.max(1, Math.ceil((people.length + extra) / perPage));
+  const perPage = sheetPerPage(sheetDlgOrient), pages = Math.max(1, Math.ceil((people.length + extra) / perPage));
   let what = '';
   if (sheetDlgMode === 'print') { const ds = isDate($('#shStart').value) ? classDaysFrom($('#shStart').value, cols) : []; what = ds.length ? `${shortDate(ds[0])} – ${shortDate(ds[ds.length - 1])}` : 'choose a start date'; }
   else what = `${cols} blank date column${cols === 1 ? '' : 's'}`;
-  $('#shSummary').innerHTML = `<b>Sheet ${n}:</b> ${esc(what)} · ${pages} page${pages === 1 ? '' : 's'}, landscape Letter, sorted by last name.`;
+  $('#shSummary').innerHTML = `<b>Sheet ${n}:</b> ${esc(what)} · ${pages} page${pages === 1 ? '' : 's'}, ${sheetDlgOrient} Letter, sorted by last name.${(parseInt($('#shCols').value, 10) || 1) > L.maxCols ? ` Only ${L.maxCols} date columns fit ${sheetDlgOrient === 'portrait' ? 'in portrait' : 'across the page'}.` : ''}`;
   const checks = Object.values(S.students).filter(st => st.nameCheck && !st.dropped).length;
   $('#shWarn').innerHTML = [
     !hasDays && sheetDlgMode === 'blank' ? '<p class="note" style="margin:0">This class has no meeting days set, so dates can\'t be printed. Set them in Manage data → Classes &amp; rooms to print dates.</p>' : '',
@@ -1305,19 +1342,20 @@ function updateSheetDialog() {
   $('#shReview')?.addEventListener('click', () => { $('#sheetDlg').close(); S.view = 'import'; commit(); $('#nameCheck')?.scrollIntoView({ block: 'center' }); });
 }
 document.querySelectorAll('[data-shd]').forEach(b => b.addEventListener('click', () => { sheetDlgMode = b.dataset.shd; updateSheetDialog(); }));
+document.querySelectorAll('[data-sho]').forEach(b => b.addEventListener('click', () => { sheetDlgOrient = b.dataset.sho; updateSheetDialog(); }));
 ['#shStart', '#shCols', '#shExtra'].forEach(id => $(id).addEventListener('input', updateSheetDialog));
 $('#shCancel').addEventListener('click', () => $('#sheetDlg').close());
 $('#sheetForm').addEventListener('submit', e => {
   e.preventDefault();
-  const people = sheetPeople(), L = sheetLayout(people.length ? people : [{ last: '', first: '' }], 99);
+  const people = sheetPeople(), L = sheetLayout(people.length ? people : [{ last: '', first: '' }], 99, sheetDlgOrient);
   const cols = Math.min(L.maxCols, Math.max(1, parseInt($('#shCols').value, 10) || 1)), extra = Math.max(0, Math.min(20, parseInt($('#shExtra').value, 10) || 0));
   let dates;
   if (sheetDlgMode === 'print') { if (!isDate($('#shStart').value)) return toast('Choose a start date.', true); dates = classDaysFrom($('#shStart').value, cols); }
   else dates = Array(cols).fill(null);
   const n = (S.sheets || []).reduce((m, x) => Math.max(m, x.n), 0) + 1;
-  const sh = { id: uid(), n, made: todayStr(), blank: sheetDlgMode !== 'print', dates, extra };
+  const sh = { id: uid(), n, made: todayStr(), blank: sheetDlgMode !== 'print', dates, extra, orient: sheetDlgOrient };
   (S.sheets ||= []).push(sh); S.sheetSel = sh.id;
-  S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra };
+  S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra, orient: sheetDlgOrient };
   $('#sheetDlg').close(); commit(); downloadSheet(sh);
 });
 $('#sheetPdfBtn').addEventListener('click', openSheetDialog);
@@ -1713,6 +1751,83 @@ function renderRoster() {
     if (confirm(`Delete ${st.name} and all of their attendance records? This can't be undone.`)) { deleteStudent(b.dataset.purge); toast(`${st.name} deleted.`); }
   }));
 }
+/* ---------- recovering data saved elsewhere ----------
+   Saved data is tied to the app's address. If the address changed (renamed file, moved folder, ".../" vs ".../index.html"),
+   or the saved data couldn't be read, the earlier data is still in this browser under another key. List it and let it be used. */
+function savedCopies() {
+  const out = [];
+  let keys = []; try { for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i)); } catch (e) { return out; }
+  for (const k of keys) {
+    if (!k || k === KEY || !k.startsWith('seat-tracker-v1')) continue;
+    let raw = null; try { raw = localStorage.getItem(k); } catch (e) {}
+    if (!raw) continue;
+    let kind, where = '', when = '';
+    if (k.startsWith(PREFIX)) { kind = 'address'; where = k.slice(PREFIX.length); }
+    else if (k.startsWith(SNAP_PREFIX)) { kind = 'snapshot'; const r = k.slice(SNAP_PREFIX.length), i = r.lastIndexOf(':'); where = r.slice(0, i); when = r.slice(i + 1); }
+    else if (k.startsWith(BAD_PREFIX)) { kind = 'unreadable'; const r = k.slice(BAD_PREFIX.length), i = r.lastIndexOf(':'); where = r.slice(0, i); when = r.slice(i + 1); }
+    else continue;
+    let st = null; try { st = fixStore(JSON.parse(raw)); } catch (e) {}
+    const item = { k, kind, where, when, raw, st, demo: demoOnly(raw) };
+    if (st) {
+      const cls = Object.values(st.classes);
+      item.names = cls.map(c => c.className || 'Untitled class').sort();
+      item.students = cls.reduce((n, c) => n + Object.values(c.students).filter(x => !x.dropped).length, 0);
+      item.last = cls.flatMap(c => Object.keys(c.attendance)).filter(isDate).sort().pop() || '';
+    }
+    out.push(item);
+  }
+  const rank = { address: 0, unreadable: 1, snapshot: 2 };
+  return out.sort((a, b) => rank[a.kind] - rank[b.kind] || (b.when || '').localeCompare(a.when || ''));
+}
+const whenText = w => { if (!w) return ''; const [d, t] = w.split('T'); return (isDate(d) ? shortDate(d) : d) + (t ? ' ' + t.replace('-', ':') : ''); };
+function describeCopy(c) {
+  const src = c.kind === 'address' ? `Saved at another address of this app: <code>${esc(c.where || '/')}</code>`
+    : c.kind === 'snapshot' ? `Automatic copy from ${esc(whenText(c.when))}${c.where !== HERE ? ` (address <code>${esc(c.where || '/')}</code>)` : ''}`
+    : `Data that couldn't be read on ${esc(whenText(c.when))}`;
+  const what = c.st ? `${c.names.length} class${c.names.length === 1 ? '' : 'es'} (${esc(c.names.slice(0, 3).join(', '))}${c.names.length > 3 ? '…' : ''}), ${c.students} student${c.students === 1 ? '' : 's'}${c.last ? `, last attendance ${esc(shortDate(c.last))}` : ''}${c.demo ? ' · demo only' : ''}` : 'Not readable by this version';
+  return { src, what };
+}
+let recoverDismissed = false;
+function renderRecover() {
+  const copies = savedCopies(), box = $('#recoverBox');
+  const real = copies.filter(c => (c.kind !== 'snapshot') && (!c.st || !c.demo));
+  if (box) {
+    box.innerHTML = `<p class="small muted" style="margin-top:0">Your data is saved in this browser for this app's address. If the address changed (a renamed or moved file), or the app found data it couldn't read, the earlier data is listed here. The app also keeps an automatic copy each day for the last 7 days.</p>` +
+      (copies.length ? `<div class="table-wrap" style="max-height:none"><table><tbody>${copies.map((c, i) => { const d = describeCopy(c);
+        return `<tr><td style="white-space:normal">${d.src}<br><span class="small muted">${d.what}</span></td><td class="act">
+          ${c.st ? `<button type="button" class="btn${c.kind !== 'snapshot' && !c.demo ? ' primary' : ''}" data-rec-use="${i}">Use this data</button>` : ''}
+          <button type="button" class="btn" data-rec-dl="${i}">Download</button></td></tr>`; }).join('')}</tbody></table></div>`
+       : '<p class="small" style="margin:0">No other saved copies in this browser.</p>');
+    box.querySelectorAll('[data-rec-use]').forEach(b => b.addEventListener('click', () => useCopy(copies[+b.dataset.recUse])));
+    box.querySelectorAll('[data-rec-dl]').forEach(b => b.addEventListener('click', () => {
+      const c = copies[+b.dataset.recDl];
+      download(`attendance-recovered-${(c.when || c.where || 'copy').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '') || 'copy'}.json`, c.raw, 'application/json');
+    }));
+  }
+  // Banner: the app opened with nothing of yours, but real data exists elsewhere in this browser (or couldn't be read).
+  const bar = $('#recoverBar'), mineIsDemo = Object.values(STORE.classes).every(c => /\(demo\)\s*$/.test(c.className || '') || !Object.keys(c.students).length);
+  const show = !recoverDismissed && (loadProblem || (mineIsDemo && real.length));
+  bar.hidden = !show;
+  if (show) {
+    bar.innerHTML = loadProblem
+      ? `<span><b>Your saved data couldn't be read</b>, so the app started fresh. A copy was kept and nothing was deleted.</span>`
+      : `<span><b>Found your earlier data</b> saved under another address of this app: ${esc(real[0].names?.slice(0, 3).join(', ') || 'saved classes')}.</span>`;
+    bar.innerHTML += ` <button type="button" class="btn primary" id="recoverGo">Recover…</button><button type="button" class="btn" id="recoverNo">Not now</button>`;
+    $('#recoverGo').onclick = () => { S.view = 'import'; commit(); $('#recoverCard').scrollIntoView({ block: 'start' }); };
+    $('#recoverNo').onclick = () => { recoverDismissed = true; bar.hidden = true; };
+  }
+}
+function useCopy(c) {
+  if (!c || !c.st) return;
+  const d = describeCopy(c);
+  if (!confirm(`Use this data?\n\n${d.what.replace(/<[^>]+>/g, '')}\n\nIt replaces what this app shows now. What's here now is kept as an automatic copy, so this can be undone from this list.`)) return;
+  syncStore();
+  try { localStorage.setItem(SNAP_PREFIX + HERE + ':' + new Date().toISOString().slice(0, 16).replace(':', '-'), JSON.stringify(STORE)); } catch (e) {}
+  STORE = c.st; S = flatten(STORE); loadProblem = false; recoverDismissed = true;
+  resetSession(); S.view = 'classroom'; commit();
+  toast(`Recovered ${Object.keys(STORE.classes).length} class${Object.keys(STORE.classes).length === 1 ? '' : 'es'}.`);
+}
+
 /* ---------- removing students ----------
    Drop: off the chart, attendance, and emails, but history is kept (Manage data → Dropped students) and can be restored.
    Delete: the student and every attendance mark are gone. */
