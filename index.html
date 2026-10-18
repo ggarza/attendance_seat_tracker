@@ -178,6 +178,16 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;le
 .table-wrap .sticky{position:sticky;left:0;background:var(--panel);z-index:1}
 .table-wrap thead .sticky{z-index:3}
 td.c{text-align:center}
+#history th.sortable button{background:none;border:0;color:inherit;font:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;padding:0;display:inline-flex;gap:4px;align-items:center}
+#history th.sortable button:hover{color:var(--text)}
+#history th.sorted button{color:var(--accent)}
+#history th.sortable .arr{font-size:10px;min-width:8px}
+#backupCard{display:flex;gap:16px 24px;align-items:center;flex-wrap:wrap;border-color:#2b5c43}
+#backupCard.stale{border-color:var(--excused)}
+#backupCard.stale #backupStatus b{color:var(--excused)}
+#backupCard .bk-text{flex:1 1 320px;min-width:0}
+#backupCard .bk-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#backupCard .btn.big{font-size:15px;padding:10px 18px;font-weight:600}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -361,6 +371,18 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
 </section>
 
 <section class="view" id="view-import" aria-label="Manage data" hidden>
+  <div class="card backup" id="backupCard" style="margin-bottom:16px">
+    <div class="bk-text">
+      <h3 style="margin:0">Back up your data</h3>
+      <p class="small" id="backupStatus" style="margin:4px 0 0"></p>
+      <p class="small muted" style="margin:4px 0 0">One .json file with every class, room, student, attendance record, sign-in sheet, and template. If something gets deleted, restore it here. Keep it private: it has student names, emails, and attendance.</p>
+    </div>
+    <div class="bk-btns">
+      <button class="btn primary big" id="backupBtn" type="button" title="Ctrl/⌘ + S">⬇ Download backup (.json)</button>
+      <button class="btn" id="restoreBtn" type="button">Restore a backup…</button>
+      <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+    </div>
+  </div>
   <div class="card" id="classesCard" style="margin-bottom:16px">
     <h3>Classes &amp; rooms</h3>
     <div id="classMgr"></div>
@@ -396,9 +418,8 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
         </div>
         <div class="row" style="margin-top:8px">
           <button class="btn" id="templateBtn" type="button">Download blank template</button>
-          <button class="btn" id="backupBtn" type="button">Back up all classes (.json)</button>
         </div>
-        <p class="small muted" style="margin-bottom:0"><b>This class</b> / <b>All classes</b> applies to the CSV and to the app copy. <b>App with data</b> is this whole app with the chosen classes, their rooms, your templates, and your settings built in: open it on any computer and pick up where you left off. It contains student names, IDs, emails, and attendance, so keep it as private as your CSV files. <b>App with no data</b> is a clean copy with nothing built in, safe to put on a website (for example, to use it in Safari on an iPad); bring your classes in with the .json backup. The .json backup holds everything too; restore it by choosing or dropping it above. Nothing leaves this browser unless you download it.</p>
+        <p class="small muted" style="margin-bottom:0"><b>This class</b> / <b>All classes</b> applies to the CSV and to the app copy. <b>App with data</b> is this whole app with the chosen classes, their rooms, your templates, and your settings built in: open it on any computer and pick up where you left off. It contains student names, emails, and attendance, so keep it as private as your CSV files. <b>App with no data</b> is a clean copy with nothing built in, safe to put on a website (for example, to use it in Safari on an iPad); bring your classes in with the .json backup. The .json backup at the top of this page holds everything; restore it with <b>Restore a backup…</b> or by dropping it on this page. Nothing leaves this browser unless you download it.</p>
       </div>
       <div class="card">
         <h3>CSV format</h3>
@@ -450,7 +471,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <label class="fld"><span>Add a date</span><input type="date" id="hAddDate"></label>
     <button class="btn" id="hAddBtn" type="button" style="align-self:flex-end">Add date</button>
     <button class="btn" id="exportBtn2" type="button" style="align-self:flex-end">Download CSV</button>
-    <span class="small muted" style="align-self:flex-end">Click a cell to cycle P → A → E (or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>). Click a date to open it in Classroom. Both views edit the same records.</span>
+    <span class="small muted" style="align-self:flex-end">Click a cell to cycle P → A → E (or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>). Click a date to open it in Classroom. Click <b>Student</b>, <b>Row</b>, <b>Absent</b>, or <b>Excused</b> to sort. Both views edit the same records.</span>
   </div>
   <div class="hfocus" id="hFocus"></div>
   <div id="history"></div>
@@ -541,7 +562,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <h4>Getting started</h4>
     <p>Type the class name and pick a class date at the top. Then switch to <b>Edit seats</b> to arrange the room and fill in the roster, or use <b>Manage data</b> to load a CSV. Demo data is included so you can try things out; replace it by editing, importing, or choosing <b>Start an empty class</b>.</p>
     <h4>Several classes in one file</h4>
-    <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Back up all classes</b> saves everything, rooms included, in one .json file. Saved data belongs to this app's web address in this browser; if the address changes (a renamed or moved file), <b>Manage data → Recover data</b> lists data saved under the old address, plus an automatic copy from each of the last 7 days, and can bring any of it back. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
+    <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Download backup</b> (top of Manage data, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>S</kbd>) saves everything, rooms included, in one .json file. Saved data belongs to this app's web address in this browser; if the address changes (a renamed or moved file), <b>Manage data → Recover data</b> lists data saved under the old address, plus an automatic copy from each of the last 7 days, and can bring any of it back. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
     <h4>Choosing the class date</h4>
     <p>The date bar under the tabs shows which day you're working on. It appears on every view that uses a date. Its badge says <b>Today</b> in green. Any other day turns the bar amber (past) or blue (future) with a ⚠ warning, and while you're marking seats or drafting emails an amber frame surrounds the whole window, so you can't miss that you're working on another day. The chips jump to <b>Today</b> or a recent class date; red numbers show how many were absent that day. Use ‹ and › to step one day, click the date to open a large calendar (arrow keys move by day and week, <kbd>PgUp</kbd>/<kbd>PgDn</kbd> by month, <kbd>Enter</kbd> picks, <kbd>Esc</kbd> or clicking elsewhere closes it), press <b>Go to today</b>, or tap one of the recent class dates. Keyboard: <kbd>[</kbd> previous day, <kbd>]</kbd> next day, <kbd>T</kbd> today, <kbd>U</kbd> unlock.</p>
     <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
@@ -567,7 +588,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <h4>Manage data</h4>
     <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
     <h4>Attendance history</h4>
-    <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
+    <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Student</b> (last name), <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
     <h4>Emails</h4>
     <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload.</p>
     <p>Keep a library of response templates on the left. On the right, choose recipients. Students absent on the selected date are pre-selected. The filter buttons (<b>All</b>, <b>Absent</b>, <b>Excused</b>, <b>Absent 2+ times</b>) choose which students are listed, and only those students are shown. Picking Absent, Excused, or Absent 2+ times also selects everyone it lists, which you can then trim. Picking All shows the whole class without selecting anyone extra. Use the <b>−</b> and <b>+</b> beside “Absent 2+ times” to change the number (for example, 3+ or 4+); the list and selection update right away and the number is remembered. Search narrows the list further; <kbd>Shift</kbd>-click selects a range. If a selected student is hidden by your search, the count says so.</p>
@@ -584,6 +605,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Previous / next day (in Attendance history: previous / next recorded date)</td></tr>
       <tr><td><kbd>G</kbd></td><td>Open the calendar to go to any date</td></tr>
       <tr><td><kbd>T</kbd></td><td>Go to today</td></tr>
+      <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd></td><td>Download a backup of all your data (.json)</td></tr>
       <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd></td><td>Undo the last attendance change (repeatable)</td></tr>
       <tr><td><kbd>?</kbd></td><td>Show these shortcuts</td></tr>
       <tr><td><kbd>C</kbd></td><td>Jump to the class menu (then arrow keys pick a class)</td></tr>
@@ -776,14 +798,14 @@ function demo() {
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
     mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
-    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 } };
+    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '' };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
 const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets'];
-const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 /* Every starter template is kept in the library unless the instructor deleted it (remembered in removedStarters),
    so restoring an older backup, importing old data, or opening an older copy never shrinks the library,
@@ -1034,8 +1056,31 @@ function moveClassToRoom(cid, rid) {
 /* Full backup: every class, room, and template in one file. */
 function backupAll() {
   syncStore();
-  download(`attendance-backup-${todayStr()}.json`, JSON.stringify({ app: 'attendance', exported: new Date().toISOString(), ...STORE }, null, 2), 'application/json');
+  const stamp = new Date(), hm = String(stamp.getHours()).padStart(2, '0') + String(stamp.getMinutes()).padStart(2, '0');
+  S.lastBackup = stamp.toISOString(); S.backupSig = dataSig(); syncStore();   // recorded inside the file too, so a restore knows it matches
+  download(`attendance-backup-${todayStr()}-${hm}.json`, JSON.stringify({ app: 'attendance', exported: stamp.toISOString(), ...STORE }, null, 2), 'application/json');
+  commit();
+  toast('Backup downloaded. Keep it somewhere private.');
 }
+/* A fingerprint of the data that matters (classes, rooms, templates), to tell whether anything changed since the last backup. */
+function dataSig() {
+  syncStore();
+  const t = JSON.stringify([STORE.classes, STORE.rooms, STORE.global.templates]);
+  let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(36) + ':' + t.length;
+}
+function renderBackup() {
+  const el = $('#backupStatus'), card = $('#backupCard'); if (!el) return;
+  const when = S.lastBackup ? new Date(S.lastBackup) : null, changed = !when || S.backupSig !== dataSig();
+  const days = when ? Math.floor((dateObj(todayStr()) - dateObj(isoDay(when))) / 864e5) : null;
+  const t = when ? when.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
+  const ago = !when ? '' : days === 0 ? `today at ${t}` : days === 1 ? `yesterday at ${t}` : `${days} days ago (${when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`;
+  el.innerHTML = !when ? '<b>No backup downloaded from this browser yet.</b>'
+    : changed ? `Last backup ${esc(ago)}. <b>You've made changes since then.</b>`
+    : `✓ Last backup ${esc(ago)}. No changes since.`;
+  card.classList.toggle('stale', changed);
+}
+const isoDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 function restoreAll(text) {
   let st;
   try { st = fixStore(JSON.parse(text)); } catch (e) { st = null; }
@@ -1071,10 +1116,11 @@ function counts(date, stOf = k => getStatus(date, k)) {
 
 /* ---------- render ---------- */
 function render() {
-  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover();
+  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') renderBackup();
   $('#instructorView').checked = !!S.instructorView;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
+  if (S.view !== 'history') histOrder = null;           // coming back to History re-sorts
   if (S.classView === 'list' && S.mode !== 'take') { S.mode = 'take'; selected = null; }   // Edit seats is a seating-chart tool
   const isList = S.classView === 'list';
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === S.mode)));
@@ -1978,14 +2024,40 @@ function restoreStudent(k) {
   delete st.dropped; S.seats[lab] = k;
   commit(); toast(`${st.name} is back in ${seatName(lab)}.`);
 }
+/* History sort: by seat (default), last name, absences, or excused. Numbers sort high-to-low first; ties go by last name.
+   The order is frozen while you mark cells so rows don't jump; it refreshes when you click a header, press Esc, or come back to the view. */
+const HSORT = { seat: { label: 'Seat', first: 1 }, name: { label: 'Last name', first: 1 }, abs: { label: 'Absences', first: -1 }, exc: { label: 'Excused', first: -1 } };
+let histOrder = null;                                   // frozen row order (student keys) while editing
+function histSorted(list, dates) {
+  const so = S.histSort && HSORT[S.histSort.by] ? S.histSort : { by: 'seat', dir: 1 }, dir = so.dir === -1 ? -1 : 1;
+  const n = (x, st) => dates.reduce((t, d) => t + (getStatus(d, x.k) === st ? 1 : 0), 0);
+  const val = so.by === 'abs' ? x => n(x, 'A') : so.by === 'exc' ? x => n(x, 'E') : null;
+  const out = list.map((x, i) => ({ x, i, v: val ? val(x) : 0 }));
+  out.sort((a, b) => so.by === 'seat' ? (a.i - b.i) * dir
+    : so.by === 'name' ? nameSort(a.x.s, b.x.s) * dir || a.i - b.i
+    : (a.v - b.v) * dir || nameSort(a.x.s, b.x.s) || a.i - b.i);
+  return out.map(o => o.x);
+}
+function setHistSort(by) {
+  const cur = S.histSort || {};
+  S.histSort = { by, dir: cur.by === by ? -(cur.dir || 1) : HSORT[by].first };
+  histOrder = null; commit();
+  toast(`Sorted by ${HSORT[by].label.toLowerCase()}, ${by === 'seat' ? (S.histSort.dir === 1 ? 'front to back' : 'back to front') : by === 'name' ? (S.histSort.dir === 1 ? 'A to Z' : 'Z to A') : (S.histSort.dir === -1 ? 'most first' : 'fewest first')}.`);
+}
 function renderHistory() {
   const box = $('#history');
   const fa = document.activeElement, keep = fa?.classList?.contains('hcell') ? { k: fa.dataset.k, d: fa.dataset.d } : null;
   const oldWrap = box.querySelector('.table-wrap'), scroll = oldWrap ? [oldWrap.scrollTop, oldWrap.scrollLeft] : null;
   const everyone = assigned(), dates = Object.keys(S.attendance).filter(isDate).sort();
   const hq = fold(histFilter.trim());
-  const list = hq ? everyone.filter(x => matchStudent(x, hq)) : everyone;
-  $('#hCount').textContent = hq ? `Showing ${list.length} of ${everyone.length}` : '';
+  const fresh = histSorted(hq ? everyone.filter(x => matchStudent(x, hq)) : everyone, Object.keys(S.attendance).filter(isDate));
+  let list = fresh;
+  if (histOrder) { const pos = new Map(histOrder.map((k, i) => [k, i])); list = [...fresh].sort((a, b) => (pos.get(a.k) ?? 1e9) - (pos.get(b.k) ?? 1e9)); }
+  histOrder = list.map(x => x.k);
+  const stale = list.some((x, i) => x.k !== fresh[i].k);
+  $('#hCount').innerHTML = (hq ? `Showing ${list.length} of ${everyone.length}` : '') +
+    (stale ? ` <button type="button" class="btn ghost" id="hResort" title="Rows stay put while you edit. Re-sort with the latest counts." style="padding:2px 8px;font-size:12px">↻ Re-sort</button>` : '');
+  $('#hResort')?.addEventListener('click', () => { histOrder = null; renderHistory(); });
   if (!$('#hAddDate').value) $('#hAddDate').value = S.date;
   const absOn = d => everyone.filter(x => getStatus(d, x.k) === 'A').length;
   $('#hJump').innerHTML = (S.attendance[S.date] ? '' : `<option value="" selected>— ${esc(shortDate(S.date))} not recorded —</option>`) +
@@ -1995,11 +2067,14 @@ function renderHistory() {
   if (!list.length || !dates.length) { const f = $('#hFocus'); f.innerHTML = ''; f.classList.remove('on'); }
   if (!list.length) { box.innerHTML = hq && everyone.length ? `<p class="muted">No students match “${esc(histFilter.trim())}”. Press <kbd>Esc</kbd> to reset the view.</p>` : '<p class="muted">No students yet.</p>'; return; }
   if (!dates.length) { box.innerHTML = '<p class="muted">No dates recorded yet. Take attendance in the Classroom view, or add a date above.</p>'; return; }
-  let h = `<div class="table-wrap"><table><thead><tr><th class="sticky">Student</th><th>${unitWord()}</th><th>Seat</th><th>Absent</th><th>Excused</th>${
+  const so = S.histSort && HSORT[S.histSort.by] ? S.histSort : { by: 'seat', dir: 1 };
+  const sh = (by, text, cls = '') => { const on = so.by === by, arrow = on ? (so.dir === 1 ? '▲' : '▼') : '';
+    return `<th class="sortable${cls}${on ? ' sorted' : ''}" aria-sort="${on ? (so.dir === 1 ? 'ascending' : 'descending') : 'none'}"><button type="button" data-hsort="${by}" title="Sort by ${HSORT[by].label.toLowerCase()}${on ? ' (click again to reverse)' : ''}">${text}<span class="arr" aria-hidden="true">${arrow}</span></button></th>`; };
+  let h = `<div class="table-wrap"><table><thead><tr>${sh('name', 'Student', ' sticky')}${sh('seat', unitWord())}<th>Seat</th>${sh('abs', 'Absent')}${sh('exc', 'Excused')}${
     dates.map(d => `<th class="date c${d === S.date ? ' cur' : ''}"><button type="button" data-date="${d}" title="Open ${esc(longDate(d))} in Classroom">${esc(shortDate(d))}</button><button type="button" class="del" data-del="${d}" aria-label="Delete ${esc(longDate(d))}" title="Delete this date">×</button></th>`).join('')}</tr></thead><tbody>`;
   list.forEach(x => {
     const sts = dates.map(d => getStatus(d, x.k));
-    h += `<tr><td class="sticky">${esc(x.s.name)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
+    h += `<tr><td class="sticky">${esc(so.by === 'name' ? lastFirst(x.s) : x.s.name)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
       sts.map((st, j) => `<td class="c${dates[j] === S.date ? ' cur' : ''}"><button type="button" class="pill ${st} hcell" data-k="${x.k}" data-d="${dates[j]}" aria-label="${esc(x.s.name)}, ${esc(longDate(dates[j]))}: ${STATUS[st]}. Press to change.">${st}</button></td>`).join('')}</tr>`;
   });
   h += '</tbody></table></div>';
@@ -2010,8 +2085,9 @@ function renderHistory() {
   if (again) { again.focus({ preventScroll: true }); markHist(again); } else markHist(null);
 }
 $('#history').addEventListener('click', e => {
-  const cellB = e.target.closest('.hcell'), go = e.target.closest('[data-date]'), del = e.target.closest('[data-del]');
-  if (cellB) { const { k, d } = cellB.dataset; snapshot(); setStatus(d, k, NEXT[getStatus(d, k)]); commit(); }
+  const cellB = e.target.closest('.hcell'), go = e.target.closest('[data-date]'), del = e.target.closest('[data-del]'), srt = e.target.closest('[data-hsort]');
+  if (srt) setHistSort(srt.dataset.hsort);
+  else if (cellB) { const { k, d } = cellB.dataset; snapshot(); setStatus(d, k, NEXT[getStatus(d, k)]); commit(); }
   else if (go) { S.date = go.dataset.date; S.view = 'classroom'; S.mode = 'take'; commit(); }
   else if (del) {
     const d = del.dataset.del;
@@ -2068,7 +2144,7 @@ function histGoTo(d) {
 /* Esc in history: back to the fresh view (no search, no cursor, top-left). Leaves the selected date alone. */
 function resetHist() {
   const had = histFilter || $('#history').contains(document.activeElement) || document.activeElement === $('#hSearch');
-  histFilter = ''; $('#hSearch').value = ''; histRowKey = null; histColDate = null;
+  histFilter = ''; $('#hSearch').value = ''; histRowKey = null; histColDate = null; histOrder = null;
   if ($('#view-history').contains(document.activeElement)) document.activeElement.blur();
   renderHistory();
   const wrap = $('#history .table-wrap'); if (wrap) { wrap.scrollTop = 0; wrap.scrollLeft = 0; }
@@ -2754,6 +2830,7 @@ $('#dChips').addEventListener('click', e => { const c = e.target.closest('[data-
 /* Global shortcuts. Skipped while typing in a field, and when a seat or cell already handled the key. */
 const typing = el => !!el.closest?.('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]');
 window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') { e.preventDefault(); backupAll(); return; }   // anywhere: download a backup
   if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || $('#sheetDlg').open || calIsOpen()) return;
   if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'z' && !e.shiftKey) {
     if (typing(e.target)) return;                // let text fields keep their own undo
@@ -2894,6 +2971,9 @@ $('#ncForm').addEventListener('submit', e => {
   toast(`Created “${name}”. Add students in Edit seats or import its CSV.`);
 });
 $('#backupBtn').addEventListener('click', backupAll);
+$('#restoreBtn').addEventListener('click', () => $('#restoreFile').click());
+$('#restoreFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const r = new FileReader(); r.onload = () => restoreAll(String(r.result)); r.readAsText(f); });
 $('#appExportBtn').addEventListener('click', () => exportApp($('#expScope').value));
 $('#appBlankBtn').addEventListener('click', () => exportApp('none'));
 /* Save this app as a new .html file with data built in (all classes, or just the open one). */

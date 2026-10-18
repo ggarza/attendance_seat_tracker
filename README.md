@@ -18,7 +18,7 @@ This document describes the features and the main decisions behind them. It leav
 
 - **Class:** a course section with a roster, seat assignments, attendance records, meeting days, and printed sign-in sheets. The instructor works in one class at a time and switches between them with a class menu.
 - **Room:** a layout only, made of rows of seats (with aisles) or tables. Each class uses one room, and sections that meet in the same place can share it.
-- **Student:** first name, last name, optional student ID (unique within the class), and optional email.
+- **Student:** first name, last name, and optional email. No student ID is kept.
 - **Attendance:** for each date, each student is Present, Absent, or Excused. A date that has records is a recorded date.
 - **Selected date:** the day being worked on. It defaults to today and is shared across views.
 
@@ -37,7 +37,7 @@ This document describes the features and the main decisions behind them. It leav
 - The keyboard is fully supported: arrow keys move, P/A/E mark and move to the next student, and typing jumps to a last name.
 
 ### Paper sign-in sheets
-- A printable PDF (US Letter, landscape or portrait) with last name, first name, and empty date columns for students to initial. The date columns either show the class's next meeting dates or are left blank for students to write in. Extra blank rows at the bottom cover late adds.
+- A printable PDF (US Letter, landscape or portrait) with last name, first name, and empty date columns for students to initial. The date columns either show the class's next meeting dates or are left blank for students to write in. Optional blank rows at the bottom (none by default) cover late adds.
 - Row height is adjustable, with an option to fit every student on one page.
 - Each sheet is numbered and remembered. Sheet mode in the list view picks a sheet to transcribe, and a sheet can be downloaded again. Sheet mode doesn't require printing: "Recent class dates" is always available, and a sheet can be created without a PDF.
 - The app generates the PDF itself, with no library.
@@ -50,38 +50,41 @@ This document describes the features and the main decisions behind them. It leav
 
 - A grid with a row for each student and a column for each recorded date. It is editable, stays in sync with the classroom views, and shows absence and excused totals.
 - Clicking anywhere in a row selects it, and the selected row and column are highlighted.
-- Students can be found by searching name, ID, or email. A date can be found with a jump-to-date list, the calendar, or by stepping between recorded dates. Dates can be added or deleted.
+- Rows can be sorted by seat (the default), last name, absences, or excused, by clicking a column header; clicking again reverses. The sort is remembered. While marking cells the rows stay put, with a Re-sort button to refresh the order.
+- Students can be found by searching name or email. A date can be found with a jump-to-date list, the calendar, or by stepping between recorded dates. Dates can be added or deleted.
 - Escape resets the view.
 
 ## 5. Emails
 
 - **Recipients:** filters show All, Absent today, Excused today, or Absent N+ times (adjustable). The list shows only the filtered students. Students can be searched and selected individually or as a range.
 - **Sending:** either one email with all recipients in **BCC**, or **separate personal emails**. Drafts open in the mail app, download as .eml files, or copy to the clipboard. The app never sends anything itself.
-- **Message editor:** the editor is a live working draft that uses placeholders for first name, name, date, class, seat, and ID. Templates are starting points: editing one changes only the current draft until it is saved as a template. Eleven starter templates, written in an empathetic, supportive tone, cover:
-  missed class check-in · excused absence documentation · repeated absences · missed quiz or exam · several missed classes · excused absence confirmation · missed group work · nearing the attendance limit · missed exam review · welcome back after time away · missed announcement.
+- **Message editor:** the editor is a live working draft that uses placeholders for first name, name, date, class, and seat. Templates are starting points: editing one changes only the current draft until it is saved as a template. Fourteen starter templates, written in an empathetic, supportive tone, cover:
+  missed class check-in · excused absence documentation · repeated absences · missed quiz or exam · several missed classes · excused absence confirmation · missed group work · nearing the attendance limit · missed exam review · welcome back after time away · missed announcement · three general notes for a single missed day (a short note, easy ways to catch up, and a no-reply-needed check-in).
+- **The library never shrinks by accident.** Starter templates are part of the app: every one stays in the library unless the instructor deletes it (deleted ones can be restored), new starters added in later versions appear automatically, and restoring older data keeps templates that exist only on this device.
 
 ## 6. Managing data
 
 - **Classes and rooms:** create, rename, and delete classes; set each class's meeting days; and assign, share, copy, or delete rooms.
 - **Roster:**
+  - **Edit** a student's first name, last name, and email in place, one row at a time. Changes are checked: a name is required and emails must look valid. Seats are changed only in Edit seats.
   - **Remove** a student with a choice: **Drop** keeps their history, lists them as dropped with their last day attended, and can be restored; **Delete** erases them completely.
   - A review step checks first/last name splits when the app had to guess.
-- **CSV import and export:** one row per student, with a class column so files can hold one class or all classes. On import, rows go to the class named in each row, and new class names create classes. Existing classes can either be **updated** (the default: students are matched by ID, email, or name, and seats and history are kept) or **replaced** completely. Files can be dragged onto this view.
+- **CSV import and export:** one row per student, with a class column so files can hold one class or all classes. On import, rows go to the class named in each row, and new class names create classes. Existing classes can either be **updated** (the default: students are matched by email or name, and seats and history are kept) or **replaced** completely. Files can be dragged onto this view.
 - **Backups:**
-  - a full .json backup of everything
+  - a full .json backup of everything, from a prominent card at the top of Manage data (or Ctrl/⌘+S anywhere). The card shows when the last backup was made and warns when there are changes since; a Restore button sits next to it
   - a copy of the app with its data built in, which can be opened on another device to pick up where you left off
   - a clean copy of the app with no data, safe to host
 
 ## 7. CSV format (summary)
 
 ```
-class,last_name,first_name,student_id,email,row,seat,2026-10-13,2026-10-15
-Calculus I – Section 01,Garza,Ana,20480100,ana@example.edu,1,1,P,A
+class,last_name,first_name,email,row,seat,2026-10-13,2026-10-15
+Calculus I – Section 01,Garza,Ana,ana@example.edu,1,1,P,A
 ```
 
 - Each date column holds P, A, or E. Within a recorded date, a blank cell means present. A date counts as recorded for a class only if at least one of its students has a mark on it, which lets classes that meet on different days share one file.
 - Single-class files can include optional `#` lines with the room layout.
-- Imports accept common header variations: a single "Name" column (including "Last, First"), US-style dates (10/13/2026), and comma, semicolon, or tab separators. Students without seats are placed in open seats automatically.
+- Imports accept common header variations: a single "Name" column (including "Last, First"), US-style dates (10/13/2026), a student ID column (ignored), and comma, semicolon, or tab separators. Students without seats are placed in open seats automatically.
 
 ## 8. Hosting and offline use
 
@@ -117,17 +120,17 @@ The answers in italics are the choices made for this build.
 **Students and classes**
 12. Several classes in one app? Separate room layouts? *Yes; rooms separate from classes and shareable.*
 13. Store first and last names separately? *Yes, with a review step for guessed splits.*
-14. Is student ID required? *Optional, unique within a class.*
+14. Should student IDs be kept? *No; names and emails are enough.*
 15. How are students removed? Keep their history? *Only from Manage data; drop (keeps history, restorable) or delete.*
 
 **History and email**
 16. Should history be editable? *Yes, synced with the classroom views.*
 17. How should email work: mailto, .eml files, or a sending service? *mailto, .eml, and copy; never sends automatically.*
 18. One BCC email, separate personal emails, or both? *Both.*
-19. Tone and content of the starter templates? *Empathetic and supportive; 11 templates.*
+19. Tone and content of the starter templates? *Empathetic and supportive; 14 templates, including three general ones for a single missed day.*
 
 **Data**
-20. Which CSV columns and in what order? *class, last name, first name, ID, email, seat, then dates.*
+20. Which CSV columns and in what order? *class, last name, first name, email, seat, then dates.*
 21. Should imports into an existing class merge or replace? *Both, with merge as the default.*
 22. Which backup options? *Full .json, a copy of the app with data, and a clean copy of the app.*
 23. Should it work offline when hosted and install to an iPad Home Screen? *Yes.*
