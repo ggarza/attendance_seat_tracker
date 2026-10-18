@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Attendance</title>
+<meta name="theme-color" content="#0e1015">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
 <style>
 :root{
   --bg:#0e1015;--panel:#161920;--panel2:#1d212a;--panel3:#242935;--line:#2d3340;--text:#e7e9ee;--muted:#9aa2b0;
@@ -512,7 +520,22 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
 'use strict';
 /* The page exactly as it was loaded, before anything is drawn: used to save a copy of the app with data built in. */
 const PRISTINE = '<!doctype html>\n' + document.documentElement.outerHTML;
-const KEY = 'seat-tracker-v1:' + location.pathname;
+/* Saved data is tied to the page's location. ".../attendance/" and ".../attendance/index.html" are the same app,
+   so both use one key; anything saved under the old exact-path key is copied over once. */
+const KEY = 'seat-tracker-v1:' + location.pathname.replace(/index\.html?$/i, '');
+try {
+  if (!localStorage.getItem(KEY)) {
+    const base = KEY.slice('seat-tracker-v1:'.length);
+    for (const old of [location.pathname, base + 'index.html', base + 'index.htm']) {
+      const v = old !== base && localStorage.getItem('seat-tracker-v1:' + old);
+      if (v) { localStorage.setItem(KEY, v); break; }
+    }
+  }
+} catch (e) {}
+/* Offline: when served from a web address (e.g. GitHub Pages), a service worker keeps a copy so the app opens without internet. */
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
 const LIM = { rows: [1, 15], cols: [1, 16] };
 const STATUS = { P: 'Present', A: 'Absent', E: 'Excused' };
 const NEXT = { P: 'A', A: 'E', E: 'P' };
