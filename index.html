@@ -186,10 +186,18 @@ th.date.cur,td.cur{background:#1a2030}
 button.hcell{border:0;cursor:pointer;min-width:30px;font:inherit;font-size:12px;font-weight:600}
 button.hcell:hover{filter:brightness(1.3)}
 /* keyboard position in the history grid */
-#roster th,#roster td{padding:6px 7px}
-#roster td.em{white-space:normal;overflow-wrap:anywhere;min-width:120px}
-#roster .act{white-space:nowrap;text-align:right}
-#roster .act .btn{padding:3px 8px;font-size:12.5px}
+#roster th,#roster td{padding:6px 5px}
+#roster td.em{white-space:normal;overflow-wrap:anywhere;min-width:80px}
+#roster td.nw{white-space:nowrap}
+#roster .act{width:1%;text-align:right}
+#roster .act .btn{display:block;width:100%;margin:2px 0;padding:3px 7px;font-size:12.5px}
+#roster tr.redit td{background:#17213d}
+#roster tr.redit input{display:block;width:100%;min-width:0;box-sizing:border-box;padding:5px 7px;font-size:13.5px;margin-top:3px}
+#roster .reform{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:flex-end}
+#roster .reform label{min-width:0;flex:1 1 110px;font-size:11.5px;color:var(--muted,#9aa4b8);text-transform:uppercase;letter-spacing:.03em}
+#roster .reform label.wide{flex:2 1 190px}
+#roster .reform .rbtns{display:flex;gap:6px;margin-left:auto}
+#roster tbody tr[data-rrow]:not(.redit){cursor:default}
 #history tbody tr{cursor:pointer}
 .lst-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 #lFind{width:220px}
@@ -465,6 +473,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
         <div class="row">
           <button class="btn primary" id="tplSave" type="button">Save template</button>
           <button class="btn danger" id="tplDel" type="button">Delete</button>
+          <button class="btn ghost" id="tplRestore" type="button" hidden style="font-size:13px">Restore starter templates</button>
           <span class="small" id="tplState" style="color:var(--excused)" hidden>● Edited · drafts use this version</span>
           <button class="btn ghost" id="tplRevert" type="button" hidden title="Go back to the saved template">Revert</button>
         </div>
@@ -494,7 +503,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
       <span class="small muted" id="shDays" style="align-self:flex-end;padding-bottom:8px"></span></div>
     <div class="row">
       <label class="fld"><span>Date columns</span><input type="number" id="shCols" min="1" max="20" value="8"></label>
-      <label class="fld"><span>Blank rows for late adds</span><input type="number" id="shExtra" min="0" max="20" value="3"></label>
+      <label class="fld"><span>Blank rows for late adds</span><input type="number" id="shExtra" min="0" max="20" value="0"></label>
       <span class="small muted" id="shFit" style="align-self:flex-end;padding-bottom:8px"></span></div>
     <div class="row">
       <label class="fld"><span>Row height (points)</span><input type="number" id="shRowH" min="12" max="32" step="0.5" value="19"></label>
@@ -715,7 +724,25 @@ function extraTemplatesV3() {   // added in template set v3
       body: "Hi {first},\n\nWe missed you in {class} on {date}. I shared an important announcement in class that day, and I didn't want you to miss it:\n\n[Write the announcement here, for example a changed due date, a new assignment, or an exam room change.]\n\nIf you have any questions about it, or about anything else from that day, just reply to this email or stop by office hours. I'm happy to help.\n\nHope to see you next class," }
   ];
 }
-function defaultTemplates() {
+function extraTemplatesV4() {   // added in template set v4: general notes for a single missed day
+  return [
+    { id: uid(), title: "Short note — we missed you",
+      subject: "{class}: we missed you on {date}",
+      body: "Hi {first},\n\nJust a quick note to say we missed you in {class} on {date}. There's no need to explain; I simply wanted you to know you were missed.\n\nThe materials from that class are posted, and I'm happy to answer any questions. See you next time!\n\nBest," },
+    { id: uid(), title: "One missed class — easy ways to catch up",
+      subject: "{class}: catching up on {date}",
+      body: "Hi {first},\n\nI noticed you weren't able to make it to {class} on {date}. Missing a class happens to everyone, and catching up is very doable.\n\nA few easy next steps:\n• Look over the notes and materials posted for that day.\n• Ask a classmate what they found most helpful.\n• Bring any questions to office hours, or reply to this email.\n\nI'm here to help if anything is unclear.\n\nWarmly," },
+    { id: uid(), title: "Hope all is well — no reply needed",
+      subject: "{class}: hope all is well",
+      body: "Hi {first},\n\nI noticed you weren't in {class} on {date}, and I just wanted to check in. I hope everything is okay.\n\nYou don't need to reply to this message. If you'd like help catching up, or just want to talk, you're welcome to stop by office hours or send me an email anytime.\n\nTake care," }
+  ];
+}
+/* Starter templates have stable ids ("st-01"…), so the app can always tell which ones a library is missing. */
+function starterTemplates() {
+  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4()].map((t, i) => ({ ...t, id: 'st-' + String(i + 1).padStart(2, '0') }));
+}
+function defaultTemplates() { return starterTemplates(); }
+function defaultTemplatesBase() {
   return [
     { id: uid(), title: 'Missed class — check in', subject: '{class}: we missed you on {date}',
       body: 'Hi {first},\n\nI noticed you weren\'t in {class} on {date}. I hope everything is okay.\n\nPlease review the notes and materials posted for that day, and feel free to reach out or stop by office hours if anything is unclear. I\'m happy to help you catch up.\n\nBest regards,' },
@@ -723,8 +750,6 @@ function defaultTemplates() {
       body: 'Hi {first},\n\nYou were marked absent from {class} on {date}. If this absence was for an approved reason, please send me any documentation and I\'ll update your record to excused.\n\nIn the meantime, please make sure to review that day\'s materials.\n\nThank you,' },
     { id: uid(), title: 'Repeated absences — let\'s talk', subject: '{class}: checking in about attendance',
       body: 'Hi {first},\n\nI noticed you were absent again on {date}, and I want to make sure you have what you need to succeed in {class}. Could we find a time to talk this week, either in office hours or by appointment?\n\nI\'m here to help.\n\nBest,' },
-    ...extraTemplates(),
-    ...extraTemplatesV3()
   ];
 }
 
@@ -750,23 +775,38 @@ function demo() {
 }
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
-    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 3, bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
-    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 3 } };
+    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
+    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 } };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
 const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets'];
-const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
+/* Every starter template is kept in the library unless the instructor deleted it (remembered in removedStarters),
+   so restoring an older backup, importing old data, or opening an older copy never shrinks the library,
+   and starter templates added in later versions appear automatically. */
 function fixTemplates(g) {
-  if ((g.tplVersion || 1) < 3 && Array.isArray(g.templates)) {   // one-time: add newer starter templates to an existing library
-    const have = new Set(g.templates.map(x => x.title));
-    const add = [...((g.tplVersion || 1) < 2 ? extraTemplates() : []), ...extraTemplatesV3()];
-    add.forEach(x => { if (!have.has(x.title)) g.templates.push(x); });
-    g.tplVersion = 3;
+  if (!Array.isArray(g.templates)) g.templates = [];
+  if (!Array.isArray(g.removedStarters)) g.removedStarters = [];
+  const byTitle = new Map(g.templates.map(t => [t.title, t])), ids = new Set(g.templates.map(t => t.id));
+  for (const st of starterTemplates()) {
+    if (ids.has(st.id) || g.removedStarters.includes(st.id)) continue;
+    const old = byTitle.get(st.title);
+    if (old && !/^st-\d+$/.test(old.id)) { old.id = st.id; ids.add(st.id); continue; }   // older copy of this starter: give it the stable id
+    if (!old) { g.templates.push({ ...st }); ids.add(st.id); }
   }
+  g.tplVersion = 4;
+}
+/* When data from a file replaces what's here, keep templates that exist only here (and the starters). */
+function keepTemplates(next) {
+  const mine = STORE?.global?.templates || [], theirs = next.global.templates || [];
+  const ids = new Set(theirs.map(t => t.id)), titles = new Set(theirs.map(t => t.title));
+  next.global.templates = [...theirs, ...mine.filter(t => !ids.has(t.id) && !titles.has(t.title)).map(t => ({ ...t }))];
+  fixTemplates(next.global);
+  return next;
 }
 /* ---------- names ----------
    Students store first and last names separately; `name` ("First Last") is kept in step for display and matching.
@@ -821,8 +861,10 @@ function fixStore(st) {
   if (st.v !== 2) { if (!st.aisles && st.aisleAfter !== undefined) fixRoom(st); st = storeFromFlat(st); }   // single-class save from earlier versions
   st.classes ||= {}; st.rooms ||= {}; st.global ||= {};
   const b = base(), g = st.global;
+  if (!Array.isArray(g.templates)) g.templates = b.templates;
+  fixTemplates(g);
   for (const k of GLOBAL_KEYS) if (g[k] === undefined || g[k] === null) g[k] = b[k];
-  fixTemplates(g); if (!isDate(g.date)) g.date = todayStr();
+  if (!isDate(g.date)) g.date = todayStr();
   Object.values(st.rooms).forEach(fixRoom);
   if (!Object.keys(st.rooms).length) { const rid = uid(); st.rooms[rid] = { id: rid, name: 'Room 1' }; fixRoom(st.rooms[rid]); }
   const firstRoom = Object.keys(st.rooms)[0];
@@ -863,7 +905,8 @@ function startupStore() {
   if (!local) { setTimeout(() => toast(`Loaded the data built into this file (${count(builtIn)}, saved ${when}).`), 300); return builtIn; }
   if (local.global.embedSeen === emb.id) return local;   // already decided at this location
   const useBuiltIn = confirm(`This file has data built in: ${count(builtIn)}, saved ${when}.\n\nThis browser also has saved data for this file's location: ${count(local)}.\n\nOK = use the data built into the file (replaces what this browser has here).\nCancel = keep this browser's data.`);
-  if (useBuiltIn) return builtIn;
+  if (useBuiltIn) { const lt = local.global.templates || [], ids = new Set(builtIn.global.templates.map(t => t.id)), titles = new Set(builtIn.global.templates.map(t => t.title));
+    builtIn.global.templates.push(...lt.filter(t => !ids.has(t.id) && !titles.has(t.title))); fixTemplates(builtIn.global); return builtIn; }
   local.global.embedSeen = emb.id; return local;
 }
 let S = flatten(STORE);
@@ -909,7 +952,7 @@ function switchClass(id) {
   resetSession(); commit();
 }
 function resetSession() {                                  // view state that belongs to the class being shown
-  selected = null; selDate = null; selAuto = true; emailSel = new Set(); histFilter = ''; histRowKey = null;
+  selected = null; selDate = null; selAuto = true; emailSel = new Set(); histFilter = ''; histRowKey = null; rosterEdit = null;
   const hs = $('#hSearch'); if (hs) hs.value = '';
   undoStack.length = 0;
 }
@@ -999,7 +1042,7 @@ function restoreAll(text) {
   const nC = Object.keys(st.classes).length, nR = Object.keys(st.rooms).length;
   if (!confirm(`Replace everything in this browser with the backup: ${nC} class${nC === 1 ? '' : 'es'}, ${nR} room${nR === 1 ? '' : 's'}, and ${st.global.templates.length} templates?`)) return;
   delete st.app; delete st.exported;
-  STORE = st; S = flatten(STORE); selected = null; undoStack.length = 0; selDate = null; commit(); toast(`Restored ${nC} class${nC === 1 ? '' : 'es'}.`);
+  syncStore(); STORE = keepTemplates(st); S = flatten(STORE); selected = null; undoStack.length = 0; selDate = null; commit(); toast(`Restored ${nC} class${nC === 1 ? '' : 'es'}.`);
 }
 function commit() { save(); render(); }
 
@@ -1317,7 +1360,7 @@ function sheetPdf(title, sh, people, extra) {
 const sheetPeople = () => rosterSorted().map(x => ({ last: x.s.last || x.s.name, first: x.s.first }));
 function downloadSheet(sh) {
   if (!sh) return;
-  const r = sheetPdf(S.className || 'Class', sh, sheetPeople(), sh.extra ?? 3);
+  const r = sheetPdf(S.className || 'Class', sh, sheetPeople(), sh.extra ?? 0);
   download(`signin-${slug(S.className)}-sheet${sh.n}.pdf`, r.bytes, 'application/pdf');
   toast(`Downloaded sign-in sheet ${sh.n} (${r.pages} page${r.pages === 1 ? '' : 's'}).`);
 }
@@ -1325,7 +1368,8 @@ function downloadSheet(sh) {
 function nextClassDay(d) { const days = S.days || []; let x = d; for (let i = 0; i < 8; i++) { if (!days.length || days.includes(dateObj(x).getDay())) return x; x = shiftDate(x, 1); } return d; }
 function classDaysFrom(d, n) { const out = []; let x = nextClassDay(d); while (out.length < n) { out.push(x); x = nextClassDay(shiftDate(x, 1)); } return out; }
 function openSheetDialog() {
-  const o = S.sheetOpts || (S.sheetOpts = { dates: 'print', cols: 8, extra: 3 });
+  const o = S.sheetOpts || (S.sheetOpts = { dates: 'print', cols: 8, extra: 0, ev: 2 });
+  if (!o.ev) { if (o.extra === 3) o.extra = 0; o.ev = 2; }              // the old default of 3 blank rows becomes 0 once
   const hasDays = (S.days || []).length > 0;
   const printed = (S.sheets || []).filter(x => !x.blank).flatMap(x => x.dates).filter(Boolean).sort();
   $('#shStart').value = printed.length ? nextClassDay(shiftDate(printed[printed.length - 1], 1)) : nextClassDay(todayStr());
@@ -1383,7 +1427,7 @@ function makeSheet(pdf) {
   const rowH = sheetRowH(people.length + extra);
   const sh = { id: uid(), n, made: todayStr(), blank: sheetDlgMode !== 'print', dates, extra, orient: sheetDlgOrient, rowH, printed: pdf };
   (S.sheets ||= []).push(sh); S.sheetSel = sh.id;
-  S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra, orient: sheetDlgOrient, rowH: $('#shFit1').checked ? (S.sheetOpts?.rowH || SHEET.rowH) : rowH, fit1: $('#shFit1').checked };
+  S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra, orient: sheetDlgOrient, ev: 2, rowH: $('#shFit1').checked ? (S.sheetOpts?.rowH || SHEET.rowH) : rowH, fit1: $('#shFit1').checked };
   $('#sheetDlg').close();
   if (S.view === 'classroom' && S.classView === 'list') S.listMode = 'sheet';
   commit();
@@ -1739,6 +1783,14 @@ function renderTables() {
 }
 
 /* ---------- roster & history ---------- */
+let rosterEdit = null;                                     // student being edited in the roster
+/* Shared checks for a student's details (seat editor and roster). Returns a message, or '' when fine. */
+function studentProblem(k, first, last, sid, email) {
+  if (!first && !last) return 'Enter a first or last name.';
+  if (!emailOk(email)) return 'That email address doesn\'t look valid.';
+  if (sid) { const dup = Object.entries(S.students).find(([o, st]) => o !== k && !st.dropped && st.sid === sid); if (dup) return `Student ID ${sid} already belongs to ${dup[1].name}.`; }
+  return '';
+}
 function renderRoster() {
   const list = assigned(), dropped = droppedList();
   const check = Object.entries(S.students).filter(([, st]) => st.nameCheck).map(([k, st]) => ({ k, st })).sort((a, b) => nameSort(a.st, b.st));
@@ -1750,9 +1802,19 @@ function renderRoster() {
       <td class="act"><button type="button" class="btn" data-nswap="${k}" title="Move the first word of the last name into the first name">⇄</button>
         <button type="button" class="btn primary" data-nok="${k}">Looks right</button></td></tr>`).join('')}</tbody></table>
     ${check.length > 1 ? '<div class="row" style="margin-top:8px"><button type="button" class="btn" id="nameOkAll">Confirm all as shown</button></div>' : ''}</div>` : '';
-  h += list.length ? `<p class="small muted" style="margin-top:0">${list.length} student${list.length === 1 ? '' : 's'} · ${isTables() ? `${S.rows} tables × ${S.cols} seats` : `${S.rows} rows × ${S.cols} seats`}</p><div class="table-wrap"><table><thead><tr><th>${unitWord()}</th><th>Seat</th><th>Last name</th><th>First name</th><th>Student ID</th><th>Email</th><th></th></tr></thead><tbody>${
-    list.map(x => `<tr><td class="c">${x.row}</td><td class="c">${x.seat}</td><td>${esc(x.s.last)}${x.s.nameCheck ? ' <span class="pill E" title="Check this name">?</span>' : ''}</td><td>${esc(x.s.first)}</td><td>${esc(x.s.sid)}</td><td class="em">${esc(x.s.email)}</td>
-      <td class="act"><button type="button" class="btn danger" data-rm="${x.k}" aria-label="Remove ${esc(x.s.name)}">Remove</button></td></tr>`).join('')}</tbody></table></div>`
+  h += list.length ? `<p class="small muted" style="margin-top:0">${list.length} student${list.length === 1 ? '' : 's'} · ${isTables() ? `${S.rows} tables × ${S.cols} seats` : `${S.rows} rows × ${S.cols} seats`}</p><div class="table-wrap"><table><thead><tr><th title="${unitWord()} · seat">Seat</th><th>Last name</th><th>First name</th><th>ID</th><th>Email</th><th></th></tr></thead><tbody>${
+    list.map(x => x.k === rosterEdit
+      ? `<tr class="redit" data-rrow="${x.k}"><td class="c nw" title="${unitWord()} ${x.row}, Seat ${x.seat}">${x.row} · ${x.seat}</td>
+        <td colspan="5"><div class="reform">
+          <label>Last name<input type="text" data-rf="last" value="${esc(x.s.last)}"></label>
+          <label>First name<input type="text" data-rf="first" value="${esc(x.s.first)}"></label>
+          <label>Student ID<input type="text" data-rf="sid" value="${esc(x.s.sid)}"></label>
+          <label class="wide">Email<input type="email" data-rf="email" value="${esc(x.s.email)}"></label>
+          <div class="rbtns"><button type="button" class="btn primary" data-rsave="${x.k}">Save</button><button type="button" class="btn" data-rcancel>Cancel</button></div>
+        </div></td></tr>`
+      : `<tr data-rrow="${x.k}"><td class="c nw" title="${unitWord()} ${x.row}, Seat ${x.seat}">${x.row} · ${x.seat}</td><td>${esc(x.s.last)}${x.s.nameCheck ? ' <span class="pill E" title="Check this name">?</span>' : ''}</td><td>${esc(x.s.first)}</td><td>${esc(x.s.sid)}</td><td class="em">${esc(x.s.email)}</td>
+      <td class="act"><button type="button" class="btn" data-redit="${x.k}" aria-label="Edit ${esc(x.s.name)}">Edit</button> <button type="button" class="btn danger" data-rm="${x.k}" aria-label="Remove ${esc(x.s.name)}">Remove</button></td></tr>`).join('')}</tbody></table></div>
+    <p class="small muted" style="margin:6px 0 0">Click <b>Edit</b> (or double-click a row) to change a student's name, ID, or email. <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. Seats are changed in Classroom → Edit seats.</p>`
     : '<p class="muted small">No students yet. Add them in Edit seats or import a CSV.</p>';
   if (dropped.length) h += `<h3 style="margin:18px 0 8px">Dropped students (${dropped.length})</h3>
     <p class="small muted" style="margin-top:0">Not on the chart, in attendance, or in emails. Their past attendance is kept here.</p>
@@ -1776,6 +1838,31 @@ function renderRoster() {
   }));
   $('#nameOkAll')?.addEventListener('click', () => { check.forEach(({ k }) => { saveName(k); delete S.students[k].nameCheck; }); commit(); toast('Names confirmed.'); });
   box.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => askRemove(b.dataset.rm)));
+  /* Editing a student's details in place: one row at a time. */
+  const startEdit = (k, field) => { rosterEdit = k; renderRoster(); const r = box.querySelector(`tr[data-rrow="${k}"]`); (r?.querySelector(`[data-rf="${field || 'last'}"]`) || r?.querySelector('input'))?.select(); };
+  box.querySelectorAll('[data-redit]').forEach(b => b.addEventListener('click', () => startEdit(b.dataset.redit)));
+  box.querySelectorAll('tr[data-rrow]:not(.redit)').forEach(r => r.addEventListener('dblclick', e => {
+    if (e.target.closest('button')) return;
+    const td = e.target.closest('td'), field = ['', 'last', 'first', 'sid', 'email'][td ? td.cellIndex : 0];
+    startEdit(r.dataset.rrow, field);
+  }));
+  box.querySelector('[data-rcancel]')?.addEventListener('click', () => { rosterEdit = null; renderRoster(); });
+  const er = box.querySelector('tr.redit');
+  if (er) {
+    const k = er.dataset.rrow, val = f => er.querySelector(`[data-rf="${f}"]`).value.trim();
+    const saveRow = () => {
+      const msg = studentProblem(k, val('first'), val('last'), val('sid'), val('email'));
+      if (msg) return toast(msg, true);
+      const st = S.students[k]; setNames(st, val('first'), val('last')); st.sid = val('sid'); st.email = val('email'); delete st.nameCheck;
+      rosterEdit = null; commit(); toast(`${st.name} updated.`);
+      box.querySelector(`[data-redit="${k}"]`)?.focus();
+    };
+    box.querySelector('[data-rsave]').addEventListener('click', saveRow);
+    er.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); saveRow(); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); rosterEdit = null; renderRoster(); box.querySelector(`[data-redit="${k}"]`)?.focus(); }
+    });
+  }
   box.querySelectorAll('[data-restore]').forEach(b => b.addEventListener('click', () => restoreStudent(b.dataset.restore)));
   box.querySelectorAll('[data-purge]').forEach(b => b.addEventListener('click', () => {
     const st = S.students[b.dataset.purge];
@@ -1854,7 +1941,7 @@ function useCopy(c) {
   if (!confirm(`Use this data?\n\n${d.what.replace(/<[^>]+>/g, '')}\n\nIt replaces what this app shows now. What's here now is kept as an automatic copy, so this can be undone from this list.`)) return;
   syncStore();
   try { localStorage.setItem(SNAP_PREFIX + HERE + ':' + new Date().toISOString().slice(0, 16).replace(':', '-'), JSON.stringify(STORE)); } catch (e) {}
-  STORE = c.st; S = flatten(STORE); loadProblem = false; recoverDismissed = true;
+  STORE = keepTemplates(c.st); S = flatten(STORE); loadProblem = false; recoverDismissed = true;
   resetSession(); S.view = 'classroom'; commit();
   toast(`Recovered ${Object.keys(STORE.classes).length} class${Object.keys(STORE.classes).length === 1 ? '' : 'es'}.`);
 }
@@ -2431,6 +2518,8 @@ function renderTemplates(force) {
   if (ae !== $('#tplBody')) $('#tplBody').value = S.work.body;
   ['#tplTitle', '#tplDel', '#tplDup'].forEach(s => $(s).disabled = !t);
   $('#tplSave').textContent = t ? 'Save template' : 'Save as template';
+  const missing = (S.removedStarters || []).length;
+  $('#tplRestore').hidden = !missing; $('#tplRestore').textContent = `Restore ${missing} deleted starter template${missing === 1 ? '' : 's'}`;
   updateTplState();
 }
 function fill(str, x) {
@@ -2925,8 +3014,13 @@ $('#tplDup').addEventListener('click', () => {           // keeps your current e
 $('#tplDel').addEventListener('click', () => {
   const t = curTpl(); if (!t || !confirm(`Delete the template “${t.title}”?`)) return;
   S.templates = S.templates.filter(x => x.id !== t.id); tplSel = S.templates[0]?.id || null;
+  if (/^st-\d+$/.test(t.id)) (S.removedStarters ||= []).includes(t.id) || S.removedStarters.push(t.id);   // don't bring it back on its own
   if (S.work?.tpl === t.id) { if (tplSel) loadWork(curTpl()); else S.work.tpl = null; }   // with no templates left, keep the text as a custom message
   commit(); renderTemplates(true);
+});
+$('#tplRestore').addEventListener('click', () => {
+  const n = (S.removedStarters || []).length; S.removedStarters = []; fixTemplates(S); commit(); renderTemplates(true);
+  toast(`Restored ${n} starter template${n === 1 ? '' : 's'}.`);
 });
 window.addEventListener('storage', e => { if (e.key === KEY) { const st = load(); if (st) { STORE = st; S = flatten(STORE); render(); } } });
 
