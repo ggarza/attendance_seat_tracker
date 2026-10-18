@@ -30,7 +30,7 @@ a{color:var(--accent)}
 .brand svg{width:26px;height:26px}
 .fld{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
 .fld.grow{flex:1 1 220px}
-input[type=text],input[type=email],input[type=date],input[type=number],select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color:var(--text);min-width:0}
+input[type=text],input[type=search],input[type=email],input[type=date],input[type=number],select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color:var(--text);min-width:0}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 textarea{width:100%;resize:vertical}
 .btn{background:var(--panel3);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
@@ -191,6 +191,33 @@ button.hcell:hover{filter:brightness(1.3)}
 #roster .act{white-space:nowrap;text-align:right}
 #roster .act .btn{padding:3px 8px;font-size:12.5px}
 #history tbody tr{cursor:pointer}
+.lst-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+#lFind{width:220px}
+.classroom.wide{grid-template-columns:1fr}
+#list table{width:100%}
+#list th,#list td{padding:6px 9px}
+#list tbody tr{cursor:pointer}
+#list tbody tr:focus{outline:none}
+#list tr.cur td{background:#1a2440}
+#list tr.cur td:first-child{box-shadow:inset 5px 0 0 var(--accent);color:#fff;font-weight:700}
+#list tr.cur:focus-within td,#list tr.cur:focus td{background:#253563}
+.pae{display:inline-flex;gap:5px}
+.pae button{width:38px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font-weight:700;cursor:pointer;padding:0;font-size:14px}
+.pae button:hover{border-color:var(--accent)}
+.pae button.on.P{background:var(--present-bg);color:var(--present);border-color:var(--present)}
+.pae button.on.A{background:var(--absent-bg);color:var(--absent);border-color:var(--absent)}
+.pae button.on.E{background:var(--excused-bg);color:var(--excused);border-color:var(--excused)}
+.pae.virt button.on,button.hcell.virt{border-style:dashed;opacity:.65}
+#list.locked .pae button,#list.locked .hcell{cursor:not-allowed;opacity:.5}
+#list th.sd{text-align:center;min-width:64px}
+#list th.sd button.dlink{background:none;border:0;color:var(--accent);cursor:pointer;font:inherit;font-weight:700;text-transform:none;letter-spacing:0;line-height:1.2;padding:0}
+#list th.sd .rec{display:block;font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+#list th.sd input[type=date]{width:128px;padding:3px 5px;font-size:12px}
+#list th.cur-col{background:#253563;box-shadow:inset 0 -3px 0 var(--accent)}
+#list td.cur-col{background:#1a2440}
+#list tr.cur td.cur-col{background:#2c3f78}
+#list button.hcell:focus{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #86a8f880;transform:scale(1.3);position:relative;z-index:1}
+#list .sheet-wrap{overflow-x:auto}
 #history tbody tr:hover td{background:#1a1f2b}
 #history tr.cur-row td{background:#1a2440}
 #history tr.cur-row td.sticky{background:#253563;color:#fff;font-weight:700;box-shadow:inset 5px 0 0 var(--accent)}
@@ -285,15 +312,41 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
 <main>
 <section class="view" id="view-classroom" aria-label="Classroom">
   <div class="toolbar">
-    <div class="seg" role="group" aria-label="Mode">
-      <button type="button" data-mode="take">Take attendance</button>
-      <button type="button" data-mode="edit">Edit seats</button>
+    <div class="seg" role="group" aria-label="Classroom view">
+      <button type="button" data-cview="chart" title="Seating chart (L)">Seating chart</button>
+      <button type="button" data-cview="list" title="List (L)">List</button>
     </div>
-    <label class="switch"><input type="checkbox" id="instructorView"> Instructor view</label>
+    <span class="row" id="chartTools">
+      <span class="seg" role="group" aria-label="Mode">
+        <button type="button" data-mode="take">Take attendance</button>
+        <button type="button" data-mode="edit">Edit seats</button>
+      </span>
+      <label class="switch"><input type="checkbox" id="instructorView"> Instructor view</label>
+    </span>
+    <span class="row" id="listTools" hidden>
+      <span class="seg" role="group" aria-label="List mode">
+        <button type="button" data-lmode="one">One date</button>
+        <button type="button" data-lmode="sheet">Sheet</button>
+      </span>
+      <span class="small muted">Start everyone as</span>
+      <span class="seg" role="group" aria-label="Start everyone as">
+        <button type="button" data-lstart="P">Present</button>
+        <button type="button" data-lstart="A">Absent</button>
+      </span>
+      <button type="button" class="btn" id="sheetPdfBtn">Sign-in sheet PDF…</button>
+    </span>
     <div class="legend" id="legend"><span class="pill P">Present</span><span class="pill A">Absent</span><span class="pill E">Excused</span></div>
   </div>
   <div class="classroom">
-    <div class="card chart-wrap"><div class="room" id="room"></div></div>
+    <div class="card chart-wrap" id="chartCard"><div class="room" id="room"></div></div>
+    <div class="card chart-wrap" id="listCard" hidden>
+      <div class="lst-tools">
+        <input type="search" id="lFind" placeholder="Jump to a last name" aria-label="Jump to a student by last name ( / )" autocomplete="off">
+        <span class="small muted" id="lHint"></span>
+        <span class="row" id="sheetCtl" style="margin-left:auto"></span>
+      </div>
+      <div id="list"></div>
+    </div>
     <aside id="side"></aside>
   </div>
 </section>
@@ -330,6 +383,7 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
         </div>
         <div class="row" style="margin-top:8px">
           <button class="btn" id="appBlankBtn" type="button">Download app with no data (.html)</button>
+          <button class="btn" id="sheetPdfBtn2" type="button">Sign-in sheet (.pdf)…</button>
         </div>
         <div class="row" style="margin-top:8px">
           <button class="btn" id="templateBtn" type="button">Download blank template</button>
@@ -419,6 +473,25 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
 </section>
 </main>
 
+<dialog id="sheetDlg" aria-labelledby="shTitle">
+  <form id="sheetForm" class="stack" style="padding:18px;width:min(560px,calc(100vw - 40px))">
+    <strong id="shTitle" style="font-size:17px">Sign-in sheet</strong>
+    <p class="small muted" id="shClass" style="margin:0"></p>
+    <div class="fld"><span>Dates at the top of each column</span>
+      <span class="seg" role="group" aria-label="Column dates" style="align-self:flex-start">
+        <button type="button" data-shd="print">Print class dates</button>
+        <button type="button" data-shd="blank">Leave blank</button></span></div>
+    <div class="row" id="shStartRow"><label class="fld"><span>Starting</span><input type="date" id="shStart"></label>
+      <span class="small muted" id="shDays" style="align-self:flex-end;padding-bottom:8px"></span></div>
+    <div class="row">
+      <label class="fld"><span>Date columns</span><input type="number" id="shCols" min="1" max="20" value="8"></label>
+      <label class="fld"><span>Blank rows for late adds</span><input type="number" id="shExtra" min="0" max="20" value="3"></label>
+      <span class="small muted" id="shFit" style="align-self:flex-end;padding-bottom:8px"></span></div>
+    <p class="small" id="shSummary" style="margin:0"></p>
+    <div id="shWarn"></div>
+    <div class="row"><button class="btn primary" type="submit">Download PDF</button><button class="btn" type="button" id="shCancel">Cancel</button></div>
+  </form>
+</dialog>
 <dialog id="rmDlg" aria-labelledby="rmTitle">
   <form method="dialog" class="stack" style="padding:18px;max-width:520px">
     <strong id="rmTitle" style="font-size:17px"></strong>
@@ -448,6 +521,9 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
     <h4>Choosing the class date</h4>
     <p>The date bar under the tabs shows which day you're working on. It appears on every view that uses a date. Its badge says <b>Today</b> in green. Any other day turns the bar amber (past) or blue (future) with a ⚠ warning, and while you're marking seats or drafting emails an amber frame surrounds the whole window, so you can't miss that you're working on another day. The chips jump to <b>Today</b> or a recent class date; red numbers show how many were absent that day. Use ‹ and › to step one day, click the date to open a large calendar (arrow keys move by day and week, <kbd>PgUp</kbd>/<kbd>PgDn</kbd> by month, <kbd>Enter</kbd> picks, <kbd>Esc</kbd> or clicking elsewhere closes it), press <b>Go to today</b>, or tap one of the recent class dates. Keyboard: <kbd>[</kbd> previous day, <kbd>]</kbd> next day, <kbd>T</kbd> today, <kbd>U</kbd> unlock.</p>
     <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
+    <h4>List view and sign-in sheets</h4>
+    <p>In Classroom, switch <b>Seating chart | List</b> (or press <kbd>L</kbd>). The list is sorted by last name, the same order as the printed sign-in sheet. <b>One date</b> shows P / A / E buttons for the selected date; <b>Sheet</b> shows every date on one printed sheet side by side, so you can enter a filled sheet in one pass (sheet columns stay editable on past dates). <b>Start everyone as Present | Absent</b> decides what an unrecorded date means: with Absent, mark the students who initialed; your first mark records the date with everyone else absent. Unrecorded dates are shown dimmed.</p>
+    <p><b>Sign-in sheet PDF…</b> makes a printable landscape sheet: last name, first name, then date columns, either printed with the class's next meeting dates or left blank for students to write in. Each sheet is numbered; pick it in Sheet mode to transcribe it (for a blank sheet, set each column's date there). <b>Download again</b> re-prints a sheet.</p>
     <h4>Taking attendance</h4>
     <ul>
       <li>Every assigned seat starts as <b>Present</b> for the selected date — you only mark exceptions.</li>
@@ -457,7 +533,7 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
     </ul>
     <h4>Editing seats</h4>
     <ul>
-      <li>Select a seat to enter a name, student ID, and email, then press <b>Save seat</b>. Students are removed only in <b>Manage data</b>: the roster's <b>Remove</b> button asks whether to <b>drop</b> them (off the chart, attendance, and emails, with their past attendance kept under Dropped students, where they can be restored) or <b>delete</b> them completely. Seats can't be cleared from the Classroom view, so a stray click there never removes anyone.</li>
+      <li>Select a seat to enter a first name, last name, student ID, and email, then press <b>Save seat</b>. Students are removed only in <b>Manage data</b>: the roster's <b>Remove</b> button asks whether to <b>drop</b> them (off the chart, attendance, and emails, with their past attendance kept under Dropped students, where they can be restored) or <b>delete</b> them completely. Seats can't be cleared from the Classroom view, so a stray click there never removes anyone.</li>
       <li>Drag a student onto another seat to move them (or swap if the seat is taken). Without a mouse, enter a row and seat number under <b>Move / swap with</b>.</li>
       <li>Under <b>Room layout</b>, choose the <b>Room shape</b>. <b>Tables / pods</b> draws each table with its seats around it (numbered clockwise from top-left); set the number of tables, seats per table, and how many tables sit side by side. Seats are then named “Table 3, Seat 2” everywhere. Switching shape keeps everyone where they fit and offers to move anyone else into open seats; attendance is never lost.</li>
       <li>For a <b>Rows</b> room, set rows and seats per row. To add an aisle, click the faint <b>+</b> between two seat columns at the top of the chart; click <b>×</b> to remove it. You can have as many aisles as the room needs. Shrinking is refused if it would remove assigned students; empty seats stay available for later.</li>
@@ -493,10 +569,17 @@ Calculus I – Section 01,Mia Thompson,20480174,mia@example.edu,,,P,P</pre>
       <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark the focused seat Present, Absent, or Excused</td></tr>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the focused seat (Edit seats: select it)</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last seat in the row (add <kbd>Shift</kbd> for the whole room)</td></tr>
+      <tr><td><kbd>L</kbd></td><td>Switch between Seating chart and List</td></tr>
       <tr><td><kbd>M</kbd></td><td>Switch between Take attendance and Edit seats</td></tr>
       <tr><td><kbd>V</kbd></td><td>Toggle Instructor view</td></tr>
       <tr><td><kbd>U</kbd></td><td>Unlock (or re-lock) a date that isn't today</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Edit seats: deselect the seat</td></tr>
+      <tr><th colspan="2">Classroom → List</th></tr>
+      <tr><td><kbd>↑</kbd> <kbd>↓</kbd> (Sheet: also <kbd>←</kbd> <kbd>→</kbd>)</td><td>Move between students (and dates)</td></tr>
+      <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark and move down to the next student</td></tr>
+      <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle without moving</td></tr>
+      <tr><td><kbd>/</kbd> then type</td><td>Jump to a last name; <kbd>Enter</kbd> goes to it</td></tr>
+      <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd>, <kbd>Home</kbd> / <kbd>End</kbd></td><td>Move 10 students; first / last (Sheet: first / last date)</td></tr>
       <tr><th colspan="2">Attendance history</th></tr>
       <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></td><td>Move between cells (the first arrow press jumps to the selected date's column, or the most recent date). The focused cell, its student, and its date light up, and the line above the grid names them.</td></tr>
       <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark the cell and move down to the next student, spreadsheet-style</td></tr>
@@ -624,23 +707,26 @@ function demo() {
   names.forEach((n, i) => {
     const k = 'demo' + i;
     const parts = n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(' ');
-    s.students[k] = { name: n, sid: String(20480100 + i * 37), email: parts[0] + '.' + parts[parts.length - 1] + '@example.edu' };
+    const [first, last] = n.split(' ');
+    s.students[k] = { name: n, first, last, sid: String(20480100 + i * 37), email: parts[0] + '.' + parts[parts.length - 1] + '@example.edu' };
     s.seats[spots[i]] = k;
   });
+  s.days = [2, 4];                                       // demo class meets Tue/Thu
   s.attendance['2026-10-13'] = { demo3: 'A', demo10: 'E' };
   s.attendance['2026-10-15'] = { demo3: 'A', demo7: 'A', demo15: 'E' };
   return s;
 }
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
-    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 3, bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '' };
+    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 3, bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
+    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 3 } };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
-const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days'];
-const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen'];
+const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 function fixTemplates(g) {
   if ((g.tplVersion || 1) < 3 && Array.isArray(g.templates)) {   // one-time: add newer starter templates to an existing library
@@ -649,6 +735,31 @@ function fixTemplates(g) {
     add.forEach(x => { if (!have.has(x.title)) g.templates.push(x); });
     g.tplVersion = 3;
   }
+}
+/* ---------- names ----------
+   Students store first and last names separately; `name` ("First Last") is kept in step for display and matching.
+   Splitting a single full name: "Last, First" splits at the comma; "First Last" at the space; with three or more
+   words the first word is taken as the first name and the rest as the last name (as with two Spanish surnames),
+   and the student is flagged for a quick review. */
+function splitName(full) {
+  const t = String(full || '').trim().replace(/\s+/g, ' ');
+  if (!t) return { first: '', last: '', unsure: false };
+  if (t.includes(',')) { const i = t.indexOf(','); return { last: t.slice(0, i).trim(), first: t.slice(i + 1).trim(), unsure: false }; }
+  const w = t.split(' ');
+  if (w.length === 1) return { first: '', last: w[0], unsure: true };
+  if (w.length === 2) return { first: w[0], last: w[1], unsure: false };
+  return { first: w[0], last: w.slice(1).join(' '), unsure: true };
+}
+const fullName = (first, last) => [first, last].filter(Boolean).join(' ');
+function setNames(st, first, last) { st.first = first || ''; st.last = last || ''; st.name = fullName(st.first, st.last); }
+const nameSort = (a, b) => (fold(a.last || a.name) + '\u0000' + fold(a.first)).localeCompare(fold(b.last || b.name) + '\u0000' + fold(b.first), undefined, { numeric: true });
+const lastFirst = st => st.last && st.first ? `${st.last}, ${st.first}` : st.name;
+/* Names from one CSV row: separate first/last columns win; otherwise split the single name column. */
+function rowNames(row, c) {
+  const first = cellOf(row, c.first), last = cellOf(row, c.last);
+  if (first || last) return { first, last, name: fullName(first, last), unsure: false, explicit: true };
+  const sp = splitName(cellOf(row, c.name));
+  return { ...sp, name: fullName(sp.first, sp.last), explicit: false };
 }
 function fixRoom(r) {
   if (!Array.isArray(r.aisles)) { r.aisles = r.aisleAfter > 0 ? [r.aisleAfter] : []; delete r.aisleAfter; }   // older saves had one aisle
@@ -659,6 +770,12 @@ function fixClass(c) {
   for (const k of ['students', 'seats', 'attendance']) if (!c[k] || typeof c[k] !== 'object') c[k] = {};
   if (typeof c.className !== 'string') c.className = '';
   if (!Array.isArray(c.days)) c.days = [];                 // meeting weekdays, 0 = Sunday; empty = any day
+  if (!Array.isArray(c.sheets)) c.sheets = [];             // printed sign-in sheets
+  for (const st of Object.values(c.students)) {            // first and last names are stored separately
+    if (typeof st.first === 'string' && typeof st.last === 'string') continue;
+    const sp = splitName(st.name || ''); st.first = sp.first; st.last = sp.last; st.name = fullName(sp.first, sp.last) || st.name || '';
+    if (sp.unsure) st.nameCheck = true;
+  }
   const seats = {}; for (const [l, k] of Object.entries(c.seats)) { const n = normLabel(l); if (n) seats[n] = k; }
   c.seats = seats;
 }
@@ -862,9 +979,9 @@ function assigned() {
   return Object.entries(S.seats).filter(([, k]) => S.students[k])
     .sort((a, b) => seatOrder(a[0]) - seatOrder(b[0])).map(([lab, k]) => { const p = parseLabel(lab); return { lab, k, s: S.students[k], row: p.r + 1, seat: p.c + 1 }; });
 }
-function counts(date) {
+function counts(date, stOf = k => getStatus(date, k)) {
   const list = assigned(); let a = 0, e = 0;
-  list.forEach(x => { const st = getStatus(date, x.k); if (st === 'A') a++; else if (st === 'E') e++; });
+  list.forEach(x => { const st = stOf(x.k); if (st === 'A') a++; else if (st === 'E') e++; });
   return { n: list.length, p: list.length - a - e, a, e };
 }
 
@@ -874,11 +991,337 @@ function render() {
   $('#instructorView').checked = !!S.instructorView;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
+  if (S.classView === 'list' && S.mode !== 'take') { S.mode = 'take'; selected = null; }   // Edit seats is a seating-chart tool
+  const isList = S.classView === 'list';
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === S.mode)));
+  document.querySelectorAll('[data-cview]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cview === (isList ? 'list' : 'chart'))));
+  document.querySelectorAll('[data-lmode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lmode === S.listMode)));
+  document.querySelectorAll('[data-lstart]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lstart === S.listStart)));
+  $('#chartTools').hidden = isList; $('#listTools').hidden = !isList;
+  $('#chartCard').hidden = isList; $('#listCard').hidden = !isList;
+  $('.classroom').classList.toggle('wide', isList && S.listMode === 'sheet');
+  $('#side').hidden = isList && S.listMode === 'sheet';
   $('#legend').style.display = S.mode === 'take' ? '' : 'none';
   document.title = (S.className ? S.className + ' · ' : '') + 'Attendance';
-  renderDateBar(); renderRoom(); renderSide(); renderRoster(); renderHistory(); renderTemplates(); renderDrafts();
+  renderDateBar(); renderRoom(); renderList(); renderSide(); renderRoster(); renderHistory(); renderTemplates(); renderDrafts();
 }
+
+/* ---------- list view ----------
+   Classroom → List: students sorted by last name (the order of the printed sign-in sheet).
+   One date: P / A / E for the selected date. Sheet: every date on one printed sheet side by side.
+   "Start everyone as Absent" treats an unrecorded date as all absent until the first mark records it. */
+let listFocus = { k: null, i: null };                      // row (student) and sheet column the cursor was on
+function rosterSorted() { return assigned().slice().sort((a, b) => nameSort(a.s, b.s)); }
+const startsAbsent = d => S.listStart === 'A' && !S.attendance[d];
+const viewStatus = (d, k) => startsAbsent(d) ? 'A' : getStatus(d, k);
+function setClassView(v) { S.classView = v; if (v === 'list') { S.mode = 'take'; selected = null; } commit(); }
+function listMark(d, k, st) {
+  if (S.listMode === 'one' && lockedNotice()) return false;
+  snapshot();
+  if (!S.attendance[d]) { const day = S.attendance[d] = {}; if (S.listStart === 'A') assigned().forEach(x => day[x.k] = 'A'); }
+  setStatus(d, k, st); return true;
+}
+function curSheet() {
+  const sh = S.sheets || [];
+  return sh.find(x => x.id === S.sheetSel) || sh[sh.length - 1] || null;
+}
+const sheetLabel = sh => {
+  const ds = sh.dates.filter(Boolean);
+  const range = sh.blank ? `${sh.dates.length} blank date${sh.dates.length === 1 ? '' : 's'}${ds.length ? `, ${ds.length} filled in` : ''}`
+    : ds.length ? `${shortDate(ds[0])} – ${shortDate(ds[ds.length - 1])}` : '';
+  return `Sheet ${sh.n} · ${range}`;
+};
+function renderList() {
+  if (S.classView !== 'list') return;
+  const box = $('#list'), keepFocus = box.contains(document.activeElement);
+  const sheetMode = S.listMode === 'sheet';
+  $('#lHint').innerHTML = sheetMode
+    ? '<kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles'
+    : '<kbd>↑</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles · <kbd>/</kbd> jump';
+  const list = rosterSorted();
+  if (!list.length) { box.innerHTML = '<p class="muted">No students yet. Add them in Seating chart → Edit seats, or import a roster in Manage data.</p>'; $('#sheetCtl').innerHTML = ''; return; }
+  if (!listFocus.k || !S.students[listFocus.k] || S.students[listFocus.k].dropped) listFocus.k = list[0].k;
+  if (sheetMode) renderSheetGrid(list); else renderOneDate(list);
+  markListCursor(keepFocus);
+}
+function renderOneDate(list) {
+  $('#sheetCtl').innerHTML = '';
+  const d = S.date, virt = !S.attendance[d], locked = isLocked(), box = $('#list');   // unrecorded: shown dimmed
+  box.classList.toggle('locked', locked);
+  box.innerHTML = `${S.attendance[d] ? '' : `<p class="note" style="margin-top:0">${esc(longDate(d))} isn't recorded yet. ${S.listStart === 'A' ? 'Everyone starts <b>absent</b>: mark who is here. Your first mark records the date.' : 'Everyone counts as <b>present</b>: mark only who is missing.'}</p>`}
+    <div class="table-wrap" style="max-height:none"><table><thead><tr><th>Last name</th><th>First name</th><th>${esc(shortDate(d))}</th><th class="c">Absences</th><th>Seat</th></tr></thead><tbody>${
+    list.map(x => { const st = viewStatus(d, x.k);
+      return `<tr data-k="${x.k}" tabindex="-1" aria-label="${esc(lastFirst(x.s))}: ${STATUS[st]}${virt ? ' (not recorded yet)' : ''}${locked ? '. Locked: not today.' : ''}">
+        <td>${esc(x.s.last)}</td><td>${esc(x.s.first)}</td>
+        <td><span class="pae${virt ? ' virt' : ''}">${['P', 'A', 'E'].map(v => `<button type="button" tabindex="-1" data-st="${v}" class="${v}${st === v ? ' on' : ''}" aria-label="${STATUS[v]}">${v}</button>`).join('')}</span></td>
+        <td class="c">${absTotal(x.k) || ''}</td><td class="small muted">${seatShort(x.lab)}</td></tr>`; }).join('')}</tbody></table></div>`;
+}
+function renderSheetGrid(list) {
+  const sh = curSheet(), box = $('#list');
+  box.classList.remove('locked');
+  const sheets = S.sheets || [];
+  $('#sheetCtl').innerHTML = sheets.length ? `<select id="sheetSel" aria-label="Sign-in sheet">${sheets.slice().reverse().map(x => `<option value="${x.id}" ${sh && x.id === sh.id ? 'selected' : ''}>${esc(sheetLabel(x))}</option>`).join('')}</select>
+    <button type="button" class="btn" id="sheetAgain" title="Download this sheet's PDF again">Download again</button>` : '';
+  $('#sheetSel')?.addEventListener('change', e => { S.sheetSel = e.target.value; listFocus.i = null; commit(); });
+  $('#sheetAgain')?.addEventListener('click', () => downloadSheet(curSheet()));
+  if (!sh) {
+    box.innerHTML = `<p class="muted">No sign-in sheets yet for this class. Use <b>Sign-in sheet PDF…</b> to print one; when students have initialed it, come back here to enter the whole sheet at once.</p>
+      <div class="row"><button type="button" class="btn primary" id="sheetNow">Make a sign-in sheet</button></div>`;
+    $('#sheetNow').addEventListener('click', openSheetDialog);
+    return;
+  }
+  const cols = sh.dates;
+  box.innerHTML = `<p class="small muted" style="margin-top:0">${sh.blank ? 'This sheet was printed without dates: set the date above each column as you enter it. ' : ''}Blank boxes on paper are absences${S.listStart === 'A' ? ' — with “Start everyone as Absent”, mark the initialed boxes present' : ' — mark them A'}. Columns stay editable here even on past dates.</p>
+    <div class="table-wrap sheet-wrap" style="max-height:none"><table><thead><tr><th class="sticky">Last name</th><th>First name</th>${cols.map((d, i) => {
+      const rec = d && S.attendance[d];
+      if (sh.blank) return `<th class="sd" data-col="${i}"><input type="date" data-setd="${i}" value="${d || ''}" aria-label="Date for column ${i + 1}">${d ? `<span class="rec">${rec ? '✓ recorded' : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span>` : '<span class="rec">set a date</span>'}</th>`;
+      return `<th class="sd" data-col="${i}"><button type="button" class="dlink" data-open="${d}" title="Open ${esc(longDate(d))} in One date">${esc(dateObj(d).toLocaleDateString(undefined, { weekday: 'short' }))}<br>${esc(dateObj(d).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }))}</button>
+        <span class="rec">${rec ? '✓ recorded' : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span></th>`;
+    }).join('')}<th class="c">Abs.</th></tr></thead><tbody>${
+    list.map(x => `<tr data-k="${x.k}"><td class="sticky">${esc(x.s.last)}</td><td>${esc(x.s.first)}</td>${cols.map((d, i) => {
+      if (!d) return `<td class="c" data-col="${i}"><span class="muted">—</span></td>`;
+      const st = viewStatus(d, x.k), virt = !S.attendance[d];
+      return `<td class="c" data-col="${i}"><button type="button" class="pill ${st} hcell${virt ? ' virt' : ''}" data-k="${x.k}" data-d="${d}" data-i="${i}" aria-label="${esc(lastFirst(x.s))}, ${esc(longDate(d))}: ${STATUS[st]}${virt ? ' (not recorded yet)' : ''}">${st}</button></td>`;
+    }).join('')}<td class="c">${absTotal(x.k) || ''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+/* Put the cursor (highlight, and focus when the list had it) on the remembered row / column. */
+function markListCursor(focus) {
+  const box = $('#list');
+  box.querySelectorAll('tr.cur').forEach(r => r.classList.remove('cur'));
+  box.querySelectorAll('.cur-col').forEach(c => c.classList.remove('cur-col'));
+  const tr = box.querySelector(`tbody tr[data-k="${listFocus.k}"]`); if (!tr) return;
+  tr.classList.add('cur');
+  if (S.listMode === 'one') {
+    box.querySelectorAll('tbody tr[tabindex]').forEach(r => r.tabIndex = -1); tr.tabIndex = 0;
+    if (focus) { tr.focus({ preventScroll: true }); keepInView(tr); }
+  } else {
+    const cells = [...tr.querySelectorAll('.hcell')]; if (!cells.length) return;
+    let cell = cells.find(b => +b.dataset.i === listFocus.i) || cells.find(b => b.dataset.d === S.date) || cells[0];
+    listFocus.i = +cell.dataset.i;
+    box.querySelectorAll(`[data-col="${listFocus.i}"]`).forEach(c => c.classList.add('cur-col'));
+    if (focus) { cell.focus({ preventScroll: true }); keepInView(cell); }
+  }
+}
+function keepInView(el) {
+  const r = el.getBoundingClientRect(), bar = $('#dateBar'), top = (bar.hidden ? 0 : bar.getBoundingClientRect().bottom) + 8, bot = innerHeight - 8;
+  if (r.top < top) scrollBy(0, r.top - top); else if (r.bottom > bot) scrollBy(0, r.bottom - bot);
+  const wrap = el.closest('.sheet-wrap');
+  if (wrap) { const w = wrap.getBoundingClientRect(), stick = wrap.querySelector('td.sticky')?.offsetWidth || 0;
+    if (r.left < w.left + stick + 8) wrap.scrollLeft -= (w.left + stick + 8 - r.left); else if (r.right > w.right - 8) wrap.scrollLeft += r.right - w.right + 8; }
+}
+function focusListStart() { listFocus.k ||= rosterSorted()[0]?.k; markListCursor(true); }
+function moveList(dr, dc) {
+  const ks = rosterSorted().map(x => x.k); if (!ks.length) return;
+  let r = Math.max(0, Math.min(ks.length - 1, ks.indexOf(listFocus.k) + dr));
+  listFocus.k = ks[r];
+  if (dc && S.listMode === 'sheet') {
+    const sh = curSheet(), set = sh ? sh.dates.map((d, i) => d ? i : -1).filter(i => i >= 0) : [];
+    const at = set.indexOf(listFocus.i); listFocus.i = set[Math.max(0, Math.min(set.length - 1, (at < 0 ? 0 : at) + dc))];
+  }
+  markListCursor(true);
+}
+$('#list').addEventListener('click', e => {
+  const b = e.target.closest('[data-st]'), cell = e.target.closest('.hcell'), open = e.target.closest('[data-open]'), rec = e.target.closest('[data-srec]');
+  const tr = e.target.closest('tbody tr');
+  if (open) { S.date = open.dataset.open; S.listMode = 'one'; commit(); return; }
+  if (rec) { const d = curSheet().dates[+rec.dataset.srec]; snapshot(); const day = S.attendance[d] = S.attendance[d] || {};
+    if (S.listStart === 'A') assigned().forEach(x => { if (!(x.k in day)) day[x.k] = 'A'; }); commit(); toast(`${longDate(d)} recorded.`); return; }
+  if (b && tr) { listFocus.k = tr.dataset.k; if (listMark(S.date, tr.dataset.k, b.dataset.st)) commit(); markListCursor(true); return; }
+  if (cell) { listFocus = { k: cell.dataset.k, i: +cell.dataset.i }; if (listMark(cell.dataset.d, cell.dataset.k, NEXT[viewStatus(cell.dataset.d, cell.dataset.k)])) commit(); markListCursor(true); return; }
+  if (tr && !e.target.closest('input,button')) { listFocus.k = tr.dataset.k; const td = e.target.closest('td[data-col]'); if (td) listFocus.i = +td.dataset.col; markListCursor(true); }
+});
+$('#list').addEventListener('change', e => {
+  const inp = e.target.closest('[data-setd]'); if (!inp) return;
+  const sh = curSheet(), i = +inp.dataset.setd, d = inp.value, old = sh.dates[i];
+  if (d && !isDate(d)) return;
+  if (d && sh.dates.some((x, j) => j !== i && x === d)) { inp.value = old || ''; return toast(`${longDate(d)} is already a column on this sheet.`, true); }
+  sh.dates[i] = d || null; listFocus.i = i; commit();
+  if (old && old !== d && S.attendance[old]) toast(`Column ${i + 1} now shows ${d ? shortDate(d) : 'no date'}. Attendance already entered for ${shortDate(old)} stays on ${shortDate(old)}.`);
+});
+$('#list').addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input')) return;
+  const tr = e.target.closest('tbody tr'); if (!tr) return;
+  const sheet = S.listMode === 'sheet', cell = e.target.closest('.hcell');
+  if (sheet && !cell) return;
+  const m = { p: 'P', a: 'A', e: 'E' }[e.key.toLowerCase()];
+  const d = sheet ? cell.dataset.d : S.date, k = tr.dataset.k;
+  if (m || e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if (listMark(d, k, m || NEXT[viewStatus(d, k)])) { commit(); if (m) moveList(1, 0); else markListCursor(true); }
+    return;
+  }
+  const moves = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1], PageUp: [-10, 0], PageDown: [10, 0], Home: [-1e4, 0], End: [1e4, 0] };
+  if (sheet && (e.key === 'Home' || e.key === 'End') && !e.shiftKey) { e.preventDefault(); moveList(0, e.key === 'Home' ? -1e4 : 1e4); return; }
+  if (moves[e.key]) { e.preventDefault(); moveList(...moves[e.key]); return; }
+  if (e.key === 'Escape') { e.preventDefault(); e.target.blur(); }
+});
+/* Jump: typing in the box moves the cursor to the first last name that starts with it (accents ignored). */
+$('#lFind').addEventListener('input', e => {
+  const q = fold(e.target.value.trim()); if (!q) return;
+  const list = rosterSorted();
+  const hit = list.find(x => fold(x.s.last).startsWith(q)) || list.find(x => fold(lastFirst(x.s)).startsWith(q)) || list.find(x => matchStudent(x, q));
+  if (hit) { listFocus.k = hit.k; markListCursor(false); const tr = $('#list').querySelector(`tr[data-k="${hit.k}"]`); tr && keepInView(tr); }
+});
+$('#lFind').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); markListCursor(true); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.target.value = ''; markListCursor(true); }
+});
+document.querySelectorAll('[data-cview]').forEach(b => b.addEventListener('click', () => setClassView(b.dataset.cview)));
+document.querySelectorAll('[data-lmode]').forEach(b => b.addEventListener('click', () => { S.listMode = b.dataset.lmode; commit(); }));
+document.querySelectorAll('[data-lstart]').forEach(b => b.addEventListener('click', () => { S.listStart = b.dataset.lstart; commit(); }));
+
+/* ---------- sign-in sheet PDF ---------- */
+const HELV = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,556,222,556,333,1000,556,556,333,1000,667,333,1000,556,611,556,556,222,222,333,333,350,556,1000,333,1000,500,333,944,556,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500];
+const HELVB = [278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,761,556,611,278,556,500,1000,556,556,333,1000,667,333,1000,611,611,611,611,278,278,500,500,350,556,1000,333,1000,556,333,944,611,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556];
+
+const WINANSI_EXTRA = { '€': 128, '‚': 130, 'ƒ': 131, '„': 132, '…': 133, '†': 134, '‡': 135, 'ˆ': 136, '‰': 137, 'Š': 138, '‹': 139, 'Œ': 140, 'Ž': 142, '‘': 145, '’': 146, '“': 147, '”': 148, '•': 149, '–': 150, '—': 151, '˜': 152, '™': 153, 'š': 154, '›': 155, 'œ': 156, 'ž': 158, 'Ÿ': 159 };
+/* Text → WinAnsi bytes (as a string of char codes < 256). Letters outside it lose their accent, or become "?". */
+function winAnsi(str) {
+  let out = '';
+  for (const ch of String(str)) {
+    const c = ch.codePointAt(0);
+    if ((c >= 32 && c < 127) || (c >= 160 && c <= 255)) out += String.fromCharCode(c);
+    else if (WINANSI_EXTRA[ch]) out += String.fromCharCode(WINANSI_EXTRA[ch]);
+    else { const b = ch.normalize('NFD').replace(/[̀-ͯ]/g, ''); const bc = b.codePointAt(0); out += b && ((bc >= 32 && bc < 127) || (bc >= 160 && bc <= 255)) ? b[0] : '?'; }
+  }
+  return out;
+}
+const pdfW = (enc, size, bold) => { let w = 0; const t = bold ? HELVB : HELV; for (let i = 0; i < enc.length; i++) w += t[enc.charCodeAt(i) - 32] || 556; return w * size / 1000; };
+function pdfFit(str, size, bold, max) {
+  let enc = winAnsi(str); if (pdfW(enc, size, bold) <= max) return enc;
+  const ell = String.fromCharCode(133);
+  while (enc.length && pdfW(enc + ell, size, bold) > max) enc = enc.slice(0, -1);
+  return enc + ell;
+}
+const pdfEsc = enc => enc.replace(/[\\()]/g, '\\$&');
+const SHEET = { W: 792, H: 612, M: 36, headH: 30, rowH: 22, minCol: 44 };
+/* Column widths for a list of students: names sized to the longest (within limits), dates share the rest. */
+function sheetLayout(people, cols) {
+  const lw = Math.max(...people.map(x => pdfW(winAnsi(x.last), 10, true)), 50), fw = Math.max(...people.map(x => pdfW(winAnsi(x.first), 10, false)), 50);
+  const lastW = Math.min(Math.max(lw + 14, 86), 190), firstW = Math.min(Math.max(fw + 14, 72), 150);
+  const avail = SHEET.W - 2 * SHEET.M - lastW - firstW, maxCols = Math.max(1, Math.floor(avail / SHEET.minCol));
+  const n = Math.max(1, Math.min(cols, maxCols));
+  return { lastW, firstW, n, colW: avail / n, maxCols };
+}
+function sheetPdf(title, sh, people, extra) {
+  const { W, H, M, headH, rowH } = SHEET, L = sheetLayout(people, sh.dates.length), cols = sh.dates.slice(0, L.n);
+  const tableTop = H - M - 44, perPage = Math.floor((tableTop - headH - M - 14) / rowH);
+  const rows = [...people, ...Array(extra).fill({ last: '', first: '' })];
+  const pages = []; for (let i = 0; i < Math.max(rows.length, 1); i += perPage) pages.push(rows.slice(i, i + perPage));
+  const f = n => (Math.round(n * 100) / 100).toString();
+  const T = (x, y, enc, size, bold, gray = 0) => `${f(gray)} g BT /${bold ? 'F2' : 'F1'} ${size} Tf 1 0 0 1 ${f(x)} ${f(y)} Tm (${pdfEsc(enc)}) Tj ET\n`;
+  const TC = (cx, y, str, size, bold, gray) => { const e = winAnsi(str); return T(cx - pdfW(e, size, bold) / 2, y, e, size, bold, gray); };
+  const TR = (rx, y, str, size, bold, gray) => { const e = winAnsi(str); return T(rx - pdfW(e, size, bold), y, e, size, bold, gray); };
+  const range = sh.blank ? '' : (() => { const ds = cols.filter(Boolean); return ds.length ? ` · ${shortDate(ds[0])} – ${shortDate(ds[ds.length - 1])}` : ''; })();
+  const xs = [M, M + L.lastW, M + L.lastW + L.firstW]; cols.forEach((_, i) => xs.push(xs[2] + (i + 1) * L.colW));
+  const content = pages.map((pg, pi) => {
+    let o = '';
+    o += T(M, H - M - 14, pdfFit(title, 15, true, W - 2 * M - 260), 15, true);
+    o += TR(W - M, H - M - 14, `Sign-in sheet · Sheet ${sh.n}${range}`, 10, false, 0.25);
+    o += T(M, H - M - 31, winAnsi('Initial the box for each class you attend. Sign only for yourself.'), 9, false, 0.35);
+    const top = tableTop, bottom = top - headH - pg.length * rowH;
+    o += `0.88 g ${f(M)} ${f(top - headH)} ${f(W - 2 * M)} ${headH} re f\n`;
+    pg.forEach((_, r) => { if (r % 2) o += `0.95 g ${f(M)} ${f(top - headH - (r + 1) * rowH)} ${f(W - 2 * M)} ${rowH} re f\n`; });
+    o += T(M + 6, top - headH / 2 - 3.5, winAnsi('Last name'), 9, true);
+    o += T(xs[1] + 6, top - headH / 2 - 3.5, winAnsi('First name'), 9, true);
+    cols.forEach((d, i) => {
+      const cx = xs[2] + (i + 0.5) * L.colW;
+      if (d && !sh.blank) {
+        o += TC(cx, top - 12.5, dateObj(d).toLocaleDateString(undefined, { weekday: 'short' }), 9, true);
+        o += TC(cx, top - 24, dateObj(d).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }), 9, false);
+      } else o += T(xs[2] + i * L.colW + 3, top - 9, winAnsi('Date'), 7, false, 0.45);
+    });
+    pg.forEach((p, r) => {
+      const y = top - headH - (r + 1) * rowH + rowH / 2 - 3.5;
+      if (p.last) o += T(M + 6, y, pdfFit(p.last, 10, true, L.lastW - 10), 10, true);
+      if (p.first) o += T(xs[1] + 6, y, pdfFit(p.first, 10, false, L.firstW - 10), 10, false);
+    });
+    o += '0.25 G 0.6 w\n';
+    for (let r = 0; r <= pg.length; r++) { const y = top - headH - r * rowH; o += `${f(M)} ${f(y)} m ${f(W - M)} ${f(y)} l S\n`; }
+    o += `${f(M)} ${f(top)} m ${f(W - M)} ${f(top)} l S\n`;
+    xs.forEach((x, i) => { o += `${i === 2 ? '1.2 w ' : ''}${f(x)} ${f(top)} m ${f(x)} ${f(bottom)} l S${i === 2 ? ' 0.6 w' : ''}\n`; });
+    o += `${f(W - M)} ${f(top)} m ${f(W - M)} ${f(bottom)} l S\n`;
+    o += T(M, M - 12, pdfFit(title, 8, false, 400), 8, false, 0.45);
+    o += TR(W - M, M - 12, `Sheet ${sh.n} · Page ${pi + 1} of ${pages.length}`, 8, false, 0.45);
+    return o;
+  });
+  const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>', `<< /Title (${pdfEsc(winAnsi(title + ' · Sign-in sheet ' + sh.n))}) /Producer (Attendance) >>`];
+  const kids = [];
+  content.forEach(c => {
+    const pn = objs.length + 1; kids.push(`${pn} 0 R`);
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${pn + 1} 0 R >>`);
+    objs.push(`<< /Length ${c.length} >>\nstream\n${c}endstream`);
+  });
+  objs[1] = `<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${kids.length} >>`;
+  let out = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'; const off = [];
+  objs.forEach((o, i) => { off.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xref = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + off.map(n => String(n).padStart(10, '0') + ' 00000 n \n').join('');
+  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R /Info 5 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  const bytes = new Uint8Array(out.length); for (let i = 0; i < out.length; i++) bytes[i] = out.charCodeAt(i) & 255;
+  return { bytes, pages: pages.length, cols: cols.length };
+}
+const sheetPeople = () => rosterSorted().map(x => ({ last: x.s.last || x.s.name, first: x.s.first }));
+function downloadSheet(sh) {
+  if (!sh) return;
+  const r = sheetPdf(S.className || 'Class', sh, sheetPeople(), sh.extra ?? 3);
+  download(`signin-${slug(S.className)}-sheet${sh.n}.pdf`, r.bytes, 'application/pdf');
+  toast(`Downloaded sign-in sheet ${sh.n} (${r.pages} page${r.pages === 1 ? '' : 's'}).`);
+}
+/* Class days from a start date (any day when the class has no meeting days set). */
+function nextClassDay(d) { const days = S.days || []; let x = d; for (let i = 0; i < 8; i++) { if (!days.length || days.includes(dateObj(x).getDay())) return x; x = shiftDate(x, 1); } return d; }
+function classDaysFrom(d, n) { const out = []; let x = nextClassDay(d); while (out.length < n) { out.push(x); x = nextClassDay(shiftDate(x, 1)); } return out; }
+function openSheetDialog() {
+  const o = S.sheetOpts || (S.sheetOpts = { dates: 'print', cols: 8, extra: 3 });
+  const hasDays = (S.days || []).length > 0;
+  const printed = (S.sheets || []).filter(x => !x.blank).flatMap(x => x.dates).filter(Boolean).sort();
+  $('#shStart').value = printed.length ? nextClassDay(shiftDate(printed[printed.length - 1], 1)) : nextClassDay(todayStr());
+  $('#shCols').value = o.cols; $('#shExtra').value = o.extra;
+  sheetDlgMode = hasDays ? o.dates : 'blank';
+  updateSheetDialog(); $('#sheetDlg').showModal();
+}
+let sheetDlgMode = 'print';
+function updateSheetDialog() {
+  const hasDays = (S.days || []).length > 0, people = sheetPeople(), n = (S.sheets || []).reduce((m, x) => Math.max(m, x.n), 0) + 1;
+  $('#shClass').textContent = `${S.className || 'This class'} · ${people.length} student${people.length === 1 ? '' : 's'} · Sheet ${n}`;
+  document.querySelectorAll('[data-shd]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.shd === sheetDlgMode)); });
+  $('#shStartRow').hidden = sheetDlgMode !== 'print';
+  $('#shDays').textContent = hasDays ? `Meets ${daysText(S.days)}` : '';
+  const L = sheetLayout(people.length ? people : [{ last: '', first: '' }], 99);
+  let cols = Math.max(1, parseInt($('#shCols').value, 10) || 1); const extra = Math.max(0, Math.min(20, parseInt($('#shExtra').value, 10) || 0));
+  $('#shFit').textContent = `Up to ${L.maxCols} fit across the page`;
+  cols = Math.min(cols, L.maxCols);
+  const perPage = Math.floor((SHEET.H - SHEET.M - 44 - SHEET.headH - SHEET.M - 14) / SHEET.rowH), pages = Math.max(1, Math.ceil((people.length + extra) / perPage));
+  let what = '';
+  if (sheetDlgMode === 'print') { const ds = isDate($('#shStart').value) ? classDaysFrom($('#shStart').value, cols) : []; what = ds.length ? `${shortDate(ds[0])} – ${shortDate(ds[ds.length - 1])}` : 'choose a start date'; }
+  else what = `${cols} blank date column${cols === 1 ? '' : 's'}`;
+  $('#shSummary').innerHTML = `<b>Sheet ${n}:</b> ${esc(what)} · ${pages} page${pages === 1 ? '' : 's'}, landscape Letter, sorted by last name.`;
+  const checks = Object.values(S.students).filter(st => st.nameCheck && !st.dropped).length;
+  $('#shWarn').innerHTML = [
+    !hasDays && sheetDlgMode === 'blank' ? '<p class="note" style="margin:0">This class has no meeting days set, so dates can\'t be printed. Set them in Manage data → Classes &amp; rooms to print dates.</p>' : '',
+    checks ? `<p class="note" style="margin:6px 0 0">${checks} name${checks === 1 ? '' : 's'} may be split wrong between first and last name. <button type="button" class="btn" id="shReview" style="padding:2px 8px;font-size:12px">Review names</button></p>` : ''].join('');
+  document.querySelector('[data-shd="print"]').disabled = !hasDays;
+  $('#shReview')?.addEventListener('click', () => { $('#sheetDlg').close(); S.view = 'import'; commit(); $('#nameCheck')?.scrollIntoView({ block: 'center' }); });
+}
+document.querySelectorAll('[data-shd]').forEach(b => b.addEventListener('click', () => { sheetDlgMode = b.dataset.shd; updateSheetDialog(); }));
+['#shStart', '#shCols', '#shExtra'].forEach(id => $(id).addEventListener('input', updateSheetDialog));
+$('#shCancel').addEventListener('click', () => $('#sheetDlg').close());
+$('#sheetForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const people = sheetPeople(), L = sheetLayout(people.length ? people : [{ last: '', first: '' }], 99);
+  const cols = Math.min(L.maxCols, Math.max(1, parseInt($('#shCols').value, 10) || 1)), extra = Math.max(0, Math.min(20, parseInt($('#shExtra').value, 10) || 0));
+  let dates;
+  if (sheetDlgMode === 'print') { if (!isDate($('#shStart').value)) return toast('Choose a start date.', true); dates = classDaysFrom($('#shStart').value, cols); }
+  else dates = Array(cols).fill(null);
+  const n = (S.sheets || []).reduce((m, x) => Math.max(m, x.n), 0) + 1;
+  const sh = { id: uid(), n, made: todayStr(), blank: sheetDlgMode !== 'print', dates, extra };
+  (S.sheets ||= []).push(sh); S.sheetSel = sh.id;
+  S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra };
+  $('#sheetDlg').close(); commit(); downloadSheet(sh);
+});
+$('#sheetPdfBtn').addEventListener('click', openSheetDialog);
+$('#sheetPdfBtn2').addEventListener('click', openSheetDialog);
 
 /* ---------- date bar ---------- */
 const unlocked = new Set();            // past/future dates unlocked this session
@@ -905,7 +1348,7 @@ function renderDateBar() {
   bar.hidden = S.view === 'import';                       // every view that acts on a date shows it
   bar.className = 'datebar ' + when;
   // Frame the whole window when the date drives what you're doing (marking seats, drafting emails).
-  const framed = diff !== 0 && (S.view === 'emails' || (S.view === 'classroom' && S.mode === 'take'));
+  const framed = diff !== 0 && (S.view === 'emails' || (S.view === 'classroom' && S.mode === 'take' && !(S.classView === 'list' && S.listMode === 'sheet')));
   document.body.classList.toggle('not-today', framed);
   document.body.classList.toggle('future', framed && diff > 0);
   $('#dWarn').textContent = diff === 0 ? '' : S.view === 'emails' ? 'Not today — drafts will name this date'
@@ -927,6 +1370,7 @@ function renderDateBar() {
     recent.map(d => chip(d, dateObj(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }))).join('');
   const wrap = $('#room').parentElement;
   wrap.classList.toggle('not-today', S.mode === 'take' && diff !== 0);
+  $('#listCard').classList.toggle('not-today', S.listMode === 'one' && diff !== 0);
   wrap.classList.toggle('locked', isLocked());
 }
 
@@ -1019,7 +1463,8 @@ function seatEl(lab, edit) {
 
 function renderSide() {
   const side = $('#side');
-  const c = counts(S.date), diff = dayDiff(S.date), locked = isLocked();
+  const lst = S.classView === 'list', stOf = k => lst ? viewStatus(S.date, k) : getStatus(S.date, k);
+  const c = counts(S.date, stOf), diff = dayDiff(S.date), locked = isLocked();
   let h = '';
   if (S.mode === 'take' && diff !== 0) {
     h += `<div class="card warn" id="lockCard"><h3>${locked ? '🔒 Not today' : '✎ Editing a ' + (diff < 0 ? 'past' : 'future') + ' date'}</h3>
@@ -1036,16 +1481,16 @@ function renderSide() {
     <div class="stat e"><b>${c.e}</b><span>Excused</span></div></div></div>`;
   if (S.mode === 'take') {
     const rec = !!S.attendance[S.date];
-    const ex = assigned().filter(x => getStatus(S.date, x.k) !== 'P');
+    const ex = (lst ? rosterSorted() : assigned()).filter(x => stOf(x.k) !== 'P');
     h += `<div class="card"><h3>${esc(longDate(S.date))}</h3>
-      <p class="small ${rec ? '' : 'muted'}" style="margin-top:0">${rec ? '✓ Recorded in attendance history.' : 'Not recorded yet. Everyone seated counts as present; marking an exception or pressing Record date saves it.'}</p>
+      <p class="small ${rec ? '' : 'muted'}" style="margin-top:0">${rec ? '✓ Recorded in attendance history.' : lst && S.listStart === 'A' ? 'Not recorded yet. Everyone starts absent; marking a student present records the date.' : 'Not recorded yet. Everyone counts as present; marking an exception or pressing Record date saves it.'}</p>
       <div class="row">
-        ${rec ? '' : `<button class="btn primary" type="button" id="recBtn" ${locked ? 'disabled' : ''}>Record date</button>`}
+        ${rec ? '' : `<button class="btn primary" type="button" id="recBtn" ${locked ? 'disabled' : ''}>${lst && S.listStart === 'A' ? 'Record (everyone absent)' : 'Record date'}</button>`}
         <button class="btn" type="button" id="allPBtn" ${ex.length && !locked ? '' : 'disabled'}>Mark everyone present</button>
         ${rec ? `<button class="btn danger" type="button" id="delDateBtn" ${locked ? 'disabled' : ''}>Delete record</button>` : ''}
       </div></div>
-      <div class="card"><h3>Exceptions</h3>${ex.length ? '<ul class="plain">' + ex.map(x => `<li><span>${esc(x.s.name)} <span class="muted small">${seatShort(x.lab)}</span></span><span class="pill ${getStatus(S.date, x.k)}">${STATUS[getStatus(S.date, x.k)]}</span></li>`).join('') + '</ul>' : '<p class="small muted" style="margin:0">Everyone present.</p>'}
-      <p class="small muted" style="margin-bottom:0">Click a seat to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>.</p></div>`;
+      <div class="card"><h3>Exceptions</h3>${ex.length ? '<ul class="plain">' + ex.map(x => `<li><span>${esc(lst ? lastFirst(x.s) : x.s.name)} <span class="muted small">${seatShort(x.lab)}</span></span><span class="pill ${stOf(x.k)}">${STATUS[stOf(x.k)]}</span></li>`).join('') + '</ul>' : '<p class="small muted" style="margin:0">Everyone present.</p>'}
+      <p class="small muted" style="margin-bottom:0">${lst ? 'Tap P, A, or E on a row, or use <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> (marks and moves down).' : 'Click a seat to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>.'}</p></div>`;
   } else {
     h += editCard() + layoutCard();
   }
@@ -1054,7 +1499,11 @@ function renderSide() {
     $('#unlockBtn')?.addEventListener('click', () => { unlocked.add(S.date); render(); toast(`${longDate(S.date)} unlocked for editing.`); });
     $('#relockBtn')?.addEventListener('click', () => { unlocked.delete(S.date); render(); });
     $('#toTodayBtn')?.addEventListener('click', goToday);
-    $('#recBtn')?.addEventListener('click', () => { snapshot(); S.attendance[S.date] = S.attendance[S.date] || {}; commit(); toast('Date recorded.'); });
+    $('#recBtn')?.addEventListener('click', () => {
+      snapshot(); const day = S.attendance[S.date] = S.attendance[S.date] || {};
+      if (lst && S.listStart === 'A') assigned().forEach(x => day[x.k] = 'A');
+      commit(); toast('Date recorded.');
+    });
     $('#allPBtn')?.addEventListener('click', () => { snapshot(); S.attendance[S.date] = {}; commit(); toast('Everyone marked present. Ctrl/⌘+Z undoes.'); });
     $('#delDateBtn')?.addEventListener('click', () => {
       if (confirm(`Delete the attendance record for ${longDate(S.date)}?`)) { snapshot(); delete S.attendance[S.date]; commit(); toast('Record deleted. Ctrl/⌘+Z undoes.'); }
@@ -1067,9 +1516,11 @@ function editCard() {
     selected = null;
     return `<div class="card"><h3>Seat</h3><p class="small muted" style="margin:0">Select a seat to name it, assign a student ID, or move it. Drag a student onto another seat to move or swap.</p></div>`;
   }
-  const s = S.students[S.seats[selected]] || { name: '', sid: '', email: '' };
+  const s = S.students[S.seats[selected]] || { first: '', last: '', sid: '', email: '' };
   return `<div class="card"><h3>${seatName(selected)}</h3><form id="seatForm" class="stack" autocomplete="off">
-    <label class="fld"><span>Student name</span><input type="text" id="eName" value="${esc(s.name)}"></label>
+    <div class="row" style="flex-wrap:nowrap">
+      <label class="fld" style="flex:1"><span>First name</span><input type="text" id="eName" value="${esc(s.first)}" style="width:100%"></label>
+      <label class="fld" style="flex:1"><span>Last name</span><input type="text" id="eLast" value="${esc(s.last)}" style="width:100%"></label></div>
     <label class="fld"><span>Student ID</span><input type="text" id="eSid" value="${esc(s.sid)}"></label>
     <label class="fld"><span>Email</span><input type="email" id="eEmail" value="${esc(s.email)}"></label>
     <div class="row"><button class="btn primary" type="submit">Save seat</button></div>
@@ -1110,7 +1561,7 @@ function layoutCard() {
 function bindEdit() {
   $('#seatForm')?.addEventListener('submit', e => {
     e.preventDefault();
-    saveSeat(selected, $('#eName').value.trim(), $('#eSid').value.trim(), $('#eEmail').value.trim());
+    saveSeat(selected, $('#eName').value.trim(), $('#eLast').value.trim(), $('#eSid').value.trim(), $('#eEmail').value.trim());
   });
   $('#moveForm')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -1137,9 +1588,9 @@ function removeStudent(k) {
   delete S.students[k];
   for (const d of Object.values(S.attendance)) delete d[k];
 }
-function saveSeat(lab, name, sid, email) {
-  if (!name && !sid && !email) return toast('Enter a name. To remove a student, use Manage data.', true);
-  if (!name) return toast('A student name is required.', true);
+function saveSeat(lab, first, last, sid, email) {
+  if (!first && !last && !sid && !email) return toast('Enter a name. To remove a student, use Manage data.', true);
+  if (!first && !last) return toast('Enter a first or last name.', true);
   if (!emailOk(email)) return toast('That email address doesn\'t look valid.', true);
   const cur = S.seats[lab];
   if (sid) {
@@ -1148,7 +1599,8 @@ function saveSeat(lab, name, sid, email) {
   }
   let k = cur;
   if (!k) { k = uid(); S.seats[lab] = k; }
-  S.students[k] = { name, sid, email };
+  const st = S.students[k] = { ...(S.students[k] || {}), sid, email };
+  setNames(st, first, last); delete st.nameCheck;
   commit(); toast(`${seatName(lab)} saved.`);
 }
 function swapSeats(a, b) {
@@ -1220,8 +1672,17 @@ function renderTables() {
 /* ---------- roster & history ---------- */
 function renderRoster() {
   const list = assigned(), dropped = droppedList();
-  let h = list.length ? `<p class="small muted" style="margin-top:0">${list.length} student${list.length === 1 ? '' : 's'} · ${isTables() ? `${S.rows} tables × ${S.cols} seats` : `${S.rows} rows × ${S.cols} seats`}</p><div class="table-wrap"><table><thead><tr><th>${unitWord()}</th><th>Seat</th><th>Name</th><th>Student ID</th><th>Email</th><th></th></tr></thead><tbody>${
-    list.map(x => `<tr><td class="c">${x.row}</td><td class="c">${x.seat}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.sid)}</td><td class="em">${esc(x.s.email)}</td>
+  const check = Object.entries(S.students).filter(([, st]) => st.nameCheck).map(([k, st]) => ({ k, st })).sort((a, b) => nameSort(a.st, b.st));
+  let h = check.length ? `<div class="card warn" id="nameCheck" style="margin-bottom:14px"><h3>Check ${check.length} name${check.length === 1 ? '' : 's'}</h3>
+    <p class="small" style="margin-top:0">These names had one word or three or more, so the split between first and last name is a guess. Fix any that are wrong, then confirm. The sign-in sheet and the list view sort by last name.</p>
+    <table><thead><tr><th>First name</th><th>Last name</th><th></th></tr></thead><tbody>${check.map(({ k, st }) => `<tr>
+      <td><input type="text" data-nfirst="${k}" value="${esc(st.first)}" aria-label="First name" style="width:100%;min-width:90px"></td>
+      <td><input type="text" data-nlast="${k}" value="${esc(st.last)}" aria-label="Last name" style="width:100%;min-width:110px"></td>
+      <td class="act"><button type="button" class="btn" data-nswap="${k}" title="Move the first word of the last name into the first name">⇄</button>
+        <button type="button" class="btn primary" data-nok="${k}">Looks right</button></td></tr>`).join('')}</tbody></table>
+    ${check.length > 1 ? '<div class="row" style="margin-top:8px"><button type="button" class="btn" id="nameOkAll">Confirm all as shown</button></div>' : ''}</div>` : '';
+  h += list.length ? `<p class="small muted" style="margin-top:0">${list.length} student${list.length === 1 ? '' : 's'} · ${isTables() ? `${S.rows} tables × ${S.cols} seats` : `${S.rows} rows × ${S.cols} seats`}</p><div class="table-wrap"><table><thead><tr><th>${unitWord()}</th><th>Seat</th><th>Last name</th><th>First name</th><th>Student ID</th><th>Email</th><th></th></tr></thead><tbody>${
+    list.map(x => `<tr><td class="c">${x.row}</td><td class="c">${x.seat}</td><td>${esc(x.s.last)}${x.s.nameCheck ? ' <span class="pill E" title="Check this name">?</span>' : ''}</td><td>${esc(x.s.first)}</td><td>${esc(x.s.sid)}</td><td class="em">${esc(x.s.email)}</td>
       <td class="act"><button type="button" class="btn danger" data-rm="${x.k}" aria-label="Remove ${esc(x.s.name)}">Remove</button></td></tr>`).join('')}</tbody></table></div>`
     : '<p class="muted small">No students yet. Add them in Edit seats or import a CSV.</p>';
   if (dropped.length) h += `<h3 style="margin:18px 0 8px">Dropped students (${dropped.length})</h3>
@@ -1231,6 +1692,20 @@ function renderRoster() {
       <td class="act"><button type="button" class="btn" data-restore="${x.k}" aria-label="Restore ${esc(x.s.name)}">Restore</button>
       <button type="button" class="btn danger" data-purge="${x.k}" aria-label="Delete ${esc(x.s.name)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
   const box = $('#roster'); box.innerHTML = h;
+  const saveName = k => { const st = S.students[k]; setNames(st, box.querySelector(`[data-nfirst="${k}"]`).value.trim(), box.querySelector(`[data-nlast="${k}"]`).value.trim()); };
+  box.querySelectorAll('[data-nfirst],[data-nlast]').forEach(i => i.addEventListener('change', () => { saveName(i.dataset.nfirst || i.dataset.nlast); save(); }));
+  box.querySelectorAll('[data-nok]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.nok; saveName(k);
+    if (!S.students[k].first && !S.students[k].last) return toast('Enter a first or last name.', true);
+    delete S.students[k].nameCheck; commit();
+  }));
+  box.querySelectorAll('[data-nswap]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.nswap, f = box.querySelector(`[data-nfirst="${k}"]`), l = box.querySelector(`[data-nlast="${k}"]`);
+    const lw = l.value.trim().split(/\s+/).filter(Boolean), fw = f.value.trim().split(/\s+/).filter(Boolean);
+    if (lw.length > 1) { fw.push(lw.shift()); } else if (fw.length > 1) { lw.unshift(fw.pop()); }
+    f.value = fw.join(' '); l.value = lw.join(' '); saveName(k); save();
+  }));
+  $('#nameOkAll')?.addEventListener('click', () => { check.forEach(({ k }) => { saveName(k); delete S.students[k].nameCheck; }); commit(); toast('Names confirmed.'); });
   box.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => askRemove(b.dataset.rm)));
   box.querySelectorAll('[data-restore]').forEach(b => b.addEventListener('click', () => restoreStudent(b.dataset.restore)));
   box.querySelectorAll('[data-purge]').forEach(b => b.addEventListener('click', () => {
@@ -1468,10 +1943,10 @@ function buildCSV(scope = 'class') {
     syncStore();
     const classes = Object.values(STORE.classes).sort(byName);
     const dates = [...new Set(classes.flatMap(c => Object.keys(c.attendance).filter(isDate)))].sort();
-    rows.push(['class', 'name', 'student_id', 'email', 'row', 'seat', ...dates]);
+    rows.push(['class', 'last_name', 'first_name', 'student_id', 'email', 'row', 'seat', ...dates]);
     classes.forEach(c => Object.entries(c.seats).filter(([, k]) => c.students[k]).sort((a, b) => seatOrder(a[0]) - seatOrder(b[0])).forEach(([lab, k]) => {
       const p = parseLabel(lab), st = c.students[k];
-      rows.push([c.className, st.name, st.sid, st.email, p.r + 1, p.c + 1, ...dates.map(d => c.attendance[d] ? (c.attendance[d][k] || 'P') : '')]);
+      rows.push([c.className, st.last, st.first, st.sid, st.email, p.r + 1, p.c + 1, ...dates.map(d => c.attendance[d] ? (c.attendance[d][k] || 'P') : '')]);
     }));
     return rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
   }
@@ -1480,9 +1955,9 @@ function buildCSV(scope = 'class') {
   rows.push(['#class', cname], ...(isTables()
       ? [['#shape', 'tables'], ['#tables', S.rows], ['#seats_per_table', S.cols], ['#tables_across', S.tablesAcross || 3]]
       : [['#rows', S.rows], ['#seats_per_row', S.cols], ['#aisles', S.aisles.join(' ')]]),
-    ['class', 'name', 'student_id', 'email', isTables() ? 'table' : 'row', 'seat', ...dates]);
-  if (blank) rows.push([cname, 'Student Name', '12345678', 'student@example.edu', '1', '1'], [cname, 'Another Student', '12345679', 'another@example.edu', '', '']);
-  else assigned().forEach(x => rows.push([cname, x.s.name, x.s.sid, x.s.email, x.row, x.seat, ...dates.map(d => getStatus(d, x.k))]));
+    ['class', 'last_name', 'first_name', 'student_id', 'email', isTables() ? 'table' : 'row', 'seat', ...dates]);
+  if (blank) rows.push([cname, 'Garza', 'Ana', '12345678', 'student@example.edu', '1', '1'], [cname, 'Hernández García', 'Diego', '12345679', 'another@example.edu', '', '']);
+  else assigned().forEach(x => rows.push([cname, x.s.last, x.s.first, x.s.sid, x.s.email, x.row, x.seat, ...dates.map(d => getStatus(d, x.k))]));
   return rows.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 function download(name, text, type) {
@@ -1552,8 +2027,7 @@ function buildGroup(P, items) {
   const { c, dateCols } = P, errs = [], students = {}, seats = {}, attendance = {}, sids = new Map(), unseated = [], marked = new Set();
   let maxR = 0, maxC = 0;
   for (const { row, line } of items) {
-    let name = cellOf(row, c.name);
-    if (!name) name = [cellOf(row, c.first), cellOf(row, c.last)].filter(Boolean).join(' ');
+    const nm = rowNames(row, c), name = nm.name;
     const raw = cellOf(row, c.seat), sid = cellOf(row, c.sid), email = cellOf(row, c.email);
     if (!name) { if (sid || email) errs.push(`Line ${line}: this student has no name.`); continue; }
     let lab = null;
@@ -1570,7 +2044,7 @@ function buildGroup(P, items) {
     if (lab && seats[lab]) { errs.push(`Line ${line}: seat ${lab.replace('-', '/')} is used more than once.`); continue; }
     if (sid && sids.has(sid)) { errs.push(`Line ${line}: student ID ${sid} appears more than once.`); continue; }
     if (!emailOk(email)) errs.push(`Line ${line}: email "${email}" doesn't look valid.`);
-    const k = uid(); students[k] = { name, sid, email }; if (sid) sids.set(sid, line);
+    const k = uid(); students[k] = { name, first: nm.first, last: nm.last, sid, email, ...(nm.unsure ? { nameCheck: true } : {}) }; if (sid) sids.set(sid, line);
     if (lab) { seats[lab] = k; const p = parseLabel(lab); maxR = Math.max(maxR, p.r + 1); maxC = Math.max(maxC, p.c + 1); }
     else unseated.push(k);
     dateCols.forEach(([j, d]) => {
@@ -1629,8 +2103,7 @@ function mergeGroup(P, items, cls, room, removeMissing) {
   let updated = 0, moved = 0, R = room.rows;
   const C = room.cols, inRoom = l => { const p = parseLabel(l); return p.r < LIM.rows[1] && p.c < C; };
   for (const { row, line } of items) {
-    let name = cellOf(row, c.name);
-    if (!name) name = [cellOf(row, c.first), cellOf(row, c.last)].filter(Boolean).join(' ');
+    const nm = rowNames(row, c), name = nm.name;
     const sid = cellOf(row, c.sid), email = cellOf(row, c.email), raw = cellOf(row, c.seat);
     if (!name && !sid && !email) continue;
     if (email && !emailOk(email)) { errs.push(`Line ${line}: email "${email}" doesn't look valid.`); continue; }
@@ -1658,14 +2131,16 @@ function mergeGroup(P, items, cls, room, removeMissing) {
       seen.add(k);
       if (students[k].dropped) { revived.push({ k, seat: students[k].dropped.seat }); delete students[k].dropped; }   // on the roster again
       const st = students[k], before = JSON.stringify(st);
-      if (name) st.name = name; if (sid) st.sid = sid; if (email) st.email = email;
+      if (name && nkey(name) !== nkey(st.name)) { setNames(st, nm.first, nm.last); if (nm.unsure) st.nameCheck = true; else delete st.nameCheck; }   // keep a reviewed split if the name is unchanged
+      else if (name && nm.explicit && (nm.first !== st.first || nm.last !== st.last)) { setNames(st, nm.first, nm.last); delete st.nameCheck; }
+      if (sid) st.sid = sid; if (email) st.email = email;
       if (JSON.stringify(st) !== before) updated++;
       if (lab && lab !== seatOf[k]) {
         if (!seats[lab] && inRoom(lab)) { if (seatOf[k]) delete seats[seatOf[k]]; seats[lab] = k; seatOf[k] = lab; moved++; const p = parseLabel(lab); R = Math.max(R, p.r + 1); }
         else conflicts.push(`${st.name} stays in ${seatName(seatOf[k])} (${seatName(lab)} is taken)`);
       }
     } else {
-      k = uid(); students[k] = { name, sid, email }; seen.add(k); added.push({ k, lab });
+      k = uid(); students[k] = { name, first: nm.first, last: nm.last, sid, email, ...(nm.unsure ? { nameCheck: true } : {}) }; seen.add(k); added.push({ k, lab });
     }
     for (const [d, st] of Object.entries(marks)) { marked.add(d); const day = attendance[d] ||= {}; if (st === 'P') delete day[k]; else day[k] = st; }
   }
@@ -1813,8 +2288,7 @@ function renderTemplates(force) {
   updateTplState();
 }
 function fill(str, x) {
-  const parts = x.s.name.trim().split(/\s+/);
-  const map = { name: x.s.name, first: parts[0] || x.s.name, last: parts[parts.length - 1] || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: x.s.sid };
+  const map = { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: x.s.sid };
   return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m);
 }
 function b64(s) { const bytes = new TextEncoder().encode(s); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
@@ -2051,7 +2525,7 @@ $('#dChips').addEventListener('click', e => { const c = e.target.closest('[data-
 /* Global shortcuts. Skipped while typing in a field, and when a seat or cell already handled the key. */
 const typing = el => !!el.closest?.('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]');
 window.addEventListener('keydown', e => {
-  if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || calIsOpen()) return;
+  if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || $('#sheetDlg').open || calIsOpen()) return;
   if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'z' && !e.shiftKey) {
     if (typing(e.target)) return;                // let text fields keep their own undo
     e.preventDefault(); undo(); return;
@@ -2077,6 +2551,12 @@ window.addEventListener('keydown', e => {
   if (k === 'Escape' && S.view === 'history') { e.preventDefault(); resetHist(); return; }
   if (k.toLowerCase() === 't') { e.preventDefault(); goToday(); return; }
   if (S.view === 'classroom') {
+    if (k.toLowerCase() === 'l') { e.preventDefault(); setClassView(S.classView === 'list' ? 'chart' : 'list'); toast(S.classView === 'list' ? 'List' : 'Seating chart'); return; }
+    if (S.classView === 'list') {
+      if (k === '/') { e.preventDefault(); $('#lFind').focus(); $('#lFind').select(); return; }
+      if (k.startsWith('Arrow') && !e.target.closest('#list')) { e.preventDefault(); focusListStart(); return; }
+      if (['v', 'm'].includes(k.toLowerCase())) { e.preventDefault(); toast('That shortcut is for the seating chart. Press L to switch.'); return; }
+    }
     if (k.toLowerCase() === 'v') { e.preventDefault(); S.instructorView = !S.instructorView; commit(); toast(S.instructorView ? 'Instructor view' : 'Student view'); return; }
     if (k.toLowerCase() === 'm') { e.preventDefault(); S.mode = S.mode === 'take' ? 'edit' : 'take'; if (S.mode === 'take') selected = null; commit(); toast(S.mode === 'take' ? 'Take attendance' : 'Edit seats'); return; }
     if (k.toLowerCase() === 'u' && S.mode === 'take' && S.date !== todayStr()) { e.preventDefault(); unlocked.has(S.date) ? unlocked.delete(S.date) : unlocked.add(S.date); render(); toast(unlocked.has(S.date) ? `${longDate(S.date)} unlocked for editing.` : 'Locked again.'); return; }
