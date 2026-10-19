@@ -143,7 +143,9 @@ body.not-today.future::after{border-color:var(--accent)}
 .aisle.label{display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font-size:11px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase}
 .seat{width:96px;min-height:72px;border-radius:var(--radius);border:1px solid var(--line);background:var(--panel2);padding:6px 7px;text-align:left;display:flex;flex-direction:column;gap:1px;cursor:pointer;position:relative;color:var(--text)}
 .seat .lab{font-size:11px;color:var(--muted);font-weight:600}
-.seat .nm{font-size:13px;font-weight:600;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.seat .nm{font-size:13px;font-weight:600;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.seat .nm.sm{font-size:11.5px}
+.seat .nm.xs{font-size:10.5px}
 .seat .st{font-size:11px;margin-top:auto;font-weight:600}
 .seat.P{background:var(--present-bg);border-color:#2b5c43}.seat.P .st{color:var(--present)}
 .seat.A{background:var(--absent-bg);border-color:var(--absent)}.seat.A .st{color:var(--absent)}
@@ -230,6 +232,8 @@ button.hcell:hover{filter:brightness(1.3)}
 #list th.sd{text-align:center;min-width:64px}
 #list th.sd button.dlink{background:none;border:0;color:var(--accent);cursor:pointer;font:inherit;font-weight:700;text-transform:none;letter-spacing:0;line-height:1.2;padding:0}
 #list th.sd .rec{display:block;font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+#list th.sd .del{background:none;border:0;padding:0 2px;margin-left:2px;cursor:pointer;color:var(--muted);font-size:13px;line-height:1}
+#list th.sd .del:hover{color:var(--absent)}
 #list th.sd input[type=date]{width:128px;padding:3px 5px;font-size:12px}
 #list th.cur-col{background:#253563;box-shadow:inset 0 -3px 0 var(--accent)}
 #list td.cur-col{background:#1a2440}
@@ -567,7 +571,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <p>The date bar under the tabs shows which day you're working on. It appears on every view that uses a date. Its badge says <b>Today</b> in green. Any other day turns the bar amber (past) or blue (future) with a ⚠ warning, and while you're marking seats or drafting emails an amber frame surrounds the whole window, so you can't miss that you're working on another day. The chips jump to <b>Today</b> or a recent class date; red numbers show how many were absent that day. Use ‹ and › to step one day, click the date to open a large calendar (arrow keys move by day and week, <kbd>PgUp</kbd>/<kbd>PgDn</kbd> by month, <kbd>Enter</kbd> picks, <kbd>Esc</kbd> or clicking elsewhere closes it), press <b>Go to today</b>, or tap one of the recent class dates. Keyboard: <kbd>[</kbd> previous day, <kbd>]</kbd> next day, <kbd>T</kbd> today, <kbd>U</kbd> unlock.</p>
     <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
     <h4>List view and sign-in sheets</h4>
-    <p>In Classroom, switch <b>Seating chart | List</b> (or press <kbd>L</kbd>). The list is sorted by last name, the same order as the printed sign-in sheet. <b>One date</b> shows P / A / E buttons for the selected date; <b>Sheet</b> shows every date on one printed sheet side by side, so you can enter a filled sheet in one pass (sheet columns stay editable on past dates). <b>Start everyone as Present | Absent</b> decides what an unrecorded date means: with Absent, mark the students who initialed; your first mark records the date with everyone else absent. Unrecorded dates are shown dimmed.</p>
+    <p>In Classroom, switch <b>Seating chart | List</b> (or press <kbd>L</kbd>). The list is sorted by last name, the same order as the printed sign-in sheet. <b>One date</b> shows P / A / E buttons for the selected date; <b>Sheet</b> shows every date on one printed sheet side by side, so you can enter a filled sheet in one pass (sheet columns stay editable on past dates). Mark with <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or the side-by-side <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd>. The × next to “✓ recorded” deletes that date's records, like × in History (Ctrl/⌘+Z undoes). <b>Start everyone as Present | Absent</b> decides what an unrecorded date means: with Absent, mark the students who initialed; your first mark records the date with everyone else absent. Unrecorded dates are shown dimmed.</p>
     <p><b>Sign-in sheet PDF…</b> makes a printable sheet (landscape or portrait): last name, first name, then date columns, either printed with the class's next meeting dates or left blank for students to write in. Each sheet is numbered; pick it in Sheet mode to transcribe it (for a blank sheet, set each column's date there), and <b>PDF</b> prints it again. Choose the row height, or <b>Fit everyone on one page</b>. Sheet mode doesn't need a printed sheet: <b>Recent class dates</b> is always available, and <b>Create without PDF</b> makes a sheet just for entering attendance.</p>
     <h4>Taking attendance</h4>
     <ul>
@@ -622,7 +626,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <tr><td><kbd>Esc</kbd></td><td>Edit seats: deselect the seat</td></tr>
       <tr><th colspan="2">Classroom → List</th></tr>
       <tr><td><kbd>↑</kbd> <kbd>↓</kbd> (Sheet: also <kbd>←</kbd> <kbd>→</kbd>)</td><td>Move between students (and dates)</td></tr>
-      <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark and move down to the next student</td></tr>
+      <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd></td><td>Mark Present, Absent, or Excused and move down to the next student</td></tr>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle without moving</td></tr>
       <tr><td><kbd>/</kbd> then type</td><td>Jump to a last name; <kbd>Enter</kbd> goes to it</td></tr>
       <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd>, <kbd>Home</kbd> / <kbd>End</kbd></td><td>Move 10 students; first / last (Sheet: first / last date)</td></tr>
@@ -632,7 +636,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the cell without moving</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last date in the row</td></tr>
       <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Top / bottom of the column</td></tr>
-      <tr><td><kbd>/</kbd> then type</td><td>Show only matching students. Each word you type matches the start of a name or email word, so “ana g” finds Ana Garza; accents are optional.</td></tr>
+      <tr><td><kbd>/</kbd> then type</td><td>Show only matching students. Each word you type matches the start of a name or email word, so “zeph q” finds Zephyrine Quillfeather; accents are optional.</td></tr>
       <tr><td><kbd>↓</kbd> / <kbd>Enter</kbd> in search</td><td>Jump into the grid at the first match</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Reset the view: clear the search, remove the cursor and highlights, scroll back to the top-left. The selected date doesn't change.</td></tr>
     </table>
@@ -776,7 +780,7 @@ function defaultTemplatesBase() {
 }
 
 function demo() {
-  const names = ['Ana Garza','Luis Pérez','Mia Thompson','Diego Hernández','Sofia Martínez','Ethan Nguyen','Valeria Ramos','Noah Johnson','Camila Flores','Jacob Castillo','Isabella Vega','Mateo Cantu','Emily Rodríguez','Daniel Salinas','Ximena Treviño','Gabriel Lee','Andrea Villarreal','Lucas Ortiz','Natalia Guerra','Samuel Davis','Renata Chávez','Adrián Morales'];
+  const names = ['Zephyrine Quillfeather','Barnaby Wobblesworth','Inés Cosquillas','Thaddeus Snickerdoodle','Marigold Pumpernickel','Ramón Burbujas','Ottoline Fizzlebottom','Percival Thistlewhite','Clementine Bumblebrook','Horatio Wigglesby','Begoña Chispitas','Rupert Muddlecombe','Winifred Spindlewick','Cornelius Puddingfoot','Ophelia Moonwhistle','Félix Zarandaja','Bartholomew Crumpet','Esmeralda Tumbletoes','Archibald Fizzwick','Lavender Higglesworth','Gertrude Noodleman','Octavio Pirulí'];
   const spots = [];
   for (let r = 0; r < 5 && spots.length < names.length; r++)
     for (let c = 0; c < 8 && spots.length < names.length; c++)
@@ -1176,8 +1180,8 @@ function renderList() {
   const box = $('#list'), keepFocus = box.contains(document.activeElement);
   const sheetMode = S.listMode === 'sheet';
   $('#lHint').innerHTML = sheetMode
-    ? '<kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles'
-    : '<kbd>↑</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles · <kbd>/</kbd> jump';
+    ? '<kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles'
+    : '<kbd>↑</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles · <kbd>/</kbd> jump';
   const list = rosterSorted();
   if (!list.length) { box.innerHTML = '<p class="muted">No students yet. Add them in Seating chart → Edit seats, or import a roster in Manage data.</p>'; $('#sheetCtl').innerHTML = ''; return; }
   if (!listFocus.k || !S.students[listFocus.k] || S.students[listFocus.k].dropped) listFocus.k = list[0].k;
@@ -1210,9 +1214,9 @@ function renderSheetGrid(list) {
   box.innerHTML = `<p class="small muted" style="margin-top:0">${sh.blank ? 'This sheet was printed without dates: set the date above each column as you enter it. ' : ''}${sh.virtual ? `The last ${sh.dates.length} class days up to ${esc(shortDate(S.date))}. ` : ''}Blank boxes on paper are absences${S.listStart === 'A' ? ' — with “Start everyone as Absent”, mark the initialed boxes present' : ' — mark them A'}. Columns stay editable here even on past dates.</p>
     <div class="table-wrap sheet-wrap" style="max-height:none"><table><thead><tr><th class="sticky">Last name</th><th>First name</th>${cols.map((d, i) => {
       const rec = d && S.attendance[d];
-      if (sh.blank) return `<th class="sd" data-col="${i}"><input type="date" data-setd="${i}" value="${d || ''}" aria-label="Date for column ${i + 1}">${d ? `<span class="rec">${rec ? '✓ recorded' : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span>` : '<span class="rec">set a date</span>'}</th>`;
+      if (sh.blank) return `<th class="sd" data-col="${i}"><input type="date" data-setd="${i}" value="${d || ''}" aria-label="Date for column ${i + 1}">${d ? `<span class="rec">${rec ? `✓ recorded <button type="button" class="del" data-sdel="${d}" aria-label="Delete all attendance for ${esc(longDate(d))}" title="Delete this date's records">×</button>` : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span>` : '<span class="rec">set a date</span>'}</th>`;
       return `<th class="sd" data-col="${i}"><button type="button" class="dlink" data-open="${d}" title="Open ${esc(longDate(d))} in One date">${esc(dateObj(d).toLocaleDateString(undefined, { weekday: 'short' }))}<br>${esc(dateObj(d).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }))}</button>
-        <span class="rec">${rec ? '✓ recorded' : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span></th>`;
+        <span class="rec">${rec ? `✓ recorded <button type="button" class="del" data-sdel="${d}" aria-label="Delete all attendance for ${esc(longDate(d))}" title="Delete this date's records">×</button>` : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span></th>`;
     }).join('')}<th class="c">Abs.</th></tr></thead><tbody>${
     list.map(x => `<tr data-k="${x.k}"><td class="sticky">${esc(x.s.last)}</td><td>${esc(x.s.first)}</td>${cols.map((d, i) => {
       if (!d) return `<td class="c" data-col="${i}"><span class="muted">—</span></td>`;
@@ -1258,7 +1262,10 @@ function moveList(dr, dc) {
 }
 $('#list').addEventListener('click', e => {
   const b = e.target.closest('[data-st]'), cell = e.target.closest('.hcell'), open = e.target.closest('[data-open]'), rec = e.target.closest('[data-srec]');
-  const tr = e.target.closest('tbody tr');
+  const tr = e.target.closest('tbody tr'), sdel = e.target.closest('[data-sdel]');
+  if (sdel) { const d = sdel.dataset.sdel;
+    if (confirm(`Delete all attendance for ${longDate(d)}?`)) { snapshot(); delete S.attendance[d]; commit(); toast('Date deleted. Ctrl/⌘+Z undoes.'); }
+    return; }
   if (open) { S.date = open.dataset.open; S.listMode = 'one'; commit(); return; }
   if (rec) { const d = curSheet().dates[+rec.dataset.srec]; snapshot(); const day = S.attendance[d] = S.attendance[d] || {};
     if (S.listStart === 'A') assigned().forEach(x => { if (!(x.k in day)) day[x.k] = 'A'; }); commit(); toast(`${longDate(d)} recorded.`); return; }
@@ -1279,7 +1286,7 @@ $('#list').addEventListener('keydown', e => {
   const tr = e.target.closest('tbody tr'); if (!tr) return;
   const sheet = S.listMode === 'sheet', cell = e.target.closest('.hcell');
   if (sheet && !cell) return;
-  const m = { p: 'P', a: 'A', e: 'E' }[e.key.toLowerCase()];
+  const m = { p: 'P', a: 'A', e: 'E', q: 'P', w: 'A' }[e.key.toLowerCase()];   // Q W E sit side by side: Present, Absent, Excused
   const d = sheet ? cell.dataset.d : S.date, k = tr.dataset.k;
   if (m || e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
@@ -1595,13 +1602,13 @@ function seatEl(lab, edit) {
     if (!edit) b.tabIndex = -1;
   } else if (edit) {
     b.className = 'seat edit' + (selected === lab ? ' sel' : '');
-    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm">${esc(s.name)}</span><span class="st">${s.email ? '' : 'no email'}</span>`;
+    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm${nmFit(s.name)}" title="${esc(s.name)}">${esc(s.name)}</span><span class="st">${s.email ? '' : 'no email'}</span>`;
     b.setAttribute('aria-label', `${seatName(lab)}, ${s.name}${selected === lab ? ', selected' : ''}`);
     b.draggable = true;
   } else {
     const st = getStatus(S.date, k);
     b.className = 'seat ' + st;
-    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm">${esc(s.name)}</span><span class="st">${STATUS[st]}</span>`;
+    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm${nmFit(s.name)}" title="${esc(s.name)}">${esc(s.name)}</span><span class="st">${STATUS[st]}</span>`;
     b.setAttribute('aria-label', `${seatName(lab)}, ${s.name}, ${STATUS[st]}. Press to change.`);
   }
   if (edit) {
@@ -1747,6 +1754,14 @@ function removeStudent(k) {
   delete S.students[k];
   for (const d of Object.values(S.attendance)) delete d[k];
 }
+/* Seat cards are narrow: shrink the name a little when its longest word wouldn't fit, so it isn't cut off. */
+let nmCtx = null;
+const nmFit = n => {
+  nmCtx ||= document.createElement('canvas').getContext('2d');
+  const fam = getComputedStyle(document.body).fontFamily, words = String(n || '').split(/\s+/);
+  const widest = px => { nmCtx.font = `600 ${px}px ${fam}`; return Math.max(0, ...words.map(w => nmCtx.measureText(w).width)); };
+  return widest(13) <= 78 ? '' : widest(11.5) <= 78 ? ' sm' : ' xs';
+};
 function saveSeat(lab, first, last, email) {
   if (!first && !last && !email) return toast('Enter a name. To remove a student, use Manage data.', true);
   if (!first && !last) return toast('Enter a first or last name.', true);
@@ -2154,7 +2169,7 @@ function resetHist() {
 /* History search: filters rows as you type. Kept for the session, not saved. */
 let histFilter = '';
 const fold = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-/* Every typed word must match the start of a word in the student's name or email ("ana g" → Ana Garza). */
+/* Every typed word must match the start of a word in the student's name or email ("zeph q" → Zephyrine Quillfeather). */
 function matchStudent(x, query) {
   const words = fold(`${x.s.name} ${x.s.email}`).split(/[^a-z0-9]+/).filter(Boolean);
   return fold(query).split(/[^a-z0-9]+/).filter(Boolean).every(t => words.some(w => w.startsWith(t)));
