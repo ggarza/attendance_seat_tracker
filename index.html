@@ -503,7 +503,8 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
         <label class="fld"><span>Template title</span><input type="text" id="tplTitle"></label>
         <label class="fld"><span>Subject</span><input type="text" id="tplSubject"></label>
         <label class="fld"><span>Message</span><textarea id="tplBody" rows="10"></textarea></label>
-        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code></p>
+        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{instructor}</code></p>
+        <label class="fld"><span>Your name for <code>{instructor}</code> (used in every template; leave blank to leave it out)</span><input type="text" id="instrName" placeholder="e.g. Prof. García" autocomplete="name"></label>
         <div class="row">
           <button class="btn primary" id="tplSave" type="button">Save template</button>
           <button class="btn danger" id="tplDel" type="button">Delete</button>
@@ -603,7 +604,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <h4>Attendance history</h4>
     <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Last name</b>, <b>First name</b>, <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
     <h4>Emails</h4>
-    <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload.</p>
+    <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload. Type your name in <b>Your name for {instructor}</b> (above Save template) and it fills <code>{instructor}</code>, which the starter templates use under their closing; leave it blank and that line is simply left out.</p>
     <p>Keep a library of response templates on the left. On the right, choose recipients. Students absent on the selected date are pre-selected. The filter buttons (<b>All</b>, <b>Absent</b>, <b>Excused</b>, <b>Absent 2+ times</b>) choose which students are listed, and only those students are shown. Picking Absent, Excused, or Absent 2+ times also selects everyone it lists, which you can then trim. Picking All shows the whole class without selecting anyone extra. Use the <b>−</b> and <b>+</b> beside “Absent 2+ times” to change the number (for example, 3+ or 4+); the list and selection update right away and the number is remembered. Search narrows the list further; <kbd>Shift</kbd>-click selects a range. If a selected student is hidden by your search, the count says so.</p>
     <ul>
       <li><b>One email (BCC)</b> writes a single message with every selected address on the BCC line, so students can't see each other's addresses. You can put your own address in To. Personal placeholders like <code>{first}</code> become “everyone”.</li>
@@ -793,7 +794,7 @@ function extraTemplatesV4() {   // added in template set v4: general notes for a
 }
 /* Starter templates have stable ids ("st-01"…), so the app can always tell which ones a library is missing. */
 function starterTemplates() {
-  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5()].map((t, i) => ({ ...t, id: 'st-' + String(i + 1).padStart(2, '0') }));
+  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
 }
 function defaultTemplates() { return starterTemplates(); }
 function defaultTemplatesBase() {
@@ -830,18 +831,25 @@ function demo() {
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
     mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
-    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '' };
+    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1 };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
 const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets'];
-const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 /* Every starter template is kept in the library unless the instructor deleted it (remembered in removedStarters),
    so restoring an older backup, importing old data, or opening an older copy never shrinks the library,
    and starter templates added in later versions appear automatically. */
+/* Put {instructor} on its own line under a closing like "Best," — only when the message ends with one and doesn't use the tag yet. */
+function withSignature(body) {
+  const b = String(body || '');
+  if (/\{instructor\}/i.test(b)) return b;
+  const last = b.replace(/\s+$/, '').split('\n').pop().trim();
+  return last && last.length <= 40 && /,$/.test(last) ? b.replace(/\s+$/, '') + '\n{instructor}' : b;
+}
 function fixTemplates(g) {
   if (!Array.isArray(g.templates)) g.templates = [];
   if (!Array.isArray(g.removedStarters)) g.removedStarters = [];
@@ -918,6 +926,11 @@ function fixStore(st) {
   const b = base(), g = st.global;
   if (!Array.isArray(g.templates)) g.templates = b.templates;
   fixTemplates(g);
+  if (!g.instrSig) {                                       // one time: add {instructor} under the closing of saved templates and the draft
+    g.templates.forEach(t => { t.body = withSignature(t.body); });
+    if (g.work && typeof g.work.body === 'string') g.work.body = withSignature(g.work.body);
+    g.instrSig = 1;
+  }
   for (const k of GLOBAL_KEYS) if (g[k] === undefined || g[k] === null) g[k] = b[k];
   if (!isDate(g.date)) g.date = todayStr();
   Object.values(st.rooms).forEach(fixRoom);
@@ -2631,6 +2644,7 @@ function renderTemplates(force) {
   if (ae !== $('#tplTitle')) $('#tplTitle').value = t?.title || '';
   if (ae !== $('#tplSubject')) $('#tplSubject').value = S.work.subject;
   if (ae !== $('#tplBody')) $('#tplBody').value = S.work.body;
+  if (ae !== $('#instrName')) $('#instrName').value = S.instructor || '';
   ['#tplTitle', '#tplDel', '#tplDup'].forEach(s => $(s).disabled = !t);
   $('#tplSave').textContent = t ? 'Save template' : 'Save as template';
   const missing = (S.removedStarters || []).length;
@@ -2638,8 +2652,8 @@ function renderTemplates(force) {
   updateTplState();
 }
 function fill(str, x) {
-  const map = { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: '' };
-  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m);
+  const map = { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: '', instructor: (S.instructor || '').trim() };
+  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m).replace(/[ \t]*\n?[ \t]*$/, '');   // an empty tag on the last line leaves no blank line
 }
 function b64(s) { const bytes = new TextEncoder().encode(s); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
 function eml(to, subject, body) {
@@ -2649,8 +2663,8 @@ function eml(to, subject, body) {
 let emailSel = new Set(), selDate = null, selAuto = true, lastPick = null, emailMode = 'group', emailFilter = '', emailView = 'absent';
 const absTotal = k => Object.values(S.attendance).filter(d => d[k] === 'A').length;
 function fillGroup(str) {
-  const map = { name: 'everyone', first: 'everyone', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class' };
-  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m);
+  const map = { name: 'everyone', first: 'everyone', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class', instructor: (S.instructor || '').trim() };
+  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m).replace(/[ \t]*\n?[ \t]*$/, '');   // an empty tag on the last line leaves no blank line
 }
 const mailAddr = e => encodeURIComponent(e).replace(/%40/g, '@');
 function groupMailto(to, list, subj, body) {
@@ -3113,6 +3127,7 @@ $('#tplSelect').addEventListener('change', e => {
   save(); updateTplState(); renderDrafts();            // drafts follow every keystroke
 }));
 $('#tplTitle').addEventListener('input', () => { updateTplState(); renderDrafts(); });
+$('#instrName').addEventListener('input', e => { S.instructor = e.target.value; save(); renderDrafts(); });
 $('#tplSave').addEventListener('click', () => {
   let t = curTpl();
   if (!t) { t = { id: uid(), title: '', subject: '', body: '' }; S.templates.push(t); tplSel = t.id; }
@@ -3122,7 +3137,7 @@ $('#tplSave').addEventListener('click', () => {
 $('#tplRevert').addEventListener('click', () => { loadWork(curTpl()); commit(); renderTemplates(true); toast('Back to the saved template.'); });
 $('#tplNew').addEventListener('click', () => {
   if (!discardOk()) return;
-  const t = { id: uid(), title: 'New response', subject: '{class}: {date}', body: 'Hi {first},\n\n\n\nBest regards,' };
+  const t = { id: uid(), title: 'New response', subject: '{class}: {date}', body: 'Hi {first},\n\n\n\nBest regards,\n{instructor}' };
   S.templates.push(t); tplSel = t.id; loadWork(t); commit(); renderTemplates(true); $('#tplTitle').focus(); $('#tplTitle').select();
 });
 $('#tplDup').addEventListener('click', () => {           // keeps your current edits as a new template
