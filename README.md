@@ -34,7 +34,8 @@ This document describes the features and the main decisions behind them. It leav
 - The list shows the roster sorted by last name, the same order as the printed sign-in sheet, with P / A / E controls on each row.
 - **One date** mode is for the selected date. **Sheet** mode puts all the dates from one printed sheet side by side, so a filled-in sheet can be entered in one pass.
 - **Start everyone as Present or Absent** sets how an unrecorded date is treated. With Absent, the instructor marks only the students who signed in, and the first mark records the date.
-- The keyboard is fully supported: arrow keys move, P/A/E mark and move to the next student, and typing jumps to a last name.
+- The keyboard is fully supported: arrow keys move, P/A/E (or Q/W/E, which sit side by side) mark and move to the next student, and typing jumps to a last name.
+- In Sheet mode, × on a recorded column deletes that date's records, the same as in History (undoable).
 
 ### Paper sign-in sheets
 - A printable PDF (US Letter, landscape or portrait) with last name, first name, and empty date columns for students to initial. The date columns either show the class's next meeting dates or are left blank for students to write in. Optional blank rows at the bottom (none by default) cover late adds.
@@ -50,7 +51,7 @@ This document describes the features and the main decisions behind them. It leav
 
 - A grid with a row for each student and a column for each recorded date. It is editable, stays in sync with the classroom views, and shows absence and excused totals.
 - Clicking anywhere in a row selects it, and the selected row and column are highlighted.
-- Rows can be sorted by seat (the default), last name, absences, or excused, by clicking a column header; clicking again reverses. The sort is remembered. While marking cells the rows stay put, with a Re-sort button to refresh the order.
+- Last and first names are separate columns. Rows can be sorted by seat (the default), last name, first name, absences, or excused, by clicking a column header; clicking again reverses. The sort is remembered. While marking cells the rows stay put, with a Re-sort button to refresh the order.
 - Students can be found by searching name or email. A date can be found with a jump-to-date list, the calendar, or by stepping between recorded dates. Dates can be added or deleted.
 - Escape resets the view.
 
@@ -58,8 +59,8 @@ This document describes the features and the main decisions behind them. It leav
 
 - **Recipients:** filters show All, Absent today, Excused today, or Absent N+ times (adjustable). The list shows only the filtered students. Students can be searched and selected individually or as a range.
 - **Sending:** either one email with all recipients in **BCC**, or **separate personal emails**. Drafts open in the mail app, download as .eml files, or copy to the clipboard. The app never sends anything itself.
-- **Message editor:** the editor is a live working draft that uses placeholders for first name, name, date, class, and seat. Templates are starting points: editing one changes only the current draft until it is saved as a template. Fourteen starter templates, written in an empathetic, supportive tone, cover:
-  missed class check-in · excused absence documentation · repeated absences · missed quiz or exam · several missed classes · excused absence confirmation · missed group work · nearing the attendance limit · missed exam review · welcome back after time away · missed announcement · three general notes for a single missed day (a short note, easy ways to catch up, and a no-reply-needed check-in).
+- **Message editor:** the editor is a live working draft that uses placeholders for first name, name, date, class, and seat. Templates are starting points: editing one changes only the current draft until it is saved as a template. Nineteen starter templates, written in an empathetic, supportive tone, cover:
+  missed class check-in · excused absence documentation · repeated absences · missed quiz or exam · several missed classes · excused absence confirmation · missed group work · nearing the attendance limit · missed exam review · welcome back after time away · missed announcement · eight general notes that suit a single missed day (a short note, easy ways to catch up, a no-reply-needed check-in, a how-are-things-going check-in, an office-hours invitation, where to find what was covered, a glad-you're-here note, and campus support if things are busy).
 - **The library never shrinks by accident.** Starter templates are part of the app: every one stays in the library unless the instructor deletes it (deleted ones can be restored), new starters added in later versions appear automatically, and restoring older data keeps templates that exist only on this device.
 
 ## 6. Managing data
@@ -127,7 +128,7 @@ The answers in italics are the choices made for this build.
 16. Should history be editable? *Yes, synced with the classroom views.*
 17. How should email work: mailto, .eml files, or a sending service? *mailto, .eml, and copy; never sends automatically.*
 18. One BCC email, separate personal emails, or both? *Both.*
-19. Tone and content of the starter templates? *Empathetic and supportive; 14 templates, including three general ones for a single missed day.*
+19. Tone and content of the starter templates? *Empathetic and supportive; 19 templates, including eight general ones suitable for a single missed day.*
 
 **Data**
 20. Which CSV columns and in what order? *class, last name, first name, email, seat, then dates.*

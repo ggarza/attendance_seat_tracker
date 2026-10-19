@@ -230,6 +230,10 @@ button.hcell:hover{filter:brightness(1.3)}
 .pae.virt button.on,button.hcell.virt{border-style:dashed;opacity:.65}
 #list.locked .pae button,#list.locked .hcell{cursor:not-allowed;opacity:.5}
 #list th.sd{text-align:center;min-width:64px}
+#list table.sheetgrid th.nm,#list table.sheetgrid td.nm{width:1%;white-space:nowrap}
+#list table.sheetgrid th.nm{padding-right:16px}
+#list table.sheetgrid td.nm{padding-right:16px}
+#list table.sheetgrid th.sd{width:calc(100% / var(--ncols))}
 #list th.sd button.dlink{background:none;border:0;color:var(--accent);cursor:pointer;font:inherit;font-weight:700;text-transform:none;letter-spacing:0;line-height:1.2;padding:0}
 #list th.sd .rec{display:block;font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
 #list th.sd .del{background:none;border:0;padding:0 2px;margin-left:2px;cursor:pointer;color:var(--muted);font-size:13px;line-height:1}
@@ -243,6 +247,11 @@ button.hcell:hover{filter:brightness(1.3)}
 #history tbody tr:hover td{background:#1a1f2b}
 #history tr.cur-row td{background:#1a2440}
 #history tr.cur-row td.sticky{background:#253563;color:#fff;font-weight:700;box-shadow:inset 5px 0 0 var(--accent)}
+#history tr.cur-row td:nth-child(2){color:#fff;font-weight:700}
+#history table{width:auto}
+#history thead th:not(.date){white-space:nowrap;padding-right:18px}
+#history th.date{min-width:72px}
+#history tbody td:nth-child(-n+6){white-space:nowrap;padding-right:18px}
 #history .cur-col{background:#1a2440}
 #history th.cur-col{background:#253563;box-shadow:inset 0 -3px 0 var(--accent)}
 #history th.cur-col button{color:#fff;font-weight:700}
@@ -475,7 +484,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <label class="fld"><span>Add a date</span><input type="date" id="hAddDate"></label>
     <button class="btn" id="hAddBtn" type="button" style="align-self:flex-end">Add date</button>
     <button class="btn" id="exportBtn2" type="button" style="align-self:flex-end">Download CSV</button>
-    <span class="small muted" style="align-self:flex-end">Click a cell to cycle P → A → E (or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>). Click a date to open it in Classroom. Click <b>Student</b>, <b>Row</b>, <b>Absent</b>, or <b>Excused</b> to sort. Both views edit the same records.</span>
+    <span class="small muted" style="align-self:flex-end">Click a cell to cycle P → A → E (or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>). Click a date to open it in Classroom. Click <b>Last name</b>, <b>First name</b>, <b>Row</b>, <b>Absent</b>, or <b>Excused</b> to sort. Both views edit the same records.</span>
   </div>
   <div class="hfocus" id="hFocus"></div>
   <div id="history"></div>
@@ -592,7 +601,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <h4>Manage data</h4>
     <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
     <h4>Attendance history</h4>
-    <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Student</b> (last name), <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
+    <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Last name</b>, <b>First name</b>, <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
     <h4>Emails</h4>
     <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload.</p>
     <p>Keep a library of response templates on the left. On the right, choose recipients. Students absent on the selected date are pre-selected. The filter buttons (<b>All</b>, <b>Absent</b>, <b>Excused</b>, <b>Absent 2+ times</b>) choose which students are listed, and only those students are shown. Picking Absent, Excused, or Absent 2+ times also selects everyone it lists, which you can then trim. Picking All shows the whole class without selecting anyone extra. Use the <b>−</b> and <b>+</b> beside “Absent 2+ times” to change the number (for example, 3+ or 4+); the list and selection update right away and the number is remembered. Search narrows the list further; <kbd>Shift</kbd>-click selects a range. If a selected student is hidden by your search, the count says so.</p>
@@ -750,6 +759,25 @@ function extraTemplatesV3() {   // added in template set v3
       body: "Hi {first},\n\nWe missed you in {class} on {date}. I shared an important announcement in class that day, and I didn't want you to miss it:\n\n[Write the announcement here, for example a changed due date, a new assignment, or an exam room change.]\n\nIf you have any questions about it, or about anything else from that day, just reply to this email or stop by office hours. I'm happy to help.\n\nHope to see you next class," }
   ];
 }
+function extraTemplatesV5() {   // added in template set v5: more general, non-specific notes (always appended so earlier ids stay the same)
+  return [
+    { id: uid(), title: "Quick check-in — how are things going?",
+      subject: "{class}: checking in",
+      body: "Hi {first},\n\nI'm reaching out to see how things are going in {class}. I noticed you weren't with us on {date}, and I wanted to make sure you have everything you need.\n\nIf anything is getting in the way, or there's a topic you'd like to go over, just let me know. I'm glad to help.\n\nBest," },
+    { id: uid(), title: "An open invitation to office hours",
+      subject: "{class}: you're welcome at office hours",
+      body: "Hi {first},\n\nI missed seeing you in {class} on {date}. I wanted to remind you that office hours are a great place to catch up, ask questions, or work through anything that feels unclear. No question is too small.\n\nIf my regular hours don't work for you, reply with a few times that do and we'll find something.\n\nHope to see you soon," },
+    { id: uid(), title: "What we worked on — you can catch up",
+      subject: "{class}: what we covered on {date}",
+      body: "Hi {first},\n\nYou weren't in {class} on {date}, so I wanted to make sure you know where to find what we worked on. The notes and materials from that day are posted with the rest of the course materials.\n\nTake a look when you can, and let me know if anything doesn't make sense. I'm happy to walk through it with you.\n\nBest regards," },
+    { id: uid(), title: "Glad you're in this class",
+      subject: "{class}: glad you're with us",
+      body: "Hi {first},\n\nI noticed you weren't in {class} on {date}, and I wanted to say that I'm glad you're part of this class. Your presence makes a difference, and I hope to see you at our next meeting.\n\nIf there's anything I can do to support you, please let me know.\n\nWarmly," },
+    { id: uid(), title: "Support if things are busy",
+      subject: "{class}: support is available",
+      body: "Hi {first},\n\nI noticed you missed {class} on {date}. Sometimes the semester gets busy or life gets complicated, and that's okay.\n\nIf it would help, the university offers tutoring, advising, and student support services, and I'm happy to point you to the right place. You're also always welcome to talk with me about how to stay on track in this class.\n\nTake care," }
+  ];
+}
 function extraTemplatesV4() {   // added in template set v4: general notes for a single missed day
   return [
     { id: uid(), title: "Short note — we missed you",
@@ -765,7 +793,7 @@ function extraTemplatesV4() {   // added in template set v4: general notes for a
 }
 /* Starter templates have stable ids ("st-01"…), so the app can always tell which ones a library is missing. */
 function starterTemplates() {
-  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4()].map((t, i) => ({ ...t, id: 'st-' + String(i + 1).padStart(2, '0') }));
+  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5()].map((t, i) => ({ ...t, id: 'st-' + String(i + 1).padStart(2, '0') }));
 }
 function defaultTemplates() { return starterTemplates(); }
 function defaultTemplatesBase() {
@@ -1212,13 +1240,13 @@ function renderSheetGrid(list) {
   $('#sheetNew').addEventListener('click', openSheetDialog);
   const cols = sh.dates;
   box.innerHTML = `<p class="small muted" style="margin-top:0">${sh.blank ? 'This sheet was printed without dates: set the date above each column as you enter it. ' : ''}${sh.virtual ? `The last ${sh.dates.length} class days up to ${esc(shortDate(S.date))}. ` : ''}Blank boxes on paper are absences${S.listStart === 'A' ? ' — with “Start everyone as Absent”, mark the initialed boxes present' : ' — mark them A'}. Columns stay editable here even on past dates.</p>
-    <div class="table-wrap sheet-wrap" style="max-height:none"><table><thead><tr><th class="sticky">Last name</th><th>First name</th>${cols.map((d, i) => {
+    <div class="table-wrap sheet-wrap" style="max-height:none"><table class="sheetgrid" style="--ncols:${cols.length}"><thead><tr><th class="sticky nm">Last name</th><th class="nm">First name</th>${cols.map((d, i) => {
       const rec = d && S.attendance[d];
       if (sh.blank) return `<th class="sd" data-col="${i}"><input type="date" data-setd="${i}" value="${d || ''}" aria-label="Date for column ${i + 1}">${d ? `<span class="rec">${rec ? `✓ recorded <button type="button" class="del" data-sdel="${d}" aria-label="Delete all attendance for ${esc(longDate(d))}" title="Delete this date's records">×</button>` : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span>` : '<span class="rec">set a date</span>'}</th>`;
       return `<th class="sd" data-col="${i}"><button type="button" class="dlink" data-open="${d}" title="Open ${esc(longDate(d))} in One date">${esc(dateObj(d).toLocaleDateString(undefined, { weekday: 'short' }))}<br>${esc(dateObj(d).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }))}</button>
         <span class="rec">${rec ? `✓ recorded <button type="button" class="del" data-sdel="${d}" aria-label="Delete all attendance for ${esc(longDate(d))}" title="Delete this date's records">×</button>` : `<button type="button" class="btn" data-srec="${i}" style="padding:1px 6px;font-size:11px">Record</button>`}</span></th>`;
-    }).join('')}<th class="c">Abs.</th></tr></thead><tbody>${
-    list.map(x => `<tr data-k="${x.k}"><td class="sticky">${esc(x.s.last)}</td><td>${esc(x.s.first)}</td>${cols.map((d, i) => {
+    }).join('')}<th class="c nm">Abs.</th></tr></thead><tbody>${
+    list.map(x => `<tr data-k="${x.k}"><td class="sticky nm">${esc(x.s.last)}</td><td class="nm">${esc(x.s.first)}</td>${cols.map((d, i) => {
       if (!d) return `<td class="c" data-col="${i}"><span class="muted">—</span></td>`;
       const st = viewStatus(d, x.k), virt = !S.attendance[d];
       return `<td class="c" data-col="${i}"><button type="button" class="pill ${st} hcell${virt ? ' virt' : ''}" data-k="${x.k}" data-d="${d}" data-i="${i}" aria-label="${esc(lastFirst(x.s))}, ${esc(longDate(d))}: ${STATUS[st]}${virt ? ' (not recorded yet)' : ''}">${st}</button></td>`;
@@ -2041,7 +2069,7 @@ function restoreStudent(k) {
 }
 /* History sort: by seat (default), last name, absences, or excused. Numbers sort high-to-low first; ties go by last name.
    The order is frozen while you mark cells so rows don't jump; it refreshes when you click a header, press Esc, or come back to the view. */
-const HSORT = { seat: { label: 'Seat', first: 1 }, name: { label: 'Last name', first: 1 }, abs: { label: 'Absences', first: -1 }, exc: { label: 'Excused', first: -1 } };
+const HSORT = { seat: { label: 'Seat', first: 1 }, name: { label: 'Last name', first: 1 }, first: { label: 'First name', first: 1 }, abs: { label: 'Absences', first: -1 }, exc: { label: 'Excused', first: -1 } };
 let histOrder = null;                                   // frozen row order (student keys) while editing
 function histSorted(list, dates) {
   const so = S.histSort && HSORT[S.histSort.by] ? S.histSort : { by: 'seat', dir: 1 }, dir = so.dir === -1 ? -1 : 1;
@@ -2050,14 +2078,16 @@ function histSorted(list, dates) {
   const out = list.map((x, i) => ({ x, i, v: val ? val(x) : 0 }));
   out.sort((a, b) => so.by === 'seat' ? (a.i - b.i) * dir
     : so.by === 'name' ? nameSort(a.x.s, b.x.s) * dir || a.i - b.i
+    : so.by === 'first' ? firstSort(a.x.s, b.x.s) * dir || a.i - b.i
     : (a.v - b.v) * dir || nameSort(a.x.s, b.x.s) || a.i - b.i);
   return out.map(o => o.x);
 }
+const firstSort = (a, b) => (fold(a.first || a.name) + '\u0000' + fold(a.last)).localeCompare(fold(b.first || b.name) + '\u0000' + fold(b.last), undefined, { numeric: true });
 function setHistSort(by) {
   const cur = S.histSort || {};
   S.histSort = { by, dir: cur.by === by ? -(cur.dir || 1) : HSORT[by].first };
   histOrder = null; commit();
-  toast(`Sorted by ${HSORT[by].label.toLowerCase()}, ${by === 'seat' ? (S.histSort.dir === 1 ? 'front to back' : 'back to front') : by === 'name' ? (S.histSort.dir === 1 ? 'A to Z' : 'Z to A') : (S.histSort.dir === -1 ? 'most first' : 'fewest first')}.`);
+  toast(`Sorted by ${HSORT[by].label.toLowerCase()}, ${by === 'seat' ? (S.histSort.dir === 1 ? 'front to back' : 'back to front') : by === 'name' || by === 'first' ? (S.histSort.dir === 1 ? 'A to Z' : 'Z to A') : (S.histSort.dir === -1 ? 'most first' : 'fewest first')}.`);
 }
 function renderHistory() {
   const box = $('#history');
@@ -2085,11 +2115,11 @@ function renderHistory() {
   const so = S.histSort && HSORT[S.histSort.by] ? S.histSort : { by: 'seat', dir: 1 };
   const sh = (by, text, cls = '') => { const on = so.by === by, arrow = on ? (so.dir === 1 ? '▲' : '▼') : '';
     return `<th class="sortable${cls}${on ? ' sorted' : ''}" aria-sort="${on ? (so.dir === 1 ? 'ascending' : 'descending') : 'none'}"><button type="button" data-hsort="${by}" title="Sort by ${HSORT[by].label.toLowerCase()}${on ? ' (click again to reverse)' : ''}">${text}<span class="arr" aria-hidden="true">${arrow}</span></button></th>`; };
-  let h = `<div class="table-wrap"><table><thead><tr>${sh('name', 'Student', ' sticky')}${sh('seat', unitWord())}<th>Seat</th>${sh('abs', 'Absent')}${sh('exc', 'Excused')}${
+  let h = `<div class="table-wrap"><table><thead><tr>${sh('name', 'Last name', ' sticky')}${sh('first', 'First name')}${sh('seat', unitWord())}<th>Seat</th>${sh('abs', 'Absent')}${sh('exc', 'Excused')}${
     dates.map(d => `<th class="date c${d === S.date ? ' cur' : ''}"><button type="button" data-date="${d}" title="Open ${esc(longDate(d))} in Classroom">${esc(shortDate(d))}</button><button type="button" class="del" data-del="${d}" aria-label="Delete ${esc(longDate(d))}" title="Delete this date">×</button></th>`).join('')}</tr></thead><tbody>`;
   list.forEach(x => {
     const sts = dates.map(d => getStatus(d, x.k));
-    h += `<tr><td class="sticky">${esc(so.by === 'name' ? lastFirst(x.s) : x.s.name)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
+    h += `<tr><td class="sticky">${esc(x.s.last || x.s.name)}</td><td>${esc(x.s.first)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
       sts.map((st, j) => `<td class="c${dates[j] === S.date ? ' cur' : ''}"><button type="button" class="pill ${st} hcell" data-k="${x.k}" data-d="${dates[j]}" aria-label="${esc(x.s.name)}, ${esc(longDate(dates[j]))}: ${STATUS[st]}. Press to change.">${st}</button></td>`).join('')}</tr>`;
   });
   h += '</tbody></table></div>';
