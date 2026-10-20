@@ -226,6 +226,8 @@ td.c{text-align:center}
   #printArea .pill{color:#000 !important;background:none !important;border:1px solid #777 !important}
   #printArea h4{margin:14pt 0 4pt}
 }
+#dcResult ul.plain li{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--line)}
+#dcResult .chip{cursor:default}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -444,6 +446,16 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
   </div>
   <div class="two">
     <div>
+      <div class="card" id="dropCard">
+        <h3>Check for drops</h3>
+        <p class="small muted" style="margin-top:0">Compare a new class list (for example, a Brightspace classlist export) with <b>this class</b> to see who is no longer enrolled. Only names are needed; emails help. Nothing changes until you press a button.</p>
+        <div class="stack">
+          <label class="fld"><span>Choose the new roster (.csv or .txt)</span><input type="file" id="dcFile" accept=".csv,.tsv,.txt,text/csv,text/plain"></label>
+          <label class="fld"><span>…or paste names, one per line</span><textarea id="dcText" rows="4" spellcheck="false" placeholder="Garza, Ana&#10;Luis Pérez&#10;mia.thompson@utrgv.edu"></textarea></label>
+          <div class="row"><button class="btn primary" id="dcGo" type="button">Compare</button></div>
+        </div>
+        <div id="dcResult"></div>
+      </div>
       <div class="card">
         <h3>Restore from CSV</h3>
         <p class="small muted">Rows go to the class named in the file's <b>class</b> column (a new name creates that class); a file without one goes into the class that's open. Other classes and the response templates aren't touched.</p>
@@ -670,6 +682,8 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
     <h4>Backups, restoring, and recently deleted</h4>
     <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
+    <h4>Checking for drops</h4>
+    <p>Under <b>Manage data → Check for drops</b>, choose a new class list (a Brightspace classlist export works; only names are needed) or paste names, one per line, and press <b>Compare</b>. It's compared with the class that's open: students matched by email or name (accents, case, name order, and extra surnames don't matter) are fine; names that are close but not identical are listed under <b>Check these</b> for you to confirm; and anyone missing from the new list is listed with their absences and last day present. <b>Drop checked students</b> drops them as of the date you choose, keeping their attendance. Students in the new list who aren't in the class can be added to open seats, and anyone you'd marked dropped who is back on the list can be restored. Instructors and TAs in a Brightspace file are skipped.</p>
     <h4>Manage data</h4>
     <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
     <h4>Notes, the email log, and student summaries</h4>
@@ -1534,7 +1548,7 @@ function counts(date, stOf = k => getStatus(date, k)) {
 
 /* ---------- render ---------- */
 function render() {
-  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') { renderBackup(); renderBin(); }
+  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') { renderBackup(); renderBin(); renderDropCheck(); }
   $('#instructorView').checked = !!S.instructorView;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
@@ -3465,6 +3479,126 @@ $('#ncForm').addEventListener('submit', e => {
   $('#ncDlg').close(); switchClass(cid);
   toast(`Created “${name}”. Add students in Edit seats or import its CSV.`);
 });
+/* ---------- check for drops: compare a roster file (e.g. a Brightspace classlist) with the open class ----------
+   Nothing changes until you press a button. Students are matched by email, then by name (accents, case, order,
+   and extra surnames ignored); close-but-not-sure pairs are shown for you to confirm. */
+let dropCheck = null;   // { file, rows, res, cid }
+const nameToks = s => fold(s).replace(/[^a-z\s'-]/g, ' ').replace(/['-]/g, '').split(/\s+/).filter(Boolean);
+function readRosterList(text) {
+  const rows = parseCSV(text).map(r => r.map(c => String(c ?? '').trim())).filter(r => r.some(Boolean));
+  if (!rows.length) throw new Error('The roster is empty.');
+  const isHdr = r => { const h = r.map(hnorm); return ['first', 'last', 'name', 'email'].some(key => h.some(x => HDR[key].includes(x))); };
+  const hi = rows.slice(0, 6).findIndex(isHdr), out = [];
+  if (hi >= 0) {
+    const h = rows[hi].map(hnorm), col = key => h.findIndex(x => HDR[key].includes(x));
+    const c = { name: col('name'), first: col('first'), last: col('last'), email: col('email'), role: h.findIndex(x => x === 'role' || x === 'course role') };
+    for (const r of rows.slice(hi + 1)) {
+      const role = c.role >= 0 ? (r[c.role] || '').toLowerCase() : '';
+      if (role && !/student|learner/.test(role)) continue;            // skip instructors, TAs, graders
+      let first = c.first >= 0 ? r[c.first] || '' : '', last = c.last >= 0 ? r[c.last] || '' : '';
+      if (!first && !last && c.name >= 0) ({ first, last } = splitName(r[c.name] || ''));
+      const email = c.email >= 0 ? (r[c.email] || '').replace(/^mailto:/i, '') : '';
+      if (first || last || email) out.push({ first, last, email, name: fullName(first, last) || email });
+    }
+  } else {                                                              // no header: one name per line, or Last, First
+    for (const r of rows) {
+      const email = r.find(x => /\S+@\S+\.\S+/.test(x)) || '', names = r.filter(x => x && x !== email);
+      let first = '', last = '';
+      if (names.length === 1) ({ first, last } = splitName(names[0]));
+      else if (names.length >= 2) { last = names[0]; first = names[1]; }
+      if (first || last || email) out.push({ first, last, email, name: fullName(first, last) || email });
+    }
+  }
+  if (!out.length) throw new Error('No student names were found in that file.');
+  return out;
+}
+function compareRoster(list) {
+  const here = Object.entries(S.students).map(([k, s]) => ({ k, s, toks: nameToks(s.name), lab: Object.keys(S.seats).find(l => S.seats[l] === k) || null }));
+  const active = here.filter(x => !x.s.dropped), dropped = here.filter(x => x.s.dropped);
+  const R = list.map((r, i) => ({ ...r, i, toks: nameToks(r.name) }));
+  const used = new Set(), taken = new Set(), matched = [], possible = [];
+  const sameSet = (a, b) => a.length === b.length && a.every(t => b.includes(t));
+  const within = (a, b) => a.length >= 2 && a.every(t => b.includes(t));    // e.g. "Ana Garza" inside "Ana Garza Ruiz"
+  const pass = (pool, test, into) => { for (const r of R) { if (taken.has(r.i)) continue; const hit = pool.filter(x => !used.has(x.k) && test(r, x)); if (hit.length === 1) { used.add(hit[0].k); taken.add(r.i); into.push({ r, x: hit[0] }); } } };
+  pass(here, (r, x) => r.email && x.s.email && r.email.toLowerCase() === x.s.email.toLowerCase(), matched);
+  pass(here, (r, x) => sameSet(r.toks, x.toks), matched);
+  pass(here, (r, x) => within(r.toks, x.toks) || within(x.toks, r.toks), matched);
+  const fl = t => ({ f: t[0] || '', l: t.slice(1) });
+  pass(active, (r, x) => {                                              // same last name and first initial, or same email user name
+    const a = nameToks(r.last), b = nameToks(x.s.last), fi = (nameToks(r.first)[0] || '')[0], fx = (nameToks(x.s.first)[0] || '')[0];
+    const user = e => (e || '').toLowerCase().split('@')[0];
+    return (a.length && b.length && a.some(t => b.includes(t)) && fi && fi === fx) || (r.email && x.s.email && user(r.email) === user(x.s.email));
+  }, possible);
+  const gone = active.filter(x => !used.has(x.k));
+  const back = matched.filter(m => m.x.s.dropped);                      // in the new roster but marked dropped here
+  const fresh = R.filter(r => !taken.has(r.i));
+  return { total: R.length, matched: matched.filter(m => !m.x.s.dropped), possible, gone, back, fresh };
+}
+function lastPresent(k) {
+  const ds = Object.keys(S.attendance).filter(isDate).sort().reverse();
+  return ds.find(d => !S.attendance[d][k]) || null;
+}
+function renderDropCheck() {
+  const box = $('#dcResult'); if (!box) return;
+  if (!dropCheck || dropCheck.cid !== S.classId) { box.innerHTML = ''; return; }
+  const { res, file } = dropCheck, n = (v, w) => `${v} ${w}${v === 1 ? '' : 's'}`;
+  const absN = k => Object.values(S.attendance).filter(d => d[k] === 'A').length;
+  const lastTxt = k => { const d = lastPresent(k); return d ? `last present ${shortDate(d)}` : 'not present on any recorded day'; };
+  let h = `<p class="small" style="margin:10px 0 6px">Compared <b>${esc(file)}</b> (${n(res.total, 'student')}) with <b>${esc(S.className || 'this class')}</b>:</p>
+    <div class="rchips" style="margin-bottom:8px"><span class="chip" aria-pressed="false">✓ Matched<b>${res.matched.length}</b></span>
+      <span class="chip" aria-pressed="${res.gone.length ? 'true' : 'false'}">Not in the new roster<b>${res.gone.length}</b></span>
+      ${res.possible.length ? `<span class="chip">Check these<b>${res.possible.length}</b></span>` : ''}
+      <span class="chip">New in the roster<b>${res.fresh.length}</b></span></div>`;
+  if (res.possible.length) h += `<h4 style="margin:10px 0 4px">Check these: probably the same student</h4>
+    <p class="small muted" style="margin:0 0 4px">The names are close but not identical. Uncheck any that are <i>not</i> the same person; they'll be listed as dropped.</p>
+    <ul class="plain">${res.possible.map((p, i) => `<li><label class="switch"><input type="checkbox" data-dcsame="${i}" ${p.same !== false ? 'checked' : ''}> Same student:</label> <span><b>${esc(p.x.s.name)}</b> here ↔ <b>${esc(p.r.name)}</b> in the file${p.r.email ? ` <span class="muted small">${esc(p.r.email)}</span>` : ''}</span></li>`).join('')}</ul>`;
+  const gone = [...res.gone, ...res.possible.filter(p => p.same === false).map(p => p.x)];
+  if (gone.length) h += `<h4 style="margin:12px 0 4px">Not in the new roster: likely dropped</h4>
+    <ul class="plain">${gone.map(x => `<li><label class="switch"><input type="checkbox" data-dcdrop="${x.k}" ${dropCheck.skip?.has(x.k) ? '' : 'checked'}> <b>${esc(x.s.name)}</b></label>
+      <span class="small muted">${x.lab ? esc(seatShort(x.lab)) + ' · ' : ''}${absN(x.k)} abs · ${esc(lastTxt(x.k))}</span></li>`).join('')}</ul>
+    <div class="row" style="margin-top:8px"><label class="fld"><span>Dropped on</span><input type="date" id="dcOn" value="${dropCheck.on || todayStr()}"></label>
+      <button class="btn primary" type="button" id="dcDrop" style="align-self:flex-end">Drop checked students</button></div>
+    <p class="small muted" style="margin:4px 0 0">Dropping keeps their attendance under Dropped students, where they can be restored.</p>`;
+  else h += '<p class="small" style="margin:8px 0 0">✓ Everyone in this class is in the new roster. No drops found.</p>';
+  if (res.back.length) h += `<h4 style="margin:12px 0 4px">In the roster but marked dropped here</h4>
+    <ul class="plain">${res.back.map(m => `<li><span><b>${esc(m.x.s.name)}</b> <span class="small muted">dropped ${esc(shortDate(m.x.s.dropped.on))}</span></span><button class="btn" type="button" data-dcrestore="${m.x.k}">Restore</button></li>`).join('')}</ul>`;
+  if (res.fresh.length) h += `<h4 style="margin:12px 0 4px">New in the roster: not in this class</h4>
+    <ul class="plain">${res.fresh.map(r => `<li><span><b>${esc(r.name)}</b>${r.email ? ` <span class="small muted">${esc(r.email)}</span>` : ''}</span></li>`).join('')}</ul>
+    <div class="row" style="margin-top:6px"><button class="btn" type="button" id="dcAdd">Add ${res.fresh.length === 1 ? 'this student' : `these ${res.fresh.length} students`} to open seats</button></div>`;
+  h += `<div class="row" style="margin-top:10px"><button class="btn ghost" type="button" id="dcClear">Done</button></div>`;
+  box.innerHTML = h;
+  box.querySelectorAll('[data-dcsame]').forEach(cb => cb.addEventListener('change', () => { res.possible[+cb.dataset.dcsame].same = cb.checked; renderDropCheck(); }));
+  box.querySelectorAll('[data-dcdrop]').forEach(cb => cb.addEventListener('change', () => { dropCheck.skip ||= new Set(); cb.checked ? dropCheck.skip.delete(cb.dataset.dcdrop) : dropCheck.skip.add(cb.dataset.dcdrop); }));
+  $('#dcOn')?.addEventListener('change', e => { dropCheck.on = e.target.value; });
+  $('#dcDrop')?.addEventListener('click', () => {
+    const on = isDate($('#dcOn').value) ? $('#dcOn').value : todayStr();
+    const ks = gone.map(x => x.k).filter(k => !dropCheck.skip?.has(k) && S.students[k] && !S.students[k].dropped);
+    if (!ks.length) return toast('No students are checked.', true);
+    if (!confirm(`Drop ${n(ks.length, 'student')} from “${S.className || 'this class'}” as of ${longDate(on)}? Their attendance is kept.`)) return;
+    for (const k of ks) { const lab = Object.keys(S.seats).find(l => S.seats[l] === k) || null; if (lab) delete S.seats[lab]; S.students[k].dropped = { on, seat: lab }; }
+    selected = null; dropCheck.res = compareRoster(dropCheck.rows); dropCheck.skip = null; commit();
+    toast(`Dropped ${ks.map(k => S.students[k].name).join(', ')}.`);
+  });
+  box.querySelectorAll('[data-dcrestore]').forEach(b => b.addEventListener('click', () => { restoreStudent(b.dataset.dcrestore); dropCheck.res = compareRoster(dropCheck.rows); renderDropCheck(); }));
+  $('#dcAdd')?.addEventListener('click', () => {
+    let added = 0, full = 0;
+    for (const r of res.fresh) {
+      const lab = freeSeatIn(S, { rows: S.rows, cols: S.cols }, null); if (!lab) { full++; continue; }
+      const k = uid(), st = { email: r.email }; setNames(st, r.first, r.last); S.students[k] = st; S.seats[lab] = k; added++;
+    }
+    dropCheck.res = compareRoster(dropCheck.rows); commit();
+    toast(`Added ${n(added, 'student')} to open seats.${full ? ` ${full} didn't fit: add seats in Edit seats first.` : ''}`, !!full);
+  });
+  $('#dcClear').addEventListener('click', () => { dropCheck = null; $('#dcText').value = ''; $('#dcFile').value = ''; renderDropCheck(); });
+}
+function runDropCheck(text, file) {
+  if (!text.trim()) return toast('Choose a roster file or paste names first.', true);
+  try { const rows = readRosterList(text); dropCheck = { rows, file: file || 'pasted roster', res: compareRoster(rows), cid: S.classId }; renderDropCheck(); $('#dcResult').scrollIntoView({ block: 'nearest' }); }
+  catch (err) { toast('Could not read that roster: ' + err.message, true); }
+}
+$('#dcGo').addEventListener('click', () => runDropCheck($('#dcText').value, 'pasted roster'));
+$('#dcFile').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => runDropCheck(String(r.result), f.name); r.readAsText(f); });
+
 $('#backupBtn').addEventListener('click', backupAll);
 document.querySelectorAll('[data-mg]').forEach(b => b.addEventListener('click', () => { if (restoreState) { restoreState.mode = b.dataset.mg; renderRestore(); } }));
 $('#mergeDlg').addEventListener('close', () => { if ($('#mergeDlg').returnValue === 'go') applyRestore(); else restoreState = null; $('#mergeDlg').returnValue = ''; });
