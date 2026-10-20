@@ -364,9 +364,9 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
   <button class="btn ghost" id="helpBtn" type="button">Help</button>
 </header>
 <nav class="tabs" role="tablist" aria-label="Views">
-  <button role="tab" data-view="classroom">Classroom</button>
-  <button role="tab" data-view="history">Attendance history</button>
-  <button role="tab" data-view="emails">Emails</button>
+  <button role="tab" data-view="classroom">Take attendance</button>
+  <button role="tab" data-view="history">Review history</button>
+  <button role="tab" data-view="emails">Send emails</button>
   <button role="tab" data-view="import">Manage data</button>
   <button type="button" id="kbdBtn" style="margin-left:auto" title="Keyboard shortcuts">⌨ Shortcuts <kbd>?</kbd></button>
 </nav>
@@ -389,15 +389,15 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
 </div>
 
 <main>
-<section class="view" id="view-classroom" aria-label="Classroom">
+<section class="view" id="view-classroom" aria-label="Take attendance">
   <div class="toolbar">
-    <div class="seg" role="group" aria-label="Classroom view">
+    <div class="seg" role="group" aria-label="Take attendance view">
       <button type="button" data-cview="list" title="List (L)">List</button>
       <button type="button" data-cview="chart" title="Seating chart (L)">Seating chart</button>
     </div>
     <span class="row" id="chartTools">
       <span class="seg" role="group" aria-label="Mode">
-        <button type="button" data-mode="take">Take attendance</button>
+        <button type="button" data-mode="take">Mark attendance</button>
         <button type="button" data-mode="edit">Edit seats</button>
       </span>
       <label class="switch"><input type="checkbox" id="instructorView"> Instructor view</label>
@@ -528,7 +528,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
   </div>
 </section>
 
-<section class="view" id="view-history" aria-label="Attendance history" hidden>
+<section class="view" id="view-history" aria-label="Review history" hidden>
   <div class="toolbar">
     <label class="fld" style="flex:1 1 240px"><span>Find student <kbd>/</kbd></span>
       <input type="search" id="hSearch" placeholder="Type a name or email" autocomplete="off" aria-describedby="hCount"></label>
@@ -537,13 +537,13 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <label class="fld"><span>Add a date</span><input type="date" id="hAddDate"></label>
     <button class="btn" id="hAddBtn" type="button" style="align-self:flex-end">Add date</button>
     <button class="btn" id="exportBtn2" type="button" style="align-self:flex-end">Download CSV</button>
-    <span class="small muted" style="align-self:flex-end">Click a cell to cycle P → A → E (or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>). Click a date to open it in Classroom. Click <b>Last name</b>, <b>First name</b>, <b>Row</b>, <b>Absent</b>, or <b>Excused</b> to sort. Both views edit the same records.</span>
+    <span class="small muted" style="align-self:flex-end">Click a cell to cycle P → A → E (or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>). Click a date to open it in Take attendance. Click <b>Last name</b>, <b>First name</b>, <b>Row</b>, <b>Absent</b>, or <b>Excused</b> to sort. Both views edit the same records.</span>
   </div>
   <div class="hfocus" id="hFocus"></div>
   <div id="history"></div>
 </section>
 
-<section class="view" id="view-emails" aria-label="Emails" hidden>
+<section class="view" id="view-emails" aria-label="Send emails" hidden>
   <div class="two">
     <div class="card">
       <h3>Response library</h3>
@@ -693,7 +693,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <strong id="ncTitle" style="font-size:17px">New class</strong>
     <label class="fld"><span>Class name</span><input type="text" id="ncName" placeholder="e.g. Calculus II — Section 03" autocomplete="off"></label>
     <div class="fld"><span>Meets on (optional)</span><div id="ncDays"></div></div>
-    <label class="fld"><span>Classroom</span><select id="ncRoom"></select></label>
+    <label class="fld"><span>Take attendance</span><select id="ncRoom"></select></label>
     <p class="small muted" style="margin:0">Sections that meet in the same room can share its layout. Pick “New room” to set up a different one in <b>Edit seats</b>.</p>
     <div class="row"><button class="btn primary" type="submit">Create class</button><button class="btn" type="button" id="ncCancel">Cancel</button></div>
   </form>
@@ -707,9 +707,9 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <p>Pick the class you're teaching from the <b>Class</b> menu at the top (or press <kbd>C</kbd>); everything you see belongs to that class only. <b>＋ New class</b> adds one. Each class has its own roster, seats, and attendance, and uses a <b>room</b> that holds the layout (rows or tables, sizes, aisles). Sections that meet in the same room can share it; changing a shared room's layout is refused if it would leave another class's students without a seat, and <b>Give this class its own copy</b> splits it off. Rename, reassign, or delete classes and rooms under <b>Manage data → Classes &amp; rooms</b>. Set the days each class <b>meets</b> in that list (or when creating it); then ‹ › and <kbd>[</kbd> <kbd>]</kbd> step between class days, the calendar highlights them, and the date bar warns on a day the class doesn't meet. The CSV can be the current class or <b>All classes</b> (with a <b>class</b> column); <b>Download backup</b> (top of Manage data, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>S</kbd>) saves everything, rooms included, in one .json file. Saved data belongs to this app's web address in this browser; if the address changes (a renamed or moved file), <b>Manage data → Recover data</b> lists data saved under the old address, plus an automatic copy from each of the last 7 days, and can bring any of it back. <b>Download app with data</b> saves a copy of this app with all classes (or just the open one), their rooms, your templates, and your settings built in; open that file anywhere to continue. The first time it opens somewhere new it loads its built-in data; if that browser already has data for that file's location, it asks once which to keep. When importing into a class that already exists, choose <b>Update roster</b> (the default: matches students by email, then name; updates their details, adds new students in open seats, applies any P/A/E marks in the file, and keeps everyone's seat and history; blank cells change nothing) or <b>Replace everything</b> (the file becomes the class's whole roster, seating, and attendance).</p>
     <h4>Choosing the class date</h4>
     <p>The date bar under the tabs shows which day you're working on. It appears on every view that uses a date. Its badge says <b>Today</b> in green. Any other day turns the bar amber (past) or blue (future) with a ⚠ warning, and while you're marking seats or drafting emails an amber frame surrounds the whole window, so you can't miss that you're working on another day. The chips jump to <b>Today</b> or a recent class date; red numbers show how many were absent that day. Use ‹ and › to step one day, click the date to open a large calendar (arrow keys move by day and week, <kbd>PgUp</kbd>/<kbd>PgDn</kbd> by month, <kbd>Enter</kbd> picks, <kbd>Esc</kbd> or clicking elsewhere closes it), press <b>Go to today</b>, or tap one of the recent class dates. Keyboard: <kbd>[</kbd> previous day, <kbd>]</kbd> next day, <kbd>T</kbd> today, <kbd>U</kbd> unlock.</p>
-    <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Attendance history grid is always editable.</p>
+    <p>To protect your records, seats are <b>locked on any day other than today</b>. Press <b>Edit this date</b> to unlock it for corrections; it stays unlocked until you reload the page. The Review history grid is always editable.</p>
     <h4>List view and sign-in sheets</h4>
-    <p>In Classroom, switch <b>Seating chart | List</b> (or press <kbd>L</kbd>). The list is sorted by last name, the same order as the printed sign-in sheet. <b>One date</b> shows P / A / E buttons for the selected date; <b>Sheet</b> shows every date on one printed sheet side by side, so you can enter a filled sheet in one pass (sheet columns stay editable on past dates). Mark with <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or the side-by-side <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd>. The × next to “✓ recorded” deletes that date's records, like × in History (Ctrl/⌘+Z undoes). <b>Start everyone as Present | Absent</b> decides what an unrecorded date means: with Absent, mark the students who initialed; your first mark records the date with everyone else absent. Unrecorded dates are shown dimmed.</p>
+    <p>In Take attendance, switch <b>Seating chart | List</b> (or press <kbd>L</kbd>). The list is sorted by last name, the same order as the printed sign-in sheet. <b>One date</b> shows P / A / E buttons for the selected date; <b>Sheet</b> shows every date on one printed sheet side by side, so you can enter a filled sheet in one pass (sheet columns stay editable on past dates). Mark with <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or the side-by-side <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd>. The × next to “✓ recorded” deletes that date's records, like × in History (Ctrl/⌘+Z undoes). <b>Start everyone as Present | Absent</b> decides what an unrecorded date means: with Absent, mark the students who initialed; your first mark records the date with everyone else absent. Unrecorded dates are shown dimmed.</p>
     <p><b>Sign-in sheet PDF…</b> makes a printable sheet (landscape or portrait): last name, first name, then date columns, either printed with the class's next meeting dates or left blank for students to write in. Each sheet is numbered; pick it in Sheet mode to transcribe it (for a blank sheet, set each column's date there), and <b>PDF</b> prints it again. Choose the row height, or <b>Fit everyone on one page</b>. Sheet mode doesn't need a printed sheet: <b>Recent class dates</b> is always available, and <b>Create without PDF</b> makes a sheet just for entering attendance.</p>
     <h4>Taking attendance</h4>
     <ul>
@@ -720,7 +720,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     </ul>
     <h4>Editing seats</h4>
     <ul>
-      <li>Select a seat to enter a first name, last name, and email, then press <b>Save seat</b>. Students are removed only in <b>Manage data</b>: the roster's <b>Remove</b> button asks whether to <b>drop</b> them (off the chart, attendance, and emails, with their past attendance kept under Dropped students, where they can be restored) or <b>delete</b> them completely. Seats can't be cleared from the Classroom view, so a stray click there never removes anyone.</li>
+      <li>Select a seat to enter a first name, last name, and email, then press <b>Save seat</b>. Students are removed only in <b>Manage data</b>: the roster's <b>Remove</b> button asks whether to <b>drop</b> them (off the chart, attendance, and emails, with their past attendance kept under Dropped students, where they can be restored) or <b>delete</b> them completely. Seats can't be cleared from the Take attendance view, so a stray click there never removes anyone.</li>
       <li>Drag a student onto another seat to move them (or swap if the seat is taken). Without a mouse, enter a row and seat number under <b>Move / swap with</b>.</li>
       <li>Under <b>Room layout</b>, choose the <b>Room shape</b>. <b>Tables / pods</b> draws each table with its seats around it (numbered clockwise from top-left); set the number of tables, seats per table, and how many tables sit side by side. Seats are then named “Table 3, Seat 2” everywhere. Switching shape keeps everyone where they fit and offers to move anyone else into open seats; attendance is never lost.</li>
       <li>For a <b>Rows</b> room, set rows and seats per row. To add an aisle, click the faint <b>+</b> between two seat columns at the top of the chart; click <b>×</b> to remove it. You can have as many aisles as the room needs. Shrinking is refused if it would remove assigned students; empty seats stay available for later.</li>
@@ -737,10 +737,10 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <h4>Manage data</h4>
     <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
     <h4>Notes, the email log, and student summaries</h4>
-    <p><b>Notes:</b> any student on any date can have a short note (“doctor's note received”, “left early”). Press <kbd>N</kbd> on a seat, a list row, a sheet cell, or a history cell, or use the Note column in the list view. A small yellow dot marks cells with a note, notes for the day are listed beside the classroom, and they appear next to students in Emails. Ctrl/⌘+Z undoes a note change. <b>Email log:</b> when you open a draft in your mail app, download a .eml, or copy addresses or a personal email, Attendance records who it was for, the date it was about, and the subject. Students already emailed about the selected date show “✉ sent”, a warning appears before you email them again, and history marks those cells with ✉. The app can't see your mail app, so remove any log entry you didn't actually send. <b>Student summary:</b> press <kbd>I</kbd> (or Summary in the history bar) for one student's totals, attendance rate, absences and excused days with notes, and the emails sent; <b>Print</b> gives a clean one-page copy, and <b>Email this student</b> opens Emails with just them selected.</p>
-    <h4>Attendance history</h4>
-    <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Last name</b>, <b>First name</b>, <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
-    <h4>Emails</h4>
+    <p><b>Notes:</b> any student on any date can have a short note (“doctor's note received”, “left early”). Press <kbd>N</kbd> on a seat, a list row, a sheet cell, or a history cell, or use the Note column in the list view. A small yellow dot marks cells with a note, notes for the day are listed beside the classroom, and they appear next to students in Send emails. Ctrl/⌘+Z undoes a note change. <b>Email log:</b> when you open a draft in your mail app, download a .eml, or copy addresses or a personal email, Attendance records who it was for, the date it was about, and the subject. Students already emailed about the selected date show “✉ sent”, a warning appears before you email them again, and history marks those cells with ✉. The app can't see your mail app, so remove any log entry you didn't actually send. <b>Student summary:</b> press <kbd>I</kbd> (or Summary in the history bar) for one student's totals, attendance rate, absences and excused days with notes, and the emails sent; <b>Print</b> gives a clean one-page copy, and <b>Email this student</b> opens Send emails with just them selected.</p>
+    <h4>Review history</h4>
+    <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Last name</b>, <b>First name</b>, <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Take attendance and Review history edit the same records, so a change in one shows up in the other immediately.</p>
+    <h4>Send emails</h4>
     <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload. Type your name in <b>Your name for {instructor}</b> (above Save template) and it fills <code>{instructor}</code>, which the starter templates use under their closing; leave it blank and that line is simply left out. <b>Office hours</b> and <b>Office</b> next to it fill <code>{officehours}</code> and <code>{office}</code> the same way; the four office-hours templates list them on their own lines, so a blank one just disappears.</p>
     <p>Keep a library of response templates on the left. On the right, choose recipients. Students absent on the selected date are pre-selected. The filter buttons (<b>All</b>, <b>Absent</b>, <b>Excused</b>, <b>Absent 2+ times</b>) choose which students are listed, and only those students are shown. Picking Absent, Excused, or Absent 2+ times also selects everyone it lists, which you can then trim. Picking All shows the whole class without selecting anyone extra. Use the <b>−</b> and <b>+</b> beside “Absent 2+ times” to change the number (for example, 3+ or 4+); the list and selection update right away and the number is remembered. Search narrows the list further; <kbd>Shift</kbd>-click selects a range. If a selected student is hidden by your search, the count says so.</p>
     <ul>
@@ -752,16 +752,16 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <p>Shortcuts work whenever you're not typing in a text box.</p>
     <table class="small" style="margin-bottom:6px">
       <tr><th colspan="2">Everywhere</th></tr>
-      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>Classroom, Attendance history, Emails, Manage data</td></tr>
-      <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Previous / next day (in Attendance history: previous / next recorded date)</td></tr>
+      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>Take attendance, Review history, Send emails, Manage data</td></tr>
+      <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Previous / next day (in Review history: previous / next recorded date)</td></tr>
       <tr><td><kbd>G</kbd></td><td>Open the calendar to go to any date</td></tr>
       <tr><td><kbd>T</kbd></td><td>Go to today</td></tr>
       <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd></td><td>Download a backup of all your data (.json)</td></tr>
       <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd></td><td>Undo the last attendance change (repeatable)</td></tr>
       <tr><td><kbd>?</kbd></td><td>Show these shortcuts</td></tr>
       <tr><td><kbd>C</kbd></td><td>Jump to the class menu (then arrow keys pick a class)</td></tr>
-      <tr><td><kbd>/</kbd></td><td>Attendance history and Emails: jump to the student search box</td></tr>
-      <tr><th colspan="2">Classroom</th></tr>
+      <tr><td><kbd>/</kbd></td><td>Review history and Send emails: jump to the student search box</td></tr>
+      <tr><th colspan="2">Take attendance</th></tr>
       <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></td><td>Move between seats as drawn on screen (skips empty seats while taking attendance)</td></tr>
       <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark the focused seat Present, Absent, or Excused</td></tr>
       <tr><td><kbd>N</kbd></td><td>Add or edit a note for that student on that date (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> saves)</td></tr>
@@ -769,11 +769,11 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the focused seat (Edit seats: select it)</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last seat in the row (add <kbd>Shift</kbd> for the whole room)</td></tr>
       <tr><td><kbd>L</kbd></td><td>Switch between List and Seating chart</td></tr>
-      <tr><td><kbd>M</kbd></td><td>Switch between Take attendance and Edit seats</td></tr>
+      <tr><td><kbd>M</kbd></td><td>Switch between Mark attendance and Edit seats</td></tr>
       <tr><td><kbd>V</kbd></td><td>Toggle Instructor view</td></tr>
       <tr><td><kbd>U</kbd></td><td>Unlock (or re-lock) a date that isn't today</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Edit seats: deselect the seat</td></tr>
-      <tr><th colspan="2">Classroom → List</th></tr>
+      <tr><th colspan="2">Take attendance → List</th></tr>
       <tr><td><kbd>↑</kbd> <kbd>↓</kbd> (Sheet: also <kbd>←</kbd> <kbd>→</kbd>)</td><td>Move between students (and dates)</td></tr>
       <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd></td><td>Mark Present, Absent, or Excused and move down to the next student</td></tr>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle without moving</td></tr>
@@ -781,7 +781,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
       <tr><td><kbd>I</kbd></td><td>Open that student's summary</td></tr>
       <tr><td><kbd>/</kbd> then type</td><td>Jump to a last name; <kbd>Enter</kbd> goes to it</td></tr>
       <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd>, <kbd>Home</kbd> / <kbd>End</kbd></td><td>Move 10 students; first / last (Sheet: first / last date)</td></tr>
-      <tr><th colspan="2">Attendance history</th></tr>
+      <tr><th colspan="2">Review history</th></tr>
       <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></td><td>Move between cells (the first arrow press jumps to the selected date's column, or the most recent date). The focused cell, its student, and its date light up, and the line above the grid names them.</td></tr>
       <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd></td><td>Mark the cell and move down to the next student, spreadsheet-style</td></tr>
       <tr><td><kbd>N</kbd></td><td>Add or edit a note for that student on that date (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> saves)</td></tr>
@@ -1249,7 +1249,7 @@ function renderClassMgr() {
         <td class="small">${used.length ? used.map(c => esc(c.className || 'Untitled')).join(', ') : '<span class="muted">No classes</span>'}</td>
         <td style="white-space:nowrap"><button type="button" class="btn" data-rdup="${r.id}">Duplicate</button>
           <button type="button" class="btn danger" data-rdel="${r.id}" ${used.length ? 'disabled title="A class still uses this room"' : ''}>Delete</button></td></tr>`; }).join('')}</tbody></table></div>
-    <p class="small muted" style="margin-bottom:0">Edit a room's layout from <b>Classroom → Edit seats</b> while one of its classes is open.</p>`;
+    <p class="small muted" style="margin-bottom:0">Edit a room's layout from <b>Take attendance → Edit seats</b> while one of its classes is open.</p>`;
   box.querySelectorAll('[data-cname]').forEach(i => i.addEventListener('change', () => {
     const c = STORE.classes[i.dataset.cname]; c.className = i.value.trim();
     if (c.id === S.classId) S.className = c.className;
@@ -1696,7 +1696,7 @@ function render() {
 }
 
 /* ---------- list view ----------
-   Classroom → List: students sorted by last name (the order of the printed sign-in sheet).
+   Take attendance → List: students sorted by last name (the order of the printed sign-in sheet).
    One date: P / A / E for the selected date. Sheet: every date on one printed sheet side by side.
    "Start everyone as Absent" treats an unrecorded date as all absent until the first mark records it. */
 let listFocus = { k: null, i: null };                      // row (student) and sheet column the cursor was on
@@ -2440,7 +2440,7 @@ function renderRoster() {
         </div></td></tr>`
       : `<tr data-rrow="${x.k}"><td class="c nw" title="${unitWord()} ${x.row}, Seat ${x.seat}">${x.row} · ${x.seat}</td><td>${esc(x.s.last)}${x.s.nameCheck ? ' <span class="pill E" title="Check this name">?</span>' : ''}</td><td>${esc(x.s.first)}</td><td class="em">${esc(x.s.email)}</td>
       <td class="act"><button type="button" class="btn" data-redit="${x.k}" aria-label="Edit ${esc(x.s.name)}">Edit</button> <button type="button" class="btn danger" data-rm="${x.k}" aria-label="Remove ${esc(x.s.name)}">Remove</button></td></tr>`).join('')}</tbody></table></div>
-    <p class="small muted" style="margin:6px 0 0">Click <b>Edit</b> (or double-click a row) to change a student's name or email. <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. Seats are changed in Classroom → Edit seats.</p>`
+    <p class="small muted" style="margin:6px 0 0">Click <b>Edit</b> (or double-click a row) to change a student's name or email. <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. Seats are changed in Take attendance → Edit seats.</p>`
     : emptyPanel();
   if (dropped.length) h += `<h3 style="margin:18px 0 8px">Dropped students (${dropped.length})</h3>
     <p class="small muted" style="margin-top:0">Not on the chart, in attendance, or in emails. Their past attendance is kept here.</p>
@@ -2657,12 +2657,12 @@ function renderHistory() {
   $('#hJump').disabled = !dates.length;
   if (!list.length || !dates.length) { const f = $('#hFocus'); f.innerHTML = ''; f.classList.remove('on'); }
   if (!list.length) { box.innerHTML = hq && everyone.length ? `<p class="muted">No students match “${esc(histFilter.trim())}”. Press <kbd>Esc</kbd> to reset the view.</p>` : emptyPanel('Attendance history appears here once the class has students and you take attendance.'); return; }
-  if (!dates.length) { box.innerHTML = '<p class="muted">No dates recorded yet. Take attendance in the Classroom view, or add a date above.</p>'; return; }
+  if (!dates.length) { box.innerHTML = '<p class="muted">No dates recorded yet. Mark attendance on the Take attendance tab, or add a date above.</p>'; return; }
   const so = S.histSort && HSORT[S.histSort.by] ? S.histSort : { by: 'seat', dir: 1 };
   const sh = (by, text, cls = '') => { const on = so.by === by, arrow = on ? (so.dir === 1 ? '▲' : '▼') : '';
     return `<th class="sortable${cls}${on ? ' sorted' : ''}" aria-sort="${on ? (so.dir === 1 ? 'ascending' : 'descending') : 'none'}"><button type="button" data-hsort="${by}" title="Sort by ${HSORT[by].label.toLowerCase()}${on ? ' (click again to reverse)' : ''}">${text}<span class="arr" aria-hidden="true">${arrow}</span></button></th>`; };
   let h = `<div class="table-wrap"><table><thead><tr>${sh('name', 'Last name', ' sticky')}${sh('first', 'First name')}${sh('seat', unitWord())}<th>Seat</th>${sh('abs', 'Absent')}${sh('exc', 'Excused')}${
-    dates.map(d => `<th class="date c${d === S.date ? ' cur' : ''}"><button type="button" data-date="${d}" title="Open ${esc(longDate(d))} in Classroom">${esc(shortDate(d))}</button><button type="button" class="del" data-del="${d}" aria-label="Delete ${esc(longDate(d))}" title="Delete this date">×</button></th>`).join('')}</tr></thead><tbody>`;
+    dates.map(d => `<th class="date c${d === S.date ? ' cur' : ''}"><button type="button" data-date="${d}" title="Open ${esc(longDate(d))} in Take attendance">${esc(shortDate(d))}</button><button type="button" class="del" data-del="${d}" aria-label="Delete ${esc(longDate(d))}" title="Delete this date">×</button></th>`).join('')}</tr></thead><tbody>`;
   list.forEach(x => {
     const sts = dates.map(d => getStatus(d, x.k));
     h += `<tr><td class="sticky">${esc(x.s.last || x.s.name)}</td><td>${esc(x.s.first)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
@@ -3520,13 +3520,13 @@ window.addEventListener('keydown', e => {
       if (['v', 'm'].includes(k.toLowerCase())) { e.preventDefault(); toast('That shortcut is for the seating chart. Press L to switch.'); return; }
     }
     if (k.toLowerCase() === 'v') { e.preventDefault(); S.instructorView = !S.instructorView; commit(); toast(S.instructorView ? 'Instructor view' : 'Student view'); return; }
-    if (k.toLowerCase() === 'm') { e.preventDefault(); S.mode = S.mode === 'take' ? 'edit' : 'take'; if (S.mode === 'take') selected = null; commit(); toast(S.mode === 'take' ? 'Take attendance' : 'Edit seats'); return; }
+    if (k.toLowerCase() === 'm') { e.preventDefault(); S.mode = S.mode === 'take' ? 'edit' : 'take'; if (S.mode === 'take') selected = null; commit(); toast(S.mode === 'take' ? 'Mark attendance' : 'Edit seats'); return; }
     if (k.toLowerCase() === 'u' && S.mode === 'take' && S.date !== todayStr()) { e.preventDefault(); unlocked.has(S.date) ? unlocked.delete(S.date) : unlocked.add(S.date); render(); toast(unlocked.has(S.date) ? `${longDate(S.date)} unlocked for editing.` : 'Locked again.'); return; }
     if (k.startsWith('Arrow') && !e.target.closest('.seat')) { e.preventDefault(); seatFocusFirst(); return; }
   }
   if (S.view === 'history' && k.startsWith('Arrow') && !e.target.closest('.hcell')) { e.preventDefault(); const g = histGrid(); if (g.length) { const i = g[0].findIndex(b => b.dataset.d === S.date); focusHist(0, i >= 0 ? i : g[0].length - 1); } }
 });
-/* Classroom: arrow keys move between seats as drawn on screen (so they follow Instructor view). */
+/* Take attendance: arrow keys move between seats as drawn on screen (so they follow Instructor view). */
 function seatCells() {
   const btns = [...$('#room').querySelectorAll('.seat')];
   return { btns, cols: S.cols, ok: b => S.mode === 'edit' || !b.classList.contains('empty') };
@@ -3758,7 +3758,7 @@ $('#sumPrint').addEventListener('click', () => {
 $('#sumEmail').addEventListener('click', () => {
   const k = sumKey; $('#sumDlg').close();
   emailSel = new Set([k]); emailView = 'all'; selAuto = false; emailFilter = ''; emailMode = 'each'; S.view = 'emails'; commit();
-  toast(`${S.students[k].name} selected in Emails.`);
+  toast(`${S.students[k].name} selected in Send emails.`);
 });
 $('#noteDlg').addEventListener('close', () => {
   const c = noteCtx, v = $('#noteDlg').returnValue; noteCtx = null; if (!c) return;

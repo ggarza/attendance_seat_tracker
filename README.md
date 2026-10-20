@@ -16,6 +16,8 @@ This document describes the features and the main decisions behind them. It leav
 
 ## 2. Core concepts
 
+- **Views (tabs):** Take attendance · Review history · Send emails · Manage data. Tab names are actions. All interface text uses sentence-style capitalization (only the first word and proper nouns capitalized).
+
 - **Class:** a course section with a roster, seat assignments, attendance records, meeting days, and printed sign-in sheets. The instructor works in one class at a time and switches between them with a class menu.
 - **Room:** a layout only, made of rows of seats (with aisles) or tables. Each class uses one room, and sections that meet in the same place can share it.
 - **Student:** first name, last name, and optional email. No student ID is kept.
@@ -49,7 +51,7 @@ This document describes the features and the main decisions behind them. It leav
 - A prominent date bar is always visible on the views that use a date. It has previous/next day buttons, a large calendar, a Today button, and shortcuts to recent class dates.
 - Previous and next step through the class's meeting days. On any day other than today, the bar and the window take on a warning color.
 
-## 4. Attendance history
+## 4. Review history
 
 - A grid with a row for each student and a column for each recorded date. It is editable, stays in sync with the classroom views, and shows absence and excused totals.
 - Clicking anywhere in a row selects it, and the selected row and column are highlighted.
@@ -59,11 +61,11 @@ This document describes the features and the main decisions behind them. It leav
 - Cells with a note or an email sent about that date are marked. N adds a note and I opens the student's summary.
 
 ### Notes, email log, and student summary
-- **Notes:** one short note per student per date (for example, "doctor's note received"), added from a seat, a list row, a sheet cell, or a history cell. Notes appear in history, beside the classroom, next to students in Emails, and in the summary. Note changes can be undone.
+- **Notes:** one short note per student per date (for example, "doctor's note received"), added from a seat, a list row, a sheet cell, or a history cell. Notes appear in history, beside the classroom, next to students in Send emails, and in the summary. Note changes can be undone.
 - **Email log:** opening a draft in the mail app, downloading a .eml, or copying addresses or a personal email records who it was for, the date it was about, the subject, and the template. Students already emailed about the selected date are flagged, with a warning before emailing them again. Entries can be removed, since the app can't tell whether a draft was actually sent.
 - **Student summary:** a printable page per student with totals, attendance rate, absences and excused days with notes, and emails sent, with a shortcut to email that student.
 
-## 5. Emails
+## 5. Send emails
 
 - **Recipients:** filters show All, Absent today, Excused today, or Absent N+ times (adjustable). The list shows only the filtered students. Students can be searched and selected individually or as a range.
 - **Sending:** either one email with all recipients in **BCC**, or **separate personal emails**. In a BCC email the name placeholders are left blank, so the greeting reads "Hi,". Drafts open in the mail app, download as .eml files, or copy to the clipboard. The app never sends anything itself.
