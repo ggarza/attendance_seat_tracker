@@ -190,6 +190,42 @@ td.c{text-align:center}
 #backupCard .bk-text{flex:1 1 320px;min-width:0}
 #backupCard .bk-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #backupCard .btn.big{font-size:15px;padding:10px 18px;font-weight:600}
+#binCard > summary{cursor:pointer;list-style:revert;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+#binCard > summary h3{font-size:inherit}
+#history td.hasnote,#list td.hasnote,#history td.mailed{position:relative}
+#history td.hasnote::after,#list td.hasnote::after{content:'';position:absolute;top:3px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--excused)}
+#history td.mailed::before{content:'✉';position:absolute;top:0;left:4px;font-size:10px;color:var(--accent)}
+.hnote{background:#2a2614;border:1px solid #5c4d1d;border-radius:6px;padding:1px 8px;font-size:13px;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat .snote{position:absolute;top:4px;right:6px;font-size:11px}
+#list td.lnote{max-width:260px}
+#list .notebtn{background:none;border:1px dashed var(--line);border-radius:6px;color:var(--muted);padding:2px 8px;cursor:pointer;font:inherit;font-size:12.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+#list .notebtn.has{border-style:solid;border-color:#5c4d1d;background:#2a2614;color:var(--text)}
+.linkish{background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:2px 0}
+.linkish:hover b{text-decoration:underline}
+#drafts .tag.sent{color:var(--accent);border-color:#2f4a86}
+#drafts .rnote{display:block;font-size:12px;color:#d9c27a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#drafts details.elog{margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
+#drafts details.elog summary{cursor:pointer}
+#drafts .elist li{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+#sumDlg .sum .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+#sumDlg .sum table td,#sumDlg .sum table th{padding:6px 8px}
+.sum td{white-space:normal;overflow-wrap:anywhere}
+#printArea{display:none}
+@media print{
+  body.psum > *{display:none !important}
+  body.psum > #printArea{display:block !important;color:#000;background:#fff;font-size:12pt}
+  html:has(body.psum),body.psum{background:#fff !important;color-scheme:light}
+  #printArea th{background:#fff !important;color:#000 !important;position:static !important}
+  @page{margin:0.6in}
+  #printArea .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6pt;border:1px solid #999;padding:6pt;border-radius:4pt}
+  #printArea .stat{color:#000 !important;background:none !important;border:0 !important}
+  #printArea .stat b{display:block;font-size:16pt}
+  #printArea .muted{color:#555 !important}
+  #printArea table{width:100%;border-collapse:collapse}
+  #printArea th,#printArea td{border-bottom:1px solid #bbb;padding:4pt 6pt;text-align:left;color:#000}
+  #printArea .pill{color:#000 !important;background:none !important;border:1px solid #777 !important}
+  #printArea h4{margin:14pt 0 4pt}
+}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -396,6 +432,12 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
       <input type="file" id="restoreFile" accept=".json,application/json" hidden>
     </div>
   </div>
+  <details class="card" id="binCard" style="margin-bottom:16px">
+    <summary><h3 style="display:inline;margin:0">🗑 Recently deleted <span id="binCount" class="muted"></span></h3>
+      <span class="small muted">Deleted students, dates, classes, rooms, and templates are kept here for 30 days.</span></summary>
+    <div id="binBox" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:8px"><button class="btn danger" id="binEmpty" type="button">Empty the bin</button></div>
+  </details>
   <div class="card" id="classesCard" style="margin-bottom:16px">
     <h3>Classes &amp; rooms</h3>
     <div id="classMgr"></div>
@@ -551,6 +593,33 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <button class="btn" type="button" id="shCancel">Cancel</button></div>
   </form>
 </dialog>
+<dialog id="sumDlg" aria-labelledby="sumTitle">
+  <div class="hd"><strong id="sumTitle">Student summary</strong>
+    <span class="row" style="gap:6px"><button class="btn" type="button" id="sumEmail">Email this student</button><button class="btn" type="button" id="sumPrint">Print</button><button class="btn" type="button" id="sumClose">Close</button></span></div>
+  <div class="bd" id="sumBody"></div>
+</dialog>
+<div id="printArea" aria-hidden="true"></div>
+<dialog id="noteDlg" aria-labelledby="ntTitle">
+  <form method="dialog" class="stack" style="padding:18px;width:min(520px,calc(100vw - 40px))">
+    <strong id="ntTitle" style="font-size:17px">Note</strong>
+    <p class="small muted" id="ntWhen" style="margin:0"></p>
+    <textarea id="ntText" rows="4" placeholder="e.g. Doctor's note received · Left early · Arrived 20 min late" aria-label="Note"></textarea>
+    <div class="row"><button class="btn primary" value="save" id="ntSave">Save note</button>
+      <button class="btn danger" value="remove" id="ntDel">Remove note</button>
+      <button class="btn" value="cancel">Cancel</button>
+      <span class="small muted" style="margin-left:auto"><kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> saves</span></div>
+  </form>
+</dialog>
+<dialog id="mergeDlg" aria-labelledby="mgTitle">
+  <form method="dialog" class="stack" style="padding:18px">
+    <strong id="mgTitle" style="font-size:17px">Restore a backup</strong>
+    <p class="small muted" id="mgFrom" style="margin:0"></p>
+    <div class="seg" role="group" aria-label="How to restore" style="align-self:flex-start">
+      <button type="button" data-mg="merge">Merge with what's here</button><button type="button" data-mg="replace">Replace everything</button></div>
+    <div id="mgBody"></div>
+    <div class="row"><button class="btn primary" value="go" id="mgGo">Merge</button><button class="btn" value="cancel">Cancel</button></div>
+  </form>
+</dialog>
 <dialog id="rmDlg" aria-labelledby="rmTitle">
   <form method="dialog" class="stack" style="padding:18px;max-width:520px">
     <strong id="rmTitle" style="font-size:17px"></strong>
@@ -599,8 +668,12 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     </ul>
     <h4>Instructor view</h4>
     <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
+    <h4>Backups, restoring, and recently deleted</h4>
+    <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
     <h4>Manage data</h4>
     <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
+    <h4>Notes, the email log, and student summaries</h4>
+    <p><b>Notes:</b> any student on any date can have a short note (“doctor's note received”, “left early”). Press <kbd>N</kbd> on a seat, a list row, a sheet cell, or a history cell, or use the Note column in the list view. A small yellow dot marks cells with a note, notes for the day are listed beside the classroom, and they appear next to students in Emails. Ctrl/⌘+Z undoes a note change. <b>Email log:</b> when you open a draft in your mail app, download a .eml, or copy addresses or a personal email, Attendance records who it was for, the date it was about, and the subject. Students already emailed about the selected date show “✉ sent”, a warning appears before you email them again, and history marks those cells with ✉. The app can't see your mail app, so remove any log entry you didn't actually send. <b>Student summary:</b> press <kbd>I</kbd> (or Summary in the history bar) for one student's totals, attendance rate, absences and excused days with notes, and the emails sent; <b>Print</b> gives a clean one-page copy, and <b>Email this student</b> opens Emails with just them selected.</p>
     <h4>Attendance history</h4>
     <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Last name</b>, <b>First name</b>, <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
     <h4>Emails</h4>
@@ -627,6 +700,8 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <tr><th colspan="2">Classroom</th></tr>
       <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></td><td>Move between seats as drawn on screen (skips empty seats while taking attendance)</td></tr>
       <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark the focused seat Present, Absent, or Excused</td></tr>
+      <tr><td><kbd>N</kbd></td><td>Add or edit a note for that student on that date (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> saves)</td></tr>
+      <tr><td><kbd>I</kbd></td><td>Open that student's summary</td></tr>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the focused seat (Edit seats: select it)</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last seat in the row (add <kbd>Shift</kbd> for the whole room)</td></tr>
       <tr><td><kbd>L</kbd></td><td>Switch between Seating chart and List</td></tr>
@@ -638,11 +713,15 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <tr><td><kbd>↑</kbd> <kbd>↓</kbd> (Sheet: also <kbd>←</kbd> <kbd>→</kbd>)</td><td>Move between students (and dates)</td></tr>
       <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd></td><td>Mark Present, Absent, or Excused and move down to the next student</td></tr>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle without moving</td></tr>
+      <tr><td><kbd>N</kbd></td><td>Add or edit a note for that student on that date (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> saves)</td></tr>
+      <tr><td><kbd>I</kbd></td><td>Open that student's summary</td></tr>
       <tr><td><kbd>/</kbd> then type</td><td>Jump to a last name; <kbd>Enter</kbd> goes to it</td></tr>
       <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd>, <kbd>Home</kbd> / <kbd>End</kbd></td><td>Move 10 students; first / last (Sheet: first / last date)</td></tr>
       <tr><th colspan="2">Attendance history</th></tr>
       <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></td><td>Move between cells (the first arrow press jumps to the selected date's column, or the most recent date). The focused cell, its student, and its date light up, and the line above the grid names them.</td></tr>
-      <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd></td><td>Mark the cell and move down to the next student, spreadsheet-style</td></tr>
+      <tr><td><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd></td><td>Mark the cell and move down to the next student, spreadsheet-style</td></tr>
+      <tr><td><kbd>N</kbd></td><td>Add or edit a note for that student on that date (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> saves)</td></tr>
+      <tr><td><kbd>I</kbd></td><td>Open that student's summary</td></tr>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the cell without moving</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last date in the row</td></tr>
       <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Top / bottom of the column</td></tr>
@@ -830,15 +909,15 @@ function demo() {
 }
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
-    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
+    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, notes: {}, emailLog: [], bin: [], templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
     classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1 };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
-const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets'];
-const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig'];
+const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets', 'notes', 'emailLog'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig', 'bin'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 /* Every starter template is kept in the library unless the instructor deleted it (remembered in removedStarters),
    so restoring an older backup, importing old data, or opening an older copy never shrinks the library,
@@ -905,6 +984,8 @@ function fixClass(c) {
   if (typeof c.className !== 'string') c.className = '';
   if (!Array.isArray(c.days)) c.days = [];                 // meeting weekdays, 0 = Sunday; empty = any day
   if (!Array.isArray(c.sheets)) c.sheets = [];             // printed sign-in sheets
+  if (!c.notes || typeof c.notes !== 'object' || Array.isArray(c.notes)) c.notes = {};   // { date: { student: "note" } }
+  if (!Array.isArray(c.emailLog)) c.emailLog = [];         // [{ id, at, date, tpl, subject, to:[students], mode, via }]
   for (const st of Object.values(c.students)) {            // first and last names are stored separately
     delete st.sid;                                         // student IDs are no longer kept
     if (typeof st.first === 'string' && typeof st.last === 'string') continue;
@@ -932,6 +1013,7 @@ function fixStore(st) {
     g.instrSig = 1;
   }
   for (const k of GLOBAL_KEYS) if (g[k] === undefined || g[k] === null) g[k] = b[k];
+  pruneBin(g);
   if (!isDate(g.date)) g.date = todayStr();
   Object.values(st.rooms).forEach(fixRoom);
   if (!Object.keys(st.rooms).length) { const rid = uid(); st.rooms[rid] = { id: rid, name: 'Room 1' }; fixRoom(st.rooms[rid]); }
@@ -1060,10 +1142,11 @@ function renderClassMgr() {
   box.querySelectorAll('[data-copen]').forEach(b => b.addEventListener('click', () => switchClass(b.dataset.copen)));
   box.querySelectorAll('[data-cdel]').forEach(b => b.addEventListener('click', () => {
     const c = STORE.classes[b.dataset.cdel], n = Object.keys(c.seats).length;
-    if (!confirm(`Delete “${c.className || 'Untitled class'}” with ${n} student${n === 1 ? '' : 's'} and all of its attendance? Download its CSV first if you might need it. Its room is kept.`)) return;
+    if (!confirm(`Delete “${c.className || 'Untitled class'}” with ${n} student${n === 1 ? '' : 's'} and all of its attendance? Its room is kept. You can restore the class from Recently deleted for 30 days.`)) return;
+    syncStore(); binPut('class', c.className || 'Untitled class', { cls: STORE.classes[c.id], room: STORE.rooms[STORE.classes[c.id].roomId] }, c.id);
     delete STORE.classes[c.id];
     if (c.id === S.classId) { STORE.active = Object.keys(STORE.classes)[0]; S = flatten(STORE); selected = null; undoStack.length = 0; }
-    commit(); toast('Class deleted.');
+    commit(); toast('Class deleted. It can be restored from Manage data → Recently deleted.');
   }));
   box.querySelectorAll('[data-cday]').forEach(b => b.addEventListener('click', () => {
     const c = STORE.classes[b.dataset.cday], d = +b.dataset.wd, on = !c.days.includes(d);
@@ -1079,7 +1162,7 @@ function renderClassMgr() {
   box.querySelectorAll('[data-rdel]').forEach(b => b.addEventListener('click', () => {
     const r = STORE.rooms[b.dataset.rdel]; if (classesInRoom(r.id).length) return;
     if (!confirm(`Delete the room “${r.name}”?`)) return;
-    delete STORE.rooms[r.id]; commit(); toast('Room deleted.');
+    binPut('room', r.name, { room: r }, null); delete STORE.rooms[r.id]; commit(); toast('Room deleted. It can be restored from Recently deleted.');
   }));
 }
 /* Give a class a different room. Students who don't fit are offered open seats; attendance is never touched. */
@@ -1126,15 +1209,305 @@ function renderBackup() {
   card.classList.toggle('stale', changed);
 }
 const isoDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-function restoreAll(text) {
-  let st;
-  try { st = fixStore(JSON.parse(text)); } catch (e) { st = null; }
-  if (!st) return toast("That file isn't an Attendance backup.", true);
-  const nC = Object.keys(st.classes).length, nR = Object.keys(st.rooms).length;
-  if (!confirm(`Replace everything in this browser with the backup: ${nC} class${nC === 1 ? '' : 'es'}, ${nR} room${nR === 1 ? '' : 's'}, and ${st.global.templates.length} templates?`)) return;
-  delete st.app; delete st.exported;
-  syncStore(); STORE = keepTemplates(st); S = flatten(STORE); selected = null; undoStack.length = 0; selDate = null; commit(); toast(`Restored ${nC} class${nC === 1 ? '' : 'es'}.`);
+/* ---------- recently deleted bin ----------
+   Deleting a student, a date, a class, a room, a template, or clearing a class puts a copy here for 30 days.
+   It lives with your settings, so it is part of backups; "Delete forever" and "Empty" remove it for good. */
+const BIN_DAYS = 30;
+const clone = o => o === undefined ? undefined : JSON.parse(JSON.stringify(o));
+const keepCopyNow = () => { try { localStorage.setItem(SNAP_PREFIX + HERE + ':' + new Date().toISOString().slice(0, 16).replace(':', '-'), JSON.stringify(STORE)); } catch (e) {} };
+const classObj = cid => cid === S.classId ? S : STORE.classes[cid];
+const classDims = cid => cid === S.classId ? { rows: S.rows, cols: S.cols } : (STORE.rooms[STORE.classes[cid]?.roomId] || { rows: 0, cols: 0 });
+function pruneBin(g) { const cut = Date.now() - 30 * 864e5;   // runs while loading, before BIN_DAYS exists
+  g.bin = (Array.isArray(g.bin) ? g.bin : []).filter(x => x && x.kind && Date.parse(x.at) > cut); }
+function binPut(kind, label, data, cid = S.classId) {
+  (S.bin ||= []).unshift({ id: uid(), at: new Date().toISOString(), kind, label, cid, cname: classObj(cid)?.className || '', data: clone(data) });
+  if (S.bin.length > 300) S.bin.length = 300;
 }
+/* Open seat for a student: the wanted one if it's free and inside the room, else the first free one, else null. */
+function freeSeatIn(c, dims, want) {
+  const p = want && parseLabel(want);
+  if (p && p.r < dims.rows && p.c < dims.cols && !c.seats[want]) return want;
+  for (let r = 0; r < dims.rows; r++) for (let q = 0; q < dims.cols; q++) { const l = label(r, q); if (!c.seats[l]) return l; }
+  return null;
+}
+/* Everything tied to one student in a class (works on a class or on a saved copy of one). */
+function studentTrail(c, k) {
+  const marks = {}, notes = {};
+  for (const [d, rec] of Object.entries(c.attendance || {})) if (rec && k in rec) marks[d] = rec[k];
+  for (const [d, rec] of Object.entries(c.notes || {})) if (rec && rec[k]) notes[d] = rec[k];
+  return { k, st: c.students[k], lab: Object.keys(c.seats || {}).find(l => c.seats[l] === k) || null, marks, notes,
+    log: (c.emailLog || []).filter(e => e.to.includes(k)).map(e => e.id) };
+}
+function putStudentBack(c, dims, t, rep) {
+  const k = c.students[t.k] ? uid() : t.k, st = clone(t.st); c.students[k] = st;
+  if (!st.dropped) { const lab = freeSeatIn(c, dims, t.lab); if (lab) c.seats[lab] = k; else { st.dropped = { on: todayStr(), seat: t.lab }; rep.unseated++; } }
+  for (const [d, v] of Object.entries(t.marks || {})) { if (c.attendance[d]) { if (v !== 'P') c.attendance[d][k] = v; } else rep.skipped++; }
+  for (const [d, v] of Object.entries(t.notes || {})) ((c.notes ||= {})[d] ||= {})[k] = v;
+  for (const id of t.log || []) { const e = (c.emailLog || []).find(x => x.id === id); if (e && !e.to.includes(k)) e.to.push(k); }
+  return k;
+}
+/* ---------- student summary: one printable page per student ---------- */
+let sumKey = null;
+function summaryHtml(k) {
+  const st = S.students[k]; if (!st) return '';
+  const lab = Object.keys(S.seats).find(l => S.seats[l] === k);
+  const dates = Object.keys(S.attendance).filter(isDate).sort();
+  const sts = dates.map(d => ({ d, v: getStatus(d, k), n: noteOf(d, k) }));
+  const a = sts.filter(x => x.v === 'A').length, e = sts.filter(x => x.v === 'E').length, pr = sts.length - a - e;
+  const rate = sts.length ? Math.round(100 * pr / sts.length) : null;
+  const odd = sts.filter(x => x.v !== 'P' || x.n);
+  const extraNotes = Object.keys(S.notes || {}).filter(d => !S.attendance[d] && S.notes[d][k]).sort().map(d => ({ d, v: null, n: S.notes[d][k] }));
+  const mails = (S.emailLog || []).filter(m => m.to.includes(k)).slice().reverse();
+  const rows = [...odd, ...extraNotes].sort((x, y) => x.d < y.d ? -1 : 1);
+  return `<div class="sum">
+    <h2 style="margin:0">${esc(st.name)}</h2>
+    <p class="small" style="margin:2px 0 0">${esc(S.className || 'Class')} · ${lab ? esc(seatName(lab)) : st.dropped ? `Dropped ${esc(shortDate(st.dropped.on))}` : 'No seat'}${st.email ? ` · ${esc(st.email)}` : ''}</p>
+    <p class="small muted" style="margin:2px 0 0">Prepared ${esc(longDate(todayStr()))}${S.instructor ? ` by ${esc(S.instructor)}` : ''}</p>
+    <div class="stats" style="margin:14px 0">
+      <div class="stat"><b>${sts.length}</b><span>Class days recorded</span></div>
+      <div class="stat p"><b>${pr}</b><span>Present</span></div>
+      <div class="stat a"><b>${a}</b><span>Absent</span></div>
+      <div class="stat e"><b>${e}</b><span>Excused</span></div>
+      <div class="stat"><b>${rate === null ? '—' : rate + '%'}</b><span>Attendance</span></div></div>
+    <h4>Absences, excused days, and notes</h4>
+    ${rows.length ? `<table><thead><tr><th>Date</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows.map(x => `<tr><td style="white-space:nowrap">${esc(dateObj(x.d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }))}</td>
+      <td>${x.v ? `<span class="pill ${x.v}">${STATUS[x.v]}</span>` : '<span class="muted small">not recorded</span>'}</td><td>${x.n ? esc(x.n) : ''}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="small muted">Present every recorded class day, with no notes.</p>'}
+    <h4>Emails sent</h4>
+    ${mails.length ? `<table><thead><tr><th>Sent</th><th>About</th><th>Subject</th></tr></thead><tbody>${mails.map(m => `<tr><td style="white-space:nowrap">${esc(fmtWhen(m.at))}</td><td style="white-space:nowrap">${esc(shortDate(m.date))}</td>
+      <td>${esc(m.subject)}${m.mode === 'bcc' ? ' <span class="small muted">(BCC to ' + m.to.length + ')</span>' : ''}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="small muted">No emails logged.</p>'}
+  </div>`;
+}
+function openSummary(k) {
+  if (!S.students[k]) return;
+  sumKey = k; $('#sumTitle').textContent = `Student summary`;
+  $('#sumBody').innerHTML = summaryHtml(k); $('#sumEmail').disabled = !S.students[k].email || !!S.students[k].dropped;
+  const dlg = $('#sumDlg'); if (!dlg.open) dlg.showModal(); $('#sumClose').focus();
+}
+/* ---------- notes on a mark: one short note per student per date ---------- */
+const noteOf = (d, k) => S.notes?.[d]?.[k] || '';
+let noteCtx = null;
+function openNote(d, k) {
+  const st = S.students[k]; if (!st || !isDate(d)) return;
+  noteCtx = { d, k, from: document.activeElement?.closest('#history') ? 'history' : document.activeElement?.closest('#list') ? 'list' : document.activeElement?.closest('#room') ? 'room' : '' };
+  $('#ntTitle').textContent = `Note: ${st.name}`;
+  $('#ntWhen').textContent = `${longDate(d)} · ${STATUS[getStatus(d, k)]}${S.attendance[d] ? '' : ' (date not recorded yet)'}`;
+  $('#ntText').value = noteOf(d, k); $('#ntDel').hidden = !noteOf(d, k);
+  $('#noteDlg').returnValue = ''; $('#noteDlg').showModal(); $('#ntText').focus();
+}
+function setNote(d, k, text) {
+  text = String(text || '').trim();
+  if (text === noteOf(d, k)) return false;
+  snapshot();
+  if (text) ((S.notes ||= {})[d] ||= {})[k] = text;
+  else if (S.notes?.[d]) { delete S.notes[d][k]; if (!Object.keys(S.notes[d]).length) delete S.notes[d]; }
+  commit(); return true;
+}
+/* Back to where the note was opened from, so the keyboard flow continues. */
+function refocusAfterNote(c) {
+  const el = c.from === 'history' ? $(`#history .hcell[data-k="${c.k}"][data-d="${c.d}"]`)
+    : c.from === 'list' ? ($(`#list .hcell[data-k="${c.k}"][data-d="${c.d}"]`) || $(`#list tr[data-k="${c.k}"]`))
+    : c.from === 'room' ? [...document.querySelectorAll('#room .seat')].find(b => b.dataset.k === c.k) : null;
+  el?.focus({ preventScroll: true }); if (el && c.from === 'history') markHist(el);
+}
+/* The three ways a whole date gets deleted (History ×, Sheet ×, Delete record) all come here. */
+function deleteDate(d) {
+  if (!S.attendance[d]) return;
+  snapshot();
+  binPut('date', longDate(d), { d, rec: S.attendance[d], notes: S.notes?.[d] || null });
+  delete S.attendance[d]; if (S.notes) delete S.notes[d];
+  commit(); toast(`${shortDate(d)} deleted. Ctrl/⌘+Z undoes, or restore it from Manage data → Recently deleted.`);
+}
+const BIN_KIND = { student: 'Student', date: 'Date', class: 'Class', room: 'Room', template: 'Template', clear: 'Cleared class' };
+function binDescribe(x) {
+  const n = x.kind === 'student' ? '' : x.kind === 'date' ? Object.keys(x.data.rec || {}).length : x.kind === 'clear' ? Object.keys(x.data.students || {}).length : x.kind === 'class' ? Object.keys(x.data.cls?.students || {}).length : '';
+  const extra = x.kind === 'date' ? `${n} non-present mark${n === 1 ? '' : 's'}` : (x.kind === 'clear' || x.kind === 'class') ? `${n} student${n === 1 ? '' : 's'}` : x.kind === 'student' && x.data.st?.email ? x.data.st.email : '';
+  return extra;
+}
+function restoreFromBin(id) {
+  const i = (S.bin || []).findIndex(x => x.id === id); if (i < 0) return;
+  const x = S.bin[i], rep = { unseated: 0, skipped: 0 };
+  const needClass = ['student', 'date', 'clear'].includes(x.kind);
+  if (needClass && !classObj(x.cid)) return toast(`“${x.cname || 'That class'}” was deleted. Restore the class first (it's in this list too).`, true);
+  syncStore();
+  let msg = '';
+  if (x.kind === 'student') {
+    const c = classObj(x.cid); putStudentBack(c, classDims(x.cid), x.data, rep);
+    msg = `${x.label} restored${x.cid === S.classId ? '' : ` to “${x.cname}”`}.`;
+  } else if (x.kind === 'date') {
+    const c = classObj(x.cid), { d, rec, notes } = x.data;
+    if (!c.attendance[d]) c.attendance[d] = {};
+    for (const [k, v] of Object.entries(rec || {})) if (c.students[k] && !(k in c.attendance[d])) c.attendance[d][k] = v;
+    for (const [k, v] of Object.entries(notes || {})) if (c.students[k]) ((c.notes ||= {})[d] ||= {})[k] ??= v;
+    msg = `${shortDate(d)} restored${x.cid === S.classId ? '' : ` in “${x.cname}”`}.`;
+  } else if (x.kind === 'clear') {
+    const c = classObj(x.cid), saved = x.data;
+    for (const d of Object.keys(saved.attendance || {})) c.attendance[d] ||= {};
+    for (const e of saved.emailLog || []) if (!(c.emailLog ||= []).some(y => y.id === e.id)) c.emailLog.push({ ...e, to: [] });
+    for (const k of Object.keys(saved.students || {})) putStudentBack(c, classDims(x.cid), studentTrail(saved, k), rep);
+    c.emailLog = c.emailLog.filter(e => e.to.length);
+    msg = `Restored ${Object.keys(saved.students || {}).length} students${x.cid === S.classId ? '' : ` to “${x.cname}”`}.`;
+  } else if (x.kind === 'class') {
+    const c = clone(x.data.cls); if (STORE.classes[c.id]) c.id = uid();
+    if (!STORE.rooms[c.roomId]) { if (x.data.room) STORE.rooms[c.roomId] = clone(x.data.room); else c.roomId = Object.keys(STORE.rooms)[0]; }
+    fixClass(c); STORE.classes[c.id] = c; msg = `“${c.className || 'Class'}” restored. Pick it from the class menu.`;
+  } else if (x.kind === 'room') {
+    const r = clone(x.data.room); if (STORE.rooms[r.id]) r.id = uid(); STORE.rooms[r.id] = r; msg = `Room “${r.name}” restored.`;
+  } else if (x.kind === 'template') {
+    const t = clone(x.data.t);
+    if (S.templates.some(y => y.id === t.id)) msg = `“${t.title}” is already in the library.`; else S.templates.push(t); S.removedStarters = (S.removedStarters || []).filter(y => y !== x.data.t.id); msg ||= `Template “${t.title}” restored.`;
+  }
+  S.bin.splice(i, 1); commit();
+  toast(msg + (rep.unseated ? ` ${rep.unseated} had no open seat and went to Dropped students.` : '') + (rep.skipped ? ` ${rep.skipped} mark${rep.skipped === 1 ? '' : 's'} were for dates that no longer exist.` : ''));
+}
+function renderBin() {
+  const box = $('#binBox'); if (!box) return;
+  const list = S.bin || [];
+  $('#binCount').textContent = list.length ? `(${list.length})` : '';
+  $('#binEmpty').hidden = !list.length;
+  if (!list.length) { box.innerHTML = '<p class="small muted" style="margin:0">Nothing has been deleted in the last 30 days.</p>'; return; }
+  box.innerHTML = `<div class="table-wrap"><table><thead><tr><th>What</th><th>Name</th><th>Class</th><th>Deleted</th><th></th></tr></thead><tbody>${list.map(x => {
+    const days = Math.max(0, BIN_DAYS - Math.floor((Date.now() - Date.parse(x.at)) / 864e5));
+    return `<tr><td><span class="tag">${esc(BIN_KIND[x.kind] || x.kind)}</span></td><td>${esc(x.label || '')}<div class="small muted">${esc(binDescribe(x))}</div></td>
+      <td class="small">${x.kind === 'class' || x.kind === 'room' || x.kind === 'template' ? '—' : esc(x.cname || '')}</td>
+      <td class="small">${esc(new Date(x.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}<div class="muted">${days} day${days === 1 ? '' : 's'} left</div></td>
+      <td class="act"><button type="button" class="btn primary" data-binrestore="${x.id}">Restore</button> <button type="button" class="btn danger" data-binpurge="${x.id}">Delete forever</button></td></tr>`;
+  }).join('')}</tbody></table></div>`;
+  box.querySelectorAll('[data-binrestore]').forEach(b => b.addEventListener('click', () => restoreFromBin(b.dataset.binrestore)));
+  box.querySelectorAll('[data-binpurge]').forEach(b => b.addEventListener('click', () => {
+    const x = S.bin.find(y => y.id === b.dataset.binpurge);
+    if (!confirm(`Delete “${x.label}” forever? It can't be brought back after this (except from a backup made before).`)) return;
+    S.bin = S.bin.filter(y => y !== x); commit(); toast('Deleted forever.');
+  }));
+}
+
+/* ---------- restoring a backup: merge (default) or replace ----------
+   Merge adds what the backup has that isn't here: classes, rooms, students, dates, marks, notes, emails sent,
+   sign-in sheets, templates, and deleted items. Students are matched by their internal id, then email, then name.
+   When both sides have a different mark for the same student and date, you choose which side wins. */
+function analyzeMerge(inc) {
+  syncStore();
+  const out = clone(STORE), nk = t => fold(t || '').replace(/\s+/g, ' ').trim();
+  const rep = { classesAdded: [], classesMerged: [], students: 0, dates: 0, marks: 0, notes: 0, emails: 0, sheets: 0, templates: 0, rooms: 0, unseated: 0, bin: 0, conflicts: [] };
+  for (const ic of Object.values(inc.classes)) {
+    let lc = out.classes[ic.id];
+    if (!lc) { const same = Object.values(out.classes).filter(c => nk(c.className) && nk(c.className) === nk(ic.className)); if (same.length === 1) lc = same[0]; }
+    if (!lc) {
+      const c = clone(ic); if (out.classes[c.id]) c.id = uid();
+      if (!out.rooms[c.roomId]) { const r = inc.rooms[c.roomId]; if (r) { out.rooms[r.id] = clone(r); rep.rooms++; } else c.roomId = Object.keys(out.rooms)[0]; }
+      out.classes[c.id] = c; rep.classesAdded.push(c.className || 'Untitled class'); continue;
+    }
+    const before = JSON.stringify([rep.students, rep.dates, rep.marks, rep.notes, rep.emails, rep.sheets, rep.conflicts.length]);
+    const room = out.rooms[lc.roomId] || { rows: 0, cols: 0 }, map = {}, isNew = new Set(), byEmail = new Map(), byName = new Map();
+    for (const [k, st] of Object.entries(lc.students)) { if (st.email) byEmail.set(st.email.toLowerCase(), k); const n = nk(st.name); byName.set(n, byName.has(n) ? null : k); }
+    for (const [ik, ist] of Object.entries(ic.students)) {
+      let k = lc.students[ik] ? ik : (ist.email && byEmail.get(ist.email.toLowerCase())) || byName.get(nk(ist.name)) || null;
+      if (k) { const st = lc.students[k]; if (!st.email && ist.email) st.email = ist.email; map[ik] = k; continue; }
+      k = ik; const st = clone(ist); delete st.nameCheck; lc.students[k] = st; map[ik] = k; isNew.add(k); rep.students++;
+      if (!st.dropped) { const want = Object.keys(ic.seats).find(l => ic.seats[l] === ik) || null, lab = freeSeatIn(lc, room, want);
+        if (lab) lc.seats[lab] = k; else { st.dropped = { on: todayStr(), seat: want }; rep.unseated++; } }
+    }
+    for (const [d, irec] of Object.entries(ic.attendance)) {
+      if (!isDate(d)) continue;
+      const lrec = lc.attendance[d];
+      if (!lrec) { const r = {}; for (const [ik, v] of Object.entries(irec || {})) if (map[ik] && v !== 'P') r[map[ik]] = v; lc.attendance[d] = r; rep.dates++; continue; }
+      for (const ik of Object.keys(ic.students)) {
+        const k = map[ik], iv = irec?.[ik] || 'P', lv = lrec[k] || 'P';
+        if (!k || iv === lv) continue;
+        if (isNew.has(k)) { lrec[k] = iv; rep.marks++; continue; }
+        rep.conflicts.push({ cid: lc.id, cname: lc.className, d, k, name: lc.students[k].name, here: lv, file: iv });
+        if (iv === 'P') delete lrec[k]; else lrec[k] = iv;               // the backup's mark for now; "keep this device's" puts ours back
+      }
+    }
+    lc.notes ||= {};
+    for (const [d, rec] of Object.entries(ic.notes || {})) for (const [ik, text] of Object.entries(rec || {})) {
+      const k = map[ik]; if (!k || !text) continue;
+      const cur = lc.notes[d]?.[k];
+      if (cur === text || (cur && cur.includes(text))) continue;
+      (lc.notes[d] ||= {})[k] = cur && !text.includes(cur) ? `${cur} / ${text}` : text; rep.notes++;
+    }
+    lc.emailLog ||= []; const ids = new Set(lc.emailLog.map(e => e.id));
+    for (const e of ic.emailLog || []) if (!ids.has(e.id)) { const to = e.to.map(ik => map[ik]).filter(Boolean); if (to.length) { lc.emailLog.push({ ...clone(e), to }); rep.emails++; } }
+    lc.emailLog.sort((a, b) => a.at < b.at ? -1 : 1);
+    lc.sheets ||= []; const sids = new Set(lc.sheets.map(x => x.id));
+    for (const sh of ic.sheets || []) if (!sids.has(sh.id)) { lc.sheets.push(clone(sh)); rep.sheets++; }
+    if (!(lc.days || []).length && (ic.days || []).length) lc.days = [...ic.days];
+    if (JSON.stringify([rep.students, rep.dates, rep.marks, rep.notes, rep.emails, rep.sheets, rep.conflicts.length]) !== before) rep.classesMerged.push(lc.className || 'Untitled class');
+  }
+  const g = out.global, ig = inc.global, tids = new Set(g.templates.map(t => t.id)), titles = new Set(g.templates.map(t => t.title));
+  for (const t of ig.templates || []) if (!tids.has(t.id) && !titles.has(t.title) && !(g.removedStarters || []).includes(t.id)) { g.templates.push(clone(t)); rep.templates++; }
+  const bids = new Set((g.bin || []).map(x => x.id));
+  for (const x of ig.bin || []) if (!bids.has(x.id)) { (g.bin ||= []).push(clone(x)); rep.bin++; }
+  g.bin.sort((a, b) => a.at < b.at ? 1 : -1);
+  if (!g.instructor && ig.instructor) g.instructor = ig.instructor;
+  return { out, rep };
+}
+let restoreState = null;   // { inc, text, name, merge: {out, rep}, mode }
+function openRestore(text, name) {
+  let raw = null, inc = null;
+  try { raw = JSON.parse(text); inc = fixStore(clone(raw)); } catch (e) { inc = null; }
+  if (!inc) return toast("That file isn't an Attendance backup.", true);
+  restoreState = { inc, name, exported: raw.exported, merge: analyzeMerge(inc), mode: 'merge' };
+  const when = raw.exported ? new Date(raw.exported).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'an unknown time';
+  $('#mgFrom').textContent = `${name ? name + ' · ' : ''}saved ${when}`;
+  renderRestore(); $('#mergeDlg').showModal();
+}
+function renderRestore() {
+  const st = restoreState, rep = st.merge.rep, n = (v, w) => `${v} ${w}${v === 1 ? '' : 's'}`;
+  document.querySelectorAll('[data-mg]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mg === st.mode)));
+  const body = $('#mgBody'), go = $('#mgGo');
+  if (st.mode === 'replace') {
+    const nC = Object.keys(st.inc.classes).length, nR = Object.keys(st.inc.rooms).length;
+    body.innerHTML = `<p class="small" style="margin:0">Everything in this browser is replaced by the backup: <b>${n(nC, 'class')}</b>, ${n(nR, 'room')}, and ${n(st.inc.global.templates.length, 'template')}. Templates that exist only here are kept.</p>
+      <p class="small muted" style="margin:6px 0 0">What's here now is saved as an automatic copy first, so this can be undone from Manage data → Recover data.</p>`;
+    go.textContent = 'Replace everything'; go.className = 'btn danger'; go.disabled = false; return;
+  }
+  const lines = [];
+  if (rep.classesAdded.length) lines.push(`New class${rep.classesAdded.length === 1 ? '' : 'es'}: <b>${rep.classesAdded.map(esc).join(', ')}</b>`);
+  if (rep.students) lines.push(`${n(rep.students, 'student')} added${rep.unseated ? ` (${rep.unseated} with no open seat go to Dropped students)` : ''}`);
+  if (rep.dates) lines.push(`${n(rep.dates, 'date')} of attendance added`);
+  if (rep.marks) lines.push(`${n(rep.marks, 'mark')} for new students`);
+  if (rep.notes) lines.push(`${n(rep.notes, 'note')} added`);
+  if (rep.emails) lines.push(`${n(rep.emails, 'email log entry', )} added`.replace('entrys', 'entries'));
+  if (rep.sheets) lines.push(`${n(rep.sheets, 'sign-in sheet')} added`);
+  if (rep.templates) lines.push(`${n(rep.templates, 'template')} added`);
+  if (rep.rooms) lines.push(`${n(rep.rooms, 'room')} added`);
+  if (rep.bin) lines.push(`${n(rep.bin, 'recently deleted item')} added to the bin`);
+  const nothing = !lines.length && !rep.conflicts.length;
+  let h = nothing ? '<p class="small" style="margin:0">✓ Everything in this backup is already here. There is nothing to merge.</p>'
+    : `<p class="small" style="margin:0 0 4px">Nothing here is removed. From the backup this adds:</p>${lines.length ? `<ul class="small" style="margin:0;padding-left:18px">${lines.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p class="small muted" style="margin:0">No new students, dates, or notes.</p>'}`;
+  if (rep.conflicts.length) {
+    const c = rep.conflicts, show = c.slice(0, 12);
+    h += `<div class="note" style="margin-top:10px"><b>${n(c.length, 'mark')} ${c.length === 1 ? 'differs' : 'differ'}</b> between this device and the backup:
+      <ul class="small" style="margin:4px 0;padding-left:18px">${show.map(x => `<li>${esc(x.name)}, ${esc(shortDate(x.d))}${Object.keys(st.inc.classes).length > 1 ? ` (${esc(x.cname)})` : ''}: here <b>${STATUS[x.here]}</b>, backup <b>${STATUS[x.file]}</b></li>`).join('')}${c.length > show.length ? `<li>…and ${c.length - show.length} more</li>` : ''}</ul>
+      <div class="row" role="radiogroup" aria-label="Which mark to keep">
+        <label class="switch"><input type="radio" name="mgWin" value="file" ${st.win !== 'here' ? 'checked' : ''}> Use the backup's marks</label>
+        <label class="switch"><input type="radio" name="mgWin" value="here" ${st.win === 'here' ? 'checked' : ''}> Keep this device's marks</label></div></div>`;
+  }
+  h += '<p class="small muted" style="margin:8px 0 0">What\'s here now is saved as an automatic copy first (Manage data → Recover data).</p>';
+  body.innerHTML = h;
+  body.querySelectorAll('[name=mgWin]').forEach(r => r.addEventListener('change', () => { st.win = r.value; }));
+  go.textContent = 'Merge'; go.className = 'btn primary'; go.disabled = nothing;
+}
+function applyRestore() {
+  const st = restoreState; if (!st) return;
+  keepCopyNow();
+  const keepView = { cid: S.classId, view: S.view };
+  if (st.mode === 'replace') {
+    const next = clone(st.inc); delete next.app; delete next.exported;
+    STORE = keepTemplates(next); S = flatten(STORE); selected = null; undoStack.length = 0; selDate = null; resetSession(); commit();
+    toast(`Restored ${Object.keys(STORE.classes).length} class${Object.keys(STORE.classes).length === 1 ? '' : 'es'} from the backup.`);
+  } else {
+    const { out, rep } = st.merge;
+    if (st.win === 'here') for (const x of rep.conflicts) { const rec = out.classes[x.cid].attendance[x.d]; if (x.here === 'P') delete rec[x.k]; else rec[x.k] = x.here; }
+    STORE = fixStore(out); if (STORE.classes[keepView.cid]) STORE.active = keepView.cid;
+    S = flatten(STORE); S.view = keepView.view; selected = null; undoStack.length = 0; selDate = null; resetSession(); commit();
+    toast(`Merged the backup${rep.conflicts.length ? ` (${rep.conflicts.length} differing mark${rep.conflicts.length === 1 ? '' : 's'}: kept ${st.win === 'here' ? "this device's" : "the backup's"})` : ''}.`);
+  }
+  restoreState = null;
+}
+
 function commit() { save(); render(); }
 
 let toastT;
@@ -1161,7 +1534,7 @@ function counts(date, stOf = k => getStatus(date, k)) {
 
 /* ---------- render ---------- */
 function render() {
-  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') renderBackup();
+  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') { renderBackup(); renderBin(); }
   $('#instructorView').checked = !!S.instructorView;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
@@ -1234,11 +1607,12 @@ function renderOneDate(list) {
   const d = S.date, virt = !S.attendance[d], locked = isLocked(), box = $('#list');   // unrecorded: shown dimmed
   box.classList.toggle('locked', locked);
   box.innerHTML = `${S.attendance[d] ? '' : `<p class="note" style="margin-top:0">${esc(longDate(d))} isn't recorded yet. ${S.listStart === 'A' ? 'Everyone starts <b>absent</b>: mark who is here. Your first mark records the date.' : 'Everyone counts as <b>present</b>: mark only who is missing.'}</p>`}
-    <div class="table-wrap" style="max-height:none"><table><thead><tr><th>Last name</th><th>First name</th><th>${esc(shortDate(d))}</th><th class="c">Absences</th><th>Seat</th></tr></thead><tbody>${
+    <div class="table-wrap" style="max-height:none"><table><thead><tr><th>Last name</th><th>First name</th><th>${esc(shortDate(d))}</th><th>Note <kbd>N</kbd></th><th class="c">Absences</th><th>Seat</th></tr></thead><tbody>${
     list.map(x => { const st = viewStatus(d, x.k);
       return `<tr data-k="${x.k}" tabindex="-1" aria-label="${esc(lastFirst(x.s))}: ${STATUS[st]}${virt ? ' (not recorded yet)' : ''}${locked ? '. Locked: not today.' : ''}">
         <td>${esc(x.s.last)}</td><td>${esc(x.s.first)}</td>
         <td><span class="pae${virt ? ' virt' : ''}">${['P', 'A', 'E'].map(v => `<button type="button" tabindex="-1" data-st="${v}" class="${v}${st === v ? ' on' : ''}" aria-label="${STATUS[v]}">${v}</button>`).join('')}</span></td>
+        <td class="lnote"><button type="button" tabindex="-1" class="notebtn${noteOf(d, x.k) ? ' has' : ''}" data-lnote="${x.k}" title="${noteOf(d, x.k) ? esc(noteOf(d, x.k)) : 'Add a note'}">${noteOf(d, x.k) ? '📝 ' + esc(noteOf(d, x.k)) : '＋'}</button></td>
         <td class="c">${absTotal(x.k) || ''}</td><td class="small muted">${seatShort(x.lab)}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 function renderSheetGrid(list) {
@@ -1262,7 +1636,8 @@ function renderSheetGrid(list) {
     list.map(x => `<tr data-k="${x.k}"><td class="sticky nm">${esc(x.s.last)}</td><td class="nm">${esc(x.s.first)}</td>${cols.map((d, i) => {
       if (!d) return `<td class="c" data-col="${i}"><span class="muted">—</span></td>`;
       const st = viewStatus(d, x.k), virt = !S.attendance[d];
-      return `<td class="c" data-col="${i}"><button type="button" class="pill ${st} hcell${virt ? ' virt' : ''}" data-k="${x.k}" data-d="${d}" data-i="${i}" aria-label="${esc(lastFirst(x.s))}, ${esc(longDate(d))}: ${STATUS[st]}${virt ? ' (not recorded yet)' : ''}">${st}</button></td>`;
+      const nt = noteOf(d, x.k);
+      return `<td class="c${nt ? ' hasnote' : ''}" data-col="${i}"><button type="button" class="pill ${st} hcell${virt ? ' virt' : ''}" data-k="${x.k}" data-d="${d}" data-i="${i}"${nt ? ` title="Note: ${esc(nt)}"` : ''} aria-label="${esc(lastFirst(x.s))}, ${esc(longDate(d))}: ${STATUS[st]}${virt ? ' (not recorded yet)' : ''}${nt ? '. Note: ' + esc(nt) : ''}">${st}</button></td>`;
     }).join('')}<td class="c">${absTotal(x.k) || ''}</td></tr>`).join('')}</tbody></table></div>`;
 }
 /* Put the cursor (highlight, and focus when the list had it) on the remembered row / column. */
@@ -1303,9 +1678,10 @@ function moveList(dr, dc) {
 }
 $('#list').addEventListener('click', e => {
   const b = e.target.closest('[data-st]'), cell = e.target.closest('.hcell'), open = e.target.closest('[data-open]'), rec = e.target.closest('[data-srec]');
-  const tr = e.target.closest('tbody tr'), sdel = e.target.closest('[data-sdel]');
+  const tr = e.target.closest('tbody tr'), sdel = e.target.closest('[data-sdel]'), lnote = e.target.closest('[data-lnote]');
+  if (lnote) { listFocus.k = lnote.dataset.lnote; markListCursor(true); openNote(S.date, lnote.dataset.lnote); noteCtx.from = 'list'; return; }
   if (sdel) { const d = sdel.dataset.sdel;
-    if (confirm(`Delete all attendance for ${longDate(d)}?`)) { snapshot(); delete S.attendance[d]; commit(); toast('Date deleted. Ctrl/⌘+Z undoes.'); }
+    if (confirm(`Delete all attendance for ${longDate(d)}?`)) deleteDate(d);
     return; }
   if (open) { S.date = open.dataset.open; S.listMode = 'one'; commit(); return; }
   if (rec) { const d = curSheet().dates[+rec.dataset.srec]; snapshot(); const day = S.attendance[d] = S.attendance[d] || {};
@@ -1329,6 +1705,8 @@ $('#list').addEventListener('keydown', e => {
   if (sheet && !cell) return;
   const m = { p: 'P', a: 'A', e: 'E', q: 'P', w: 'A' }[e.key.toLowerCase()];   // Q W E sit side by side: Present, Absent, Excused
   const d = sheet ? cell.dataset.d : S.date, k = tr.dataset.k;
+  if (e.key.toLowerCase() === 'n') { e.preventDefault(); openNote(d, k); return; }
+  if (e.key.toLowerCase() === 'i') { e.preventDefault(); openSummary(k); return; }
   if (m || e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
     if (listMark(d, k, m || NEXT[viewStatus(d, k)])) { commit(); if (m) moveList(1, 0); else markListCursor(true); }
@@ -1649,8 +2027,10 @@ function seatEl(lab, edit) {
   } else {
     const st = getStatus(S.date, k);
     b.className = 'seat ' + st;
-    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm${nmFit(s.name)}" title="${esc(s.name)}">${esc(s.name)}</span><span class="st">${STATUS[st]}</span>`;
-    b.setAttribute('aria-label', `${seatName(lab)}, ${s.name}, ${STATUS[st]}. Press to change.`);
+    const nt = noteOf(S.date, k);
+    b.innerHTML = `<span class="lab">${seatShort(lab)}</span><span class="nm${nmFit(s.name)}" title="${esc(s.name)}">${esc(s.name)}</span><span class="st">${STATUS[st]}</span>${nt ? `<span class="snote" title="Note: ${esc(nt)}">📝</span>` : ''}`;
+    b.dataset.k = k;
+    b.setAttribute('aria-label', `${seatName(lab)}, ${s.name}, ${STATUS[st]}.${nt ? ' Note: ' + nt + '.' : ''} Press to change.`);
   }
   if (edit) {
     b.addEventListener('click', () => { selected = lab; render(); setTimeout(() => $('#eName')?.focus(), 0); });
@@ -1662,6 +2042,8 @@ function seatEl(lab, edit) {
     if (isLocked()) b.setAttribute('aria-label', b.getAttribute('aria-label').replace('Press to change.', 'Locked: not today.'));
     b.addEventListener('click', () => { if (lockedNotice()) return; snapshot(); setStatus(S.date, k, NEXT[getStatus(S.date, k)]); commit(); });
     b.addEventListener('keydown', e => {
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); openNote(S.date, k); return; }
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'i') { e.preventDefault(); openSummary(k); return; }
       const m = { p: 'P', a: 'A', e: 'E' }[e.key.toLowerCase()];
       if (m && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); if (lockedNotice()) return; snapshot(); setStatus(S.date, k, m); commit(); }
     });
@@ -1697,6 +2079,9 @@ function renderSide() {
         <button class="btn" type="button" id="allPBtn" ${ex.length && !locked ? '' : 'disabled'}>Mark everyone present</button>
         ${rec ? `<button class="btn danger" type="button" id="delDateBtn" ${locked ? 'disabled' : ''}>Delete record</button>` : ''}
       </div></div>
+      ${(() => { const ns = (lst ? rosterSorted() : assigned()).filter(x => noteOf(S.date, x.k));
+        return `<div class="card"><h3>Notes${ns.length ? ` (${ns.length})` : ''}</h3>${ns.length ? '<ul class="plain">' + ns.map(x => `<li><button type="button" class="linkish" data-snote="${x.k}"><b>${esc(lst ? lastFirst(x.s) : x.s.name)}</b> <span class="muted">${esc(noteOf(S.date, x.k))}</span></button></li>`).join('') + '</ul>' : ''}
+          <p class="small muted" style="margin:${ns.length ? '6px' : '0'} 0 0">${lst ? 'Click ＋ in the Note column, or press <kbd>N</kbd> on a row.' : 'Focus a seat and press <kbd>N</kbd> to add a note for this date.'}</p></div>`; })()}
       <div class="card"><h3>Exceptions</h3>${ex.length ? '<ul class="plain">' + ex.map(x => `<li><span>${esc(lst ? lastFirst(x.s) : x.s.name)} <span class="muted small">${seatShort(x.lab)}</span></span><span class="pill ${stOf(x.k)}">${STATUS[stOf(x.k)]}</span></li>`).join('') + '</ul>' : '<p class="small muted" style="margin:0">Everyone present.</p>'}
       <p class="small muted" style="margin-bottom:0">${lst ? 'Tap P, A, or E on a row, or use <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> (marks and moves down).' : 'Click a seat to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd>.'}</p></div>`;
   } else {
@@ -1712,9 +2097,10 @@ function renderSide() {
       if (lst && S.listStart === 'A') assigned().forEach(x => day[x.k] = 'A');
       commit(); toast('Date recorded.');
     });
+    side.querySelectorAll('[data-snote]').forEach(b => b.addEventListener('click', () => openNote(S.date, b.dataset.snote)));
     $('#allPBtn')?.addEventListener('click', () => { snapshot(); S.attendance[S.date] = {}; commit(); toast('Everyone marked present. Ctrl/⌘+Z undoes.'); });
     $('#delDateBtn')?.addEventListener('click', () => {
-      if (confirm(`Delete the attendance record for ${longDate(S.date)}?`)) { snapshot(); delete S.attendance[S.date]; commit(); toast('Record deleted. Ctrl/⌘+Z undoes.'); }
+      if (confirm(`Delete the attendance record for ${longDate(S.date)}?`)) deleteDate(S.date);
     });
   } else bindEdit();
 }
@@ -1794,6 +2180,8 @@ function bindEdit() {
 function removeStudent(k) {
   delete S.students[k];
   for (const d of Object.values(S.attendance)) delete d[k];
+  for (const d of Object.keys(S.notes || {})) { delete S.notes[d][k]; if (!Object.keys(S.notes[d]).length) delete S.notes[d]; }
+  S.emailLog = (S.emailLog || []).map(e => ({ ...e, to: e.to.filter(x => x !== k) })).filter(e => e.to.length);
 }
 /* Seat cards are narrow: shrink the name a little when its longest word wouldn't fit, so it isn't cut off. */
 let nmCtx = null;
@@ -1916,7 +2304,7 @@ function renderRoster() {
     <p class="small muted" style="margin-top:0">Not on the chart, in attendance, or in emails. Their past attendance is kept here.</p>
     <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Dropped</th><th>Last attended</th><th class="c">Abs.</th><th></th></tr></thead><tbody>${
     dropped.map(x => `<tr><td>${esc(x.s.name)}</td><td>${esc(x.s.email)}</td><td>${esc(shortDate(x.s.dropped.on))}</td><td>${x.last ? esc(shortDate(x.last)) : '<span class="muted">—</span>'}</td><td class="c">${x.abs}</td>
-      <td class="act"><button type="button" class="btn" data-restore="${x.k}" aria-label="Restore ${esc(x.s.name)}">Restore</button>
+      <td class="act"><button type="button" class="btn" data-sum="${x.k}">Summary</button> <button type="button" class="btn" data-restore="${x.k}" aria-label="Restore ${esc(x.s.name)}">Restore</button>
       <button type="button" class="btn danger" data-purge="${x.k}" aria-label="Delete ${esc(x.s.name)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
   const box = $('#roster'); box.innerHTML = h;
   const saveName = k => { const st = S.students[k]; setNames(st, box.querySelector(`[data-nfirst="${k}"]`).value.trim(), box.querySelector(`[data-nlast="${k}"]`).value.trim()); };
@@ -1960,9 +2348,10 @@ function renderRoster() {
     });
   }
   box.querySelectorAll('[data-restore]').forEach(b => b.addEventListener('click', () => restoreStudent(b.dataset.restore)));
+  box.querySelectorAll('[data-sum]').forEach(b => b.addEventListener('click', () => openSummary(b.dataset.sum)));
   box.querySelectorAll('[data-purge]').forEach(b => b.addEventListener('click', () => {
     const st = S.students[b.dataset.purge];
-    if (confirm(`Delete ${st.name} and all of their attendance records? This can't be undone.`)) { deleteStudent(b.dataset.purge); toast(`${st.name} deleted.`); }
+    if (confirm(`Delete ${st.name} and all of their attendance records? You can restore them from Recently deleted for 30 days.`)) { deleteStudent(b.dataset.purge); toast(`${st.name} deleted. Restore from Manage data → Recently deleted.`); }
   }));
 }
 /* ---------- recovering data saved elsewhere ----------
@@ -2055,9 +2444,9 @@ function droppedList() {
 function askRemove(k) {
   const st = S.students[k]; if (!st) return;
   $('#rmTitle').textContent = `Remove ${st.name}?`;
-  $('#rmText').innerHTML = `<b>Drop</b> takes ${esc(st.name)} off the seating chart, attendance, and emails, but keeps their past attendance under <b>Manage data → Dropped students</b>, where you can restore them. <b>Delete completely</b> erases the student and all of their attendance records.`;
+  $('#rmText').innerHTML = `<b>Drop</b> takes ${esc(st.name)} off the seating chart, attendance, and emails, but keeps their past attendance under <b>Manage data → Dropped students</b>, where you can restore them. <b>Delete completely</b> erases the student and all of their attendance records; they stay in <b>Recently deleted</b> for 30 days in case you change your mind.`;
   const dlg = $('#rmDlg'); dlg.returnValue = '';
-  dlg.onclose = () => { if (dlg.returnValue === 'drop') dropStudent(k); else if (dlg.returnValue === 'delete') { deleteStudent(k); toast(`${st.name} deleted.`); } };
+  dlg.onclose = () => { if (dlg.returnValue === 'drop') dropStudent(k); else if (dlg.returnValue === 'delete') { deleteStudent(k); toast(`${st.name} deleted. Restore from Manage data → Recently deleted.`); } };
   dlg.showModal(); $('#rmDrop').focus();
 }
 function dropStudent(k) {
@@ -2068,6 +2457,7 @@ function dropStudent(k) {
   commit(); toast(`${st.name} dropped. Their attendance is kept under Manage data → Dropped students.`);
 }
 function deleteStudent(k) {
+  binPut('student', S.students[k]?.name || 'Student', studentTrail(S, k));
   const lab = Object.keys(S.seats).find(l => S.seats[l] === k);
   if (lab) { delete S.seats[lab]; if (selected === lab) selected = null; }
   removeStudent(k); commit();
@@ -2133,7 +2523,8 @@ function renderHistory() {
   list.forEach(x => {
     const sts = dates.map(d => getStatus(d, x.k));
     h += `<tr><td class="sticky">${esc(x.s.last || x.s.name)}</td><td>${esc(x.s.first)}</td><td class="c">${x.row}</td><td class="c">${x.seat}</td><td class="c">${sts.filter(s => s === 'A').length}</td><td class="c">${sts.filter(s => s === 'E').length}</td>${
-      sts.map((st, j) => `<td class="c${dates[j] === S.date ? ' cur' : ''}"><button type="button" class="pill ${st} hcell" data-k="${x.k}" data-d="${dates[j]}" aria-label="${esc(x.s.name)}, ${esc(longDate(dates[j]))}: ${STATUS[st]}. Press to change.">${st}</button></td>`).join('')}</tr>`;
+      sts.map((st, j) => { const nt = noteOf(dates[j], x.k), ml = mailedAbout(dates[j], x.k);
+        return `<td class="c${dates[j] === S.date ? ' cur' : ''}${nt ? ' hasnote' : ''}${ml ? ' mailed' : ''}"><button type="button" class="pill ${st} hcell" data-k="${x.k}" data-d="${dates[j]}"${nt || ml ? ` title="${esc([nt && 'Note: ' + nt, ml && '✉ ' + ml].filter(Boolean).join('\n'))}"` : ''} aria-label="${esc(x.s.name)}, ${esc(longDate(dates[j]))}: ${STATUS[st]}.${nt ? ' Note: ' + esc(nt) + '.' : ''}${ml ? ' Emailed.' : ''} Press to change.">${st}</button></td>`; }).join('')}</tr>`;
   });
   h += '</tbody></table></div>';
   box.innerHTML = h;
@@ -2149,7 +2540,7 @@ $('#history').addEventListener('click', e => {
   else if (go) { S.date = go.dataset.date; S.view = 'classroom'; S.mode = 'take'; commit(); }
   else if (del) {
     const d = del.dataset.del;
-    if (confirm(`Delete all attendance for ${longDate(d)}?`)) { snapshot(); delete S.attendance[d]; commit(); toast('Date deleted. Ctrl/⌘+Z undoes.'); }
+    if (confirm(`Delete all attendance for ${longDate(d)}?`)) deleteDate(d);
   }
   else {                                                  // anywhere else in a row: select that row (no change to attendance)
     const tr = e.target.closest('tbody tr'); if (!tr) return;
@@ -2163,7 +2554,9 @@ $('#history').addEventListener('click', e => {
 $('#history').addEventListener('keydown', e => {
   const cellB = e.target.closest('.hcell'); if (!cellB || e.ctrlKey || e.metaKey || e.altKey) return;
   const grid = histGrid(), pos = histPos(grid, cellB);
-  const m = { p: 'P', a: 'A', e: 'E' }[e.key.toLowerCase()];
+  if (e.key.toLowerCase() === 'n') { e.preventDefault(); openNote(cellB.dataset.d, cellB.dataset.k); return; }
+  if (e.key.toLowerCase() === 'i') { e.preventDefault(); openSummary(cellB.dataset.k); return; }
+  const m = { p: 'P', a: 'A', e: 'E', q: 'P', w: 'A' }[e.key.toLowerCase()];
   if (m) {                                       // mark, then move down like a spreadsheet
     e.preventDefault(); snapshot(); setStatus(cellB.dataset.d, cellB.dataset.k, m); commit();
     focusHist(Math.min(pos.r + 1, grid.length - 1), pos.c); return;
@@ -2259,7 +2652,12 @@ function markHist(cell) {
   info.classList.add('on');
   info.innerHTML = `<span class="who">${esc(x.s.name)}</span><span class="muted small">${seatShort(x.lab)}</span><span class="sep">·</span>
     <b>${esc(longDate(d))}</b><span class="pill ${st}">${STATUS[st]}</span>
+    ${noteOf(d, x.k) ? `<span class="hnote" title="Note">📝 ${esc(noteOf(d, x.k))}</span>` : ''}${mailedAbout(d, x.k) ? `<span class="small" style="color:var(--accent)">✉ ${esc(mailedAbout(d, x.k))}</span>` : ''}
+    <button type="button" class="btn ghost" data-hnote style="padding:2px 8px;font-size:12px">${noteOf(d, x.k) ? 'Edit note' : '＋ Note'} <kbd>N</kbd></button>
+    <button type="button" class="btn ghost" data-hsum style="padding:2px 8px;font-size:12px">Summary <kbd>I</kbd></button>
     <span class="muted small" style="margin-left:auto"><kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> mark &amp; move down · arrows move · <kbd>Space</kbd> cycles</span>`;
+  info.querySelector('[data-hnote]').onclick = () => { noteCtx = null; openNote(d, x.k); noteCtx.from = 'history'; };
+  info.querySelector('[data-hsum]').onclick = () => openSummary(x.k);
 }
 $('#history').addEventListener('focusin', e => { const c = e.target.closest('.hcell'); if (c) markHist(c); });
 $('#history').addEventListener('focusout', e => { if (!e.relatedTarget || !$('#history').contains(e.relatedTarget)) setTimeout(() => { if (!$('#history').contains(document.activeElement) && !$('#hFocus').dataset.note) markHist(null); }); });
@@ -2673,6 +3071,32 @@ function groupMailto(to, list, subj, body) {
 function groupEml(to, list, subject, body) {
   return [...(to ? [`To: ${to}`] : []), `Bcc: ${list.join(', ')}`, `Subject: =?UTF-8?B?${b64(subject)}?=`, 'X-Unsent: 1', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64(body).replace(/.{76}/g, '$&\r\n')].join('\r\n') + '\r\n';
 }
+/* ---------- email log: what was opened in the mail app, downloaded as .eml, or copied, per class ---------- */
+const fmtWhen = iso => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+let elogOpen = false;
+function logEmail(keys, via, subject, mode) {
+  keys = [...new Set(keys)].filter(k => S.students[k]); if (!keys.length) return;
+  const t = curMsg(), log = (S.emailLog ||= []), last = log[log.length - 1];
+  const same = last && last.date === S.date && last.subject === subject && last.mode === mode && Date.now() - Date.parse(last.at) < 10 * 60e3
+    && last.to.length === keys.length && keys.every(k => last.to.includes(k));
+  if (same) { if (!last.via.split(', ').includes(via)) last.via += ', ' + via; }
+  else log.push({ id: uid(), at: new Date().toISOString(), date: S.date, tpl: t?.title || '', subject, to: keys, mode, via });
+  save(); setTimeout(renderDrafts, 400);                  // after the mail app link has been followed
+}
+function mailedAbout(d, k) {
+  const es = (S.emailLog || []).filter(e => e.date === d && e.to.includes(k)); if (!es.length) return '';
+  const e = es[es.length - 1];
+  return `Emailed ${fmtWhen(e.at)}${e.tpl ? ' · ' + e.tpl : ''}${es.length > 1 ? ` (+${es.length - 1} more)` : ''}`;
+}
+function emailLogHtml() {
+  const log = (S.emailLog || []).slice().reverse();
+  const who = e => { const ns = e.to.map(k => S.students[k]?.name).filter(Boolean); return ns.length > 4 ? `${ns.slice(0, 4).map(esc).join(', ')} +${ns.length - 4} more` : ns.map(esc).join(', '); };
+  return `<details class="elog" ${elogOpen ? 'open' : ''}><summary><b>Email log</b> <span class="muted small">${log.length ? `${log.length} entr${log.length === 1 ? 'y' : 'ies'} · ` : ''}what you opened in your mail app, downloaded, or copied</span></summary>
+    ${log.length ? `<ul class="plain elist">${log.map(e => `<li><span><span class="small muted">${esc(fmtWhen(e.at))} · about ${esc(shortDate(e.date))} · ${e.mode === 'bcc' ? 'BCC' : 'personal'} · ${esc(e.via)}</span><br>
+      <b>${esc(e.subject)}</b>${e.tpl ? ` <span class="small muted">(${esc(e.tpl)})</span>` : ''}<br><span class="small">To ${e.to.length}: ${who(e)}</span></span>
+      <button type="button" class="btn ghost" data-elogdel="${e.id}" title="Remove from the log (for example, if you didn't send it)" aria-label="Remove this log entry">×</button></li>`).join('')}</ul>`
+    : '<p class="small muted" style="margin:6px 0 0">Nothing yet. Entries are added when you open a draft in your mail app, download a .eml, or copy addresses or a personal email. Since the app can\'t see your mail app, remove any you didn\'t send.</p>'}</details>`;
+}
 function renderDrafts() {
   const t = curMsg();
   if (selDate !== S.date) { selDate = S.date; selAuto = true; lastPick = null; emailView = 'absent'; }
@@ -2716,12 +3140,14 @@ function renderDrafts() {
     <div class="rlist" role="group" aria-label="Students">${vis.length ? vis.map(x => {
       const st = getStatus(S.date, x.k), on = emailSel.has(x.k), n = absTotal(x.k);
       return `<label class="rrow${on ? ' on' : ''}"><input type="checkbox" data-pick="${x.k}" ${on ? 'checked' : ''}>
-        <span class="who">${esc(x.s.name)}<span class="em${x.s.email ? '' : ' none'}">${x.s.email ? esc(x.s.email) : 'no email on file'}</span></span>
-        ${st !== 'P' ? `<span class="pill ${st}">${STATUS[st]}</span>` : ''}<span class="tag" title="Total absences">${n ? n + '× abs' : ''}</span><span class="tag">${seatShort(x.lab)}</span></label>`;
+        <span class="who">${esc(x.s.name)}<span class="em${x.s.email ? '' : ' none'}">${x.s.email ? esc(x.s.email) : 'no email on file'}</span>${noteOf(S.date, x.k) ? `<span class="rnote">📝 ${esc(noteOf(S.date, x.k))}</span>` : ''}</span>
+        ${mailedAbout(S.date, x.k) ? `<span class="tag sent" title="${esc(mailedAbout(S.date, x.k))}">✉ sent</span>` : ''}${st !== 'P' ? `<span class="pill ${st}">${STATUS[st]}</span>` : ''}<span class="tag" title="Total absences">${n ? n + '× abs' : ''}</span><span class="tag">${seatShort(x.lab)}</span></label>`;
     }).join('') : `<p class="muted small" style="padding:8px 10px;margin:0">${q ? 'No students match your search.' : esc(view[3])}</p>`}</div>
     <div class="seg" role="group" aria-label="Email style" style="margin:14px 0 10px">
       <button type="button" data-emode="group" aria-pressed="${emailMode === 'group'}">One email (BCC)</button>
       <button type="button" data-emode="each" aria-pressed="${emailMode === 'each'}">Separate emails</button></div>`;
+  const already = sel.filter(x => mailedAbout(S.date, x.k));
+  if (t && already.length) h += `<div class="note" style="margin:0 0 10px">✉ Already emailed about ${esc(shortDate(S.date))}: ${already.slice(0, 6).map(x => esc(x.s.name)).join(', ')}${already.length > 6 ? ` and ${already.length - 6} more` : ''}. See the email log below.</div>`;
   if (!t) h += '<p class="muted">Write a subject and message on the left to draft emails.</p>';
   else if (!sel.length) h += '<p class="muted">Select students above to draft an email.</p>';
   else if (emailMode === 'group') {
@@ -2742,15 +3168,20 @@ function renderDrafts() {
     sel.forEach((x, i) => {
       const subj = fill(t.subject, x), body = fill(t.body, x);
       const mailto = x.s.email ? `mailto:${mailAddr(x.s.email)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}` : '';
-      h += `<div class="draft"><div class="row" style="justify-content:space-between"><strong>${esc(x.s.name)}</strong><span class="small muted">${seatShort(x.lab)}${x.s.email ? ' · ' + esc(x.s.email) : ' · no email on file'}</span></div>
+      h += `<div class="draft"><div class="row" style="justify-content:space-between"><strong>${esc(x.s.name)}${mailedAbout(S.date, x.k) ? ' <span class="tag sent">✉ sent</span>' : ''}</strong><span class="small muted">${seatShort(x.lab)}${x.s.email ? ' · ' + esc(x.s.email) : ' · no email on file'}</span></div>
         <div class="small"><b>Subject:</b> ${esc(subj)}</div><div class="body">${esc(body)}</div>
-        <div class="row">${mailto ? `<a class="btn primary" href="${esc(mailto)}" style="text-decoration:none">Open in mail app</a>` : ''}
+        <div class="row">${mailto ? `<a class="btn primary" href="${esc(mailto)}" data-mailk="${i}" style="text-decoration:none">Open in mail app</a>` : ''}
         <button class="btn" type="button" data-eml="${i}" ${x.s.email ? '' : 'disabled'}>Download .eml</button>
         <button class="btn" type="button" data-copy="${i}">Copy</button></div></div>`;
     });
   }
+  h += emailLogHtml();
   box.innerHTML = h;
   const nl = box.querySelector('.rlist'); if (nl) nl.scrollTop = scroll;
+  box.querySelector('details.elog').addEventListener('toggle', e => { elogOpen = e.target.open; });
+  box.querySelectorAll('[data-elogdel]').forEach(b => b.addEventListener('click', () => {
+    S.emailLog = (S.emailLog || []).filter(e => e.id !== b.dataset.elogdel); save(); renderDrafts(); toast('Removed from the email log.');
+  }));
   if (fPick) box.querySelector(`[data-pick="${fPick}"]`)?.focus();
   else if (fFilter) box.querySelector(`[data-filter="${fFilter}"]`)?.focus();
   else if (fStep) (box.querySelector(`[data-step="${fStep}"]:not(:disabled)`) || box.querySelector('[data-filter="repeat"]'))?.focus();
@@ -2795,17 +3226,22 @@ function renderDrafts() {
     };
     upd();
     $('#bccTo').addEventListener('input', e => { S.bccTo = e.target.value.trim(); save(); upd(); });
-    $('#gEml').addEventListener('click', () => download(`group-${slug(S.className)}-${S.date}.eml`, groupEml(S.bccTo, list, subj, body), 'message/rfc822'));
-    $('#gCopyAddr').addEventListener('click', () => copy(list.join(', ')));
+    const keys = withE.map(x => x.k);
+    $('#gMail').addEventListener('click', () => { if (list.length) logEmail(keys, 'mail app', subj, 'bcc'); });
+    $('#gEml').addEventListener('click', () => { download(`group-${slug(S.className)}-${S.date}.eml`, groupEml(S.bccTo, list, subj, body), 'message/rfc822'); logEmail(keys, '.eml', subj, 'bcc'); });
+    $('#gCopyAddr').addEventListener('click', () => { copy(list.join(', ')); logEmail(keys, 'copied', subj, 'bcc'); });
     $('#gCopyMsg').addEventListener('click', () => copy(`Subject: ${subj}\n\n${body}`));
   } else {
+    box.querySelectorAll('[data-mailk]').forEach(a => a.addEventListener('click', () => { const x = sel[+a.dataset.mailk]; logEmail([x.k], 'mail app', fill(t.subject, x), 'each'); }));
     box.querySelectorAll('[data-eml]').forEach(b => b.addEventListener('click', () => {
       const x = sel[+b.dataset.eml];
       download(`draft-${slug(x.s.name)}-${S.date}.eml`, eml(x.s.email, fill(t.subject, x), fill(t.body, x)), 'message/rfc822');
+      logEmail([x.k], '.eml', fill(t.subject, x), 'each');
     }));
     box.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
       const x = sel[+b.dataset.copy];
       copy(`To: ${x.s.email}\nSubject: ${fill(t.subject, x)}\n\n${fill(t.body, x)}`);
+      if (x.s.email) logEmail([x.k], 'copied', fill(t.subject, x), 'each');
     }));
   }
 }
@@ -2890,7 +3326,7 @@ $('#dChips').addEventListener('click', e => { const c = e.target.closest('[data-
 const typing = el => !!el.closest?.('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]');
 window.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') { e.preventDefault(); backupAll(); return; }   // anywhere: download a backup
-  if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || $('#sheetDlg').open || calIsOpen()) return;
+  if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || $('#sheetDlg').open || $('#noteDlg').open || $('#sumDlg').open || $('#mergeDlg').open || calIsOpen()) return;
   if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'z' && !e.shiftKey) {
     if (typing(e.target)) return;                // let text fields keep their own undo
     e.preventDefault(); undo(); return;
@@ -2983,10 +3419,10 @@ function tableKeys(e, cur) {
 }
 /* Undo for attendance changes (status marks, record/add/delete date, mark everyone present). */
 const undoStack = [];
-function snapshot() { undoStack.push(JSON.stringify(S.attendance)); if (undoStack.length > 100) undoStack.shift(); }
+function snapshot() { undoStack.push(JSON.stringify({ a: S.attendance, n: S.notes || {} })); if (undoStack.length > 100) undoStack.shift(); }
 function undo() {
   if (!undoStack.length) return toast('Nothing to undo.');
-  S.attendance = JSON.parse(undoStack.pop()); commit(); toast('Undid the last attendance change.');
+  const u = JSON.parse(undoStack.pop()); S.attendance = u.a; S.notes = u.n; commit(); toast('Undid the last change.');
 }
 function openShortcuts() { $('#help').showModal(); $('#kbdHelp').scrollIntoView({ block: 'start' }); }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });   // keeps "Today" right past midnight
@@ -3030,9 +3466,33 @@ $('#ncForm').addEventListener('submit', e => {
   toast(`Created “${name}”. Add students in Edit seats or import its CSV.`);
 });
 $('#backupBtn').addEventListener('click', backupAll);
+document.querySelectorAll('[data-mg]').forEach(b => b.addEventListener('click', () => { if (restoreState) { restoreState.mode = b.dataset.mg; renderRestore(); } }));
+$('#mergeDlg').addEventListener('close', () => { if ($('#mergeDlg').returnValue === 'go') applyRestore(); else restoreState = null; $('#mergeDlg').returnValue = ''; });
+$('#sumClose').addEventListener('click', () => $('#sumDlg').close());
+$('#sumPrint').addEventListener('click', () => {
+  const pa = $('#printArea'); pa.innerHTML = summaryHtml(sumKey); document.body.classList.add('psum');
+  const done = () => { document.body.classList.remove('psum'); pa.innerHTML = ''; window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done); window.print(); setTimeout(done, 1500);
+});
+$('#sumEmail').addEventListener('click', () => {
+  const k = sumKey; $('#sumDlg').close();
+  emailSel = new Set([k]); emailView = 'all'; selAuto = false; emailFilter = ''; emailMode = 'each'; S.view = 'emails'; commit();
+  toast(`${S.students[k].name} selected in Emails.`);
+});
+$('#noteDlg').addEventListener('close', () => {
+  const c = noteCtx, v = $('#noteDlg').returnValue; noteCtx = null; if (!c) return;
+  if (v === 'save' && setNote(c.d, c.k, $('#ntText').value)) toast('Note saved.');
+  else if (v === 'remove' && setNote(c.d, c.k, '')) toast('Note removed. Ctrl/⌘+Z undoes.');
+  setTimeout(() => refocusAfterNote(c), 0);
+});
+$('#ntText').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#noteDlg').close('save'); } });
+$('#binEmpty').addEventListener('click', () => {
+  const n = (S.bin || []).length; if (!n || !confirm(`Delete all ${n} item${n === 1 ? '' : 's'} in Recently deleted forever?`)) return;
+  S.bin = []; commit(); toast('The bin is empty.');
+});
 $('#restoreBtn').addEventListener('click', () => $('#restoreFile').click());
 $('#restoreFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  const r = new FileReader(); r.onload = () => restoreAll(String(r.result)); r.readAsText(f); });
+  const r = new FileReader(); r.onload = () => openRestore(String(r.result), f.name); r.readAsText(f); });
 $('#appExportBtn').addEventListener('click', () => exportApp($('#expScope').value));
 $('#appBlankBtn').addEventListener('click', () => exportApp('none'));
 /* Save this app as a new .html file with data built in (all classes, or just the open one). */
@@ -3048,7 +3508,7 @@ function exportApp(scope) {
   let store = JSON.parse(JSON.stringify(STORE));
   if (scope !== 'all') {
     const c = store.classes[S.classId];
-    store = { v: 2, active: c.id, classes: { [c.id]: c }, rooms: { [c.roomId]: store.rooms[c.roomId] }, global: store.global };
+    store = { v: 2, active: c.id, classes: { [c.id]: c }, rooms: { [c.roomId]: store.rooms[c.roomId] }, global: { ...store.global, bin: (store.global.bin || []).filter(x => x.cid === c.id) } };
   }
   store.global.embedSeen = '';
   const payload = { app: 'attendance', kind: 'embedded', id: uid(), exported: new Date().toISOString(), store };
@@ -3070,7 +3530,7 @@ function runImport(text) {
   catch (err) { toast('Import failed:\n' + err.message, true); }
 }
 function importFile(f) {
-  if (/\.json$/i.test(f.name)) { const r = new FileReader(); r.onload = () => restoreAll(String(r.result)); r.readAsText(f); return; }
+  if (/\.json$/i.test(f.name)) { const r = new FileReader(); r.onload = () => openRestore(String(r.result), f.name); r.readAsText(f); return; }
   if (!/\.(csv|tsv|txt)$/i.test(f.name) && !/^text\//.test(f.type)) return toast(`"${f.name}" isn't a CSV file.`, true);
   const r = new FileReader();
   r.onload = () => { $('#csvText').value = r.result; runImport(String(r.result)); };
@@ -3107,8 +3567,9 @@ window.addEventListener('drop', e => {
   importFile(files[0]);
 });
 $('#emptyBtn').addEventListener('click', () => {
-  if (!confirm(`Remove all students, seating, and attendance from “${S.className || 'this class'}”? Download a CSV first if you want a backup. Other classes, the room layout, and templates are kept.`)) return;
-  Object.assign(S, { students: {}, seats: {}, attendance: {} }); selected = null; undoStack.length = 0; commit(); toast('Class cleared.');
+  if (!confirm(`Remove all students, seating, and attendance from “${S.className || 'this class'}”? Other classes, the room layout, and templates are kept. You can restore it from Recently deleted for 30 days.`)) return;
+  if (Object.keys(S.students).length) binPut('clear', S.className || 'Untitled class', pick(S, ['students', 'seats', 'attendance', 'notes', 'emailLog']));
+  Object.assign(S, { students: {}, seats: {}, attendance: {}, notes: {}, emailLog: [] }); selected = null; undoStack.length = 0; commit(); toast('Class cleared.');
 });
 $('#demoBtn').addEventListener('click', () => {
   syncStore();
@@ -3147,6 +3608,7 @@ $('#tplDup').addEventListener('click', () => {           // keeps your current e
 });
 $('#tplDel').addEventListener('click', () => {
   const t = curTpl(); if (!t || !confirm(`Delete the template “${t.title}”?`)) return;
+  binPut('template', t.title || 'Untitled', { t }, null);
   S.templates = S.templates.filter(x => x.id !== t.id); tplSel = S.templates[0]?.id || null;
   if (/^st-\d+$/.test(t.id)) (S.removedStarters ||= []).includes(t.id) || S.removedStarters.push(t.id);   // don't bring it back on its own
   if (S.work?.tpl === t.id) { if (tplSel) loadWork(curTpl()); else S.work.tpl = null; }   // with no templates left, keep the text as a custom message

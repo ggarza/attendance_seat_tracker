@@ -54,6 +54,12 @@ This document describes the features and the main decisions behind them. It leav
 - Last and first names are separate columns. Rows can be sorted by seat (the default), last name, first name, absences, or excused, by clicking a column header; clicking again reverses. The sort is remembered. While marking cells the rows stay put, with a Re-sort button to refresh the order.
 - Students can be found by searching name or email. A date can be found with a jump-to-date list, the calendar, or by stepping between recorded dates. Dates can be added or deleted.
 - Escape resets the view.
+- Cells with a note or an email sent about that date are marked. N adds a note and I opens the student's summary.
+
+### Notes, email log, and student summary
+- **Notes:** one short note per student per date (for example, "doctor's note received"), added from a seat, a list row, a sheet cell, or a history cell. Notes appear in history, beside the classroom, next to students in Emails, and in the summary. Note changes can be undone.
+- **Email log:** opening a draft in the mail app, downloading a .eml, or copying addresses or a personal email records who it was for, the date it was about, the subject, and the template. Students already emailed about the selected date are flagged, with a warning before emailing them again. Entries can be removed, since the app can't tell whether a draft was actually sent.
+- **Student summary:** a printable page per student with totals, attendance rate, absences and excused days with notes, and emails sent, with a shortcut to email that student.
 
 ## 5. Emails
 
@@ -73,6 +79,8 @@ This document describes the features and the main decisions behind them. It leav
 - **CSV import and export:** one row per student, with a class column so files can hold one class or all classes. On import, rows go to the class named in each row, and new class names create classes. Existing classes can either be **updated** (the default: students are matched by email or name, and seats and history are kept) or **replaced** completely. Files can be dragged onto this view.
 - **Backups:**
   - a full .json backup of everything, from a prominent card at the top of Manage data (or Ctrl/⌘+S anywhere). The card shows when the last backup was made and warns when there are changes since; a Restore button sits next to it
+  - restoring a backup offers **Merge** (the default) or **Replace**. Merge never removes anything; it adds the classes, students, dates, marks, notes, email log entries, sheets, and templates the backup has that this device doesn't, which keeps a computer and an iPad in step. When both sides have a different mark for the same student and date, the instructor chooses which side wins. Either way the current data is kept as an automatic copy first
+- **Recently deleted:** deleted students, dates, classes, rooms, and templates, and cleared classes, are kept for 30 days and can be restored (with attendance, notes, and seat) or deleted forever
   - a copy of the app with its data built in, which can be opened on another device to pick up where you left off
   - a clean copy of the app with no data, safe to host
 
@@ -139,4 +147,6 @@ The answers in italics are the choices made for this build.
 
 **Interaction**
 24. Which keyboard shortcuts, and are single-letter keys acceptable? *Number keys switch views; letters for common actions; single letters work whenever you aren't typing.*
-25. Is undo needed? *For attendance changes.*
+25. Is undo needed? *For attendance and note changes, plus a 30-day bin for deletions.*
+26. Should notes, an email log, and per-student summaries be kept? *Yes.*
+27. How should two devices be kept in step? *Backups with a merge restore; the instructor picks which side wins on conflicts.*
