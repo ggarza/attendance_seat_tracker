@@ -3220,8 +3220,10 @@ function eml(to, subject, body) {
 /* Recipients: a selection set kept for the session. Re-seeded with the day's absences whenever the date changes. */
 let emailSel = new Set(), selDate = null, selAuto = true, lastPick = null, emailMode = 'group', emailFilter = '', emailView = 'absent';
 const absTotal = k => Object.values(S.attendance).filter(d => d[k] === 'A').length;
+/* One email to the whole group: name tags are left blank, and the space they leave is tidied ("Hi {first}," → "Hi,"). */
 function fillGroup(str) {
-  return fillWith(str, { name: 'everyone', first: 'everyone', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class', ...myDetails() });
+  return fillWith(str, { name: '', first: '', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class', ...myDetails() })
+    .replace(/[ \t]+([,.;:!?])/g, '$1').replace(/[ \t]{2,}/g, ' ').replace(/^[ \t]+/gm, '');
 }
 const mailAddr = e => encodeURIComponent(e).replace(/%40/g, '@');
 function groupMailto(to, list, subj, body) {
@@ -3316,7 +3318,7 @@ function renderDrafts() {
       <div class="small" style="margin-top:8px"><b>BCC (${list.length}):</b> <span class="muted">${list.length ? esc(list.join(', ')) : 'none'}</span></div>
       ${noE.length ? `<div class="note">Left out, no email on file: ${noE.map(x => esc(x.s.name)).join(', ')}</div>` : ''}
       <div class="small" style="margin-top:6px"><b>Subject:</b> ${esc(subj)}</div><div class="body">${esc(body)}</div>
-      <p class="small muted" style="margin:0 0 8px">Personal placeholders ({first}, {name}) read “everyone” in a group email. Use Separate emails for personal greetings.</p>
+      <p class="small muted" style="margin:0 0 8px">Name placeholders ({first}, {name}) are left out of a group email, so “Hi {first},” reads “Hi,”. Use Separate emails for personal greetings.</p>
       <div id="longNote"></div>
       <div class="row">
         <a class="btn primary" id="gMail" style="text-decoration:none" ${list.length ? '' : 'aria-disabled="true"'}>Open in mail app</a>
