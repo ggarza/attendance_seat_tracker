@@ -231,6 +231,11 @@ td.c{text-align:center}
 #classMgr td.cact{white-space:normal;min-width:200px}
 #classMgr td.cact .btn{padding:4px 9px;font-size:12.5px;margin:2px 0}
 #classMgr td.cact .pill{margin-right:2px}
+.emptyp{border:1px dashed var(--line);border-radius:12px;padding:22px 18px;text-align:center;margin:8px 0}
+.emptyp h3{margin:0 0 6px}
+#chartCard .emptyp{margin:0 0 14px}
+details.fmt{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+details.fmt summary{cursor:pointer}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -411,7 +416,7 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
     <div class="legend" id="legend"><span class="pill P">Present</span><span class="pill A">Absent</span><span class="pill E">Excused</span></div>
   </div>
   <div class="classroom">
-    <div class="card chart-wrap" id="chartCard"><div class="room" id="room"></div></div>
+    <div class="card chart-wrap" id="chartCard"><div id="chartEmpty"></div><div class="room" id="room"></div></div>
     <div class="card chart-wrap" id="listCard" hidden>
       <div class="lst-tools">
         <input type="search" id="lFind" placeholder="Jump to a last name" aria-label="Jump to a student by last name ( / )" autocomplete="off">
@@ -601,15 +606,31 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
 <dialog id="impDlg" aria-labelledby="impTitle">
   <div class="hd"><strong id="impTitle">Import into a class</strong><button class="btn" type="button" id="impClose">Close</button></div>
   <div class="bd stack">
-    <p class="small muted" style="margin:0">Everything in the file goes into this class, even if the file names another class or has no class column. You'll see a summary before anything changes.</p>
+    <p class="small muted" style="margin:0" id="impLead">Everything in the file goes into this class, even if the file names another class or has no class column. You'll see a summary before anything changes.</p>
+    <details class="fmt" id="impHelp"><summary><b>How to format the roster</b></summary>
+      <ul class="small" style="margin:6px 0;padding-left:18px">
+        <li>A <b>Brightspace classlist export</b> works as is (instructors and TAs are skipped).</li>
+        <li>Or a CSV with a header row and one row per student: <code>last_name,first_name,email</code>. A single <code>name</code> column works too (“Ana Garza” or “Garza, Ana”). Email is optional.</li>
+        <li>Or just paste names, one per line, with no header.</li>
+        <li><code>row</code>/<code>seat</code> and date columns (P, A, E) are optional. Students without seats fill open seats, front row first.</li>
+      </ul>
+      <pre class="code small" style="margin:4px 0">last_name,first_name,email
+Garza,Ana,ana.garza@utrgv.edu
+Pérez,Luis,luis.perez@utrgv.edu</pre>
+      <button type="button" class="btn ghost" id="impTemplate" style="padding:3px 10px;font-size:12.5px">Download a blank template</button>
+    </details>
+    <div id="impModeBox" class="stack">
     <div class="seg" role="group" aria-label="Import mode" style="align-self:flex-start">
       <button type="button" data-imode="merge">Update roster</button>
       <button type="button" data-imode="replace">Replace everything</button></div>
     <p class="small impModeNote" style="margin:0"></p>
     <label class="switch impRemoveWrap"><input type="checkbox" id="impDlgRemove"> Also remove students who aren't in the file (their attendance is deleted)</label>
+    </div>
     <label class="fld"><span>Choose a CSV file</span><input type="file" id="impDlgFile" accept=".csv,.tsv,.txt,text/csv"></label>
-    <label class="fld"><span>…or paste CSV text</span><textarea id="impDlgText" rows="6" spellcheck="false" placeholder="last_name,first_name,email"></textarea></label>
-    <div class="row"><button class="btn primary" id="impDlgGo" type="button">Import</button></div>
+    <label class="fld"><span>…or paste a CSV, or a list of names (one per line)</span><textarea id="impDlgText" rows="6" spellcheck="false" placeholder="Garza, Ana&#10;Luis Pérez&#10;Mia Thompson, mia.thompson@utrgv.edu"></textarea></label>
+    <div class="row"><button class="btn primary" id="impDlgGo" type="button">Import</button>
+      <button class="btn" id="impByHand" type="button" hidden>Add students by hand</button>
+      <button class="btn ghost" id="impSkip" type="button" hidden>Skip for now</button></div>
   </div>
 </dialog>
 <dialog id="dropDlg" aria-labelledby="dropTitle">
@@ -703,6 +724,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Students dropped in the backup are dropped here too (you can uncheck that), and students dropped here but active in the backup can be restored. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
     <h4>Importing a roster</h4>
     <p>Each class in <b>Manage data → Classes &amp; rooms</b> has <b>Import…</b>: choose a CSV (or paste one) and everything in it goes into that class, whatever class column the file has. <b>Update roster</b> (the default) matches students and keeps seats and history; <b>Replace everything</b> makes the file the class's whole roster. For a file with several classes, use <b>Import a CSV</b> just below the class list; rows go to the class named in each row.</p>
+    <p>Creating a class opens <b>Add students</b> right away, with a short guide to the roster format: a Brightspace classlist export works as is, or a CSV with <code>last_name</code>, <code>first_name</code>, and <code>email</code>, or just a pasted list of names. You can also add students by hand or skip for now; a class with no students shows an <b>Import a roster</b> button in every view.</p>
     <h4>Checking for drops</h4>
     <p>In <b>Manage data → Classes &amp; rooms</b>, press <b>Check for drops…</b> on a class, choose a new class list (a Brightspace classlist export works; only names are needed) or paste names, one per line, and press <b>Compare</b>. It's compared with that class: students matched by email or name (accents, case, name order, and extra surnames don't matter) are fine; names that are close but not identical are listed under <b>Check these</b> for you to confirm; and anyone missing from the new list is listed with their absences and last day present. <b>Drop checked students</b> drops them as of the date you choose, keeping their attendance. Students in the new list who aren't in the class can be added to open seats, and anyone you'd marked dropped who is back on the list can be restored. Instructors and TAs in a Brightspace file are skipped.</p>
     <h4>Manage data</h4>
@@ -1693,7 +1715,7 @@ function renderList() {
     ? '<kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles'
     : '<kbd>↑</kbd><kbd>↓</kbd> move · <kbd>P</kbd> <kbd>A</kbd> <kbd>E</kbd> or <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> mark and move down · <kbd>Space</kbd> cycles · <kbd>/</kbd> jump';
   const list = rosterSorted();
-  if (!list.length) { box.innerHTML = '<p class="muted">No students yet. Add them in Seating chart → Edit seats, or import a roster in Manage data.</p>'; $('#sheetCtl').innerHTML = ''; return; }
+  if (!list.length) { box.innerHTML = emptyPanel(); $('#sheetCtl').innerHTML = ''; return; }
   if (!listFocus.k || !S.students[listFocus.k] || S.students[listFocus.k].dropped) listFocus.k = list[0].k;
   if (sheetMode) renderSheetGrid(list); else renderOneDate(list);
   markListCursor(keepFocus);
@@ -2057,6 +2079,7 @@ function renderDateBar() {
 }
 
 function renderRoom() {
+  $('#chartEmpty').innerHTML = S.mode === 'take' && !assigned().length ? emptyPanel() : '';
   if (isTables()) return renderTables();
   const focused = document.activeElement?.dataset?.seat, focusedAisle = document.activeElement?.dataset?.aisle;
   const room = $('#room'); room.innerHTML = '';
@@ -2395,7 +2418,7 @@ function renderRoster() {
       : `<tr data-rrow="${x.k}"><td class="c nw" title="${unitWord()} ${x.row}, Seat ${x.seat}">${x.row} · ${x.seat}</td><td>${esc(x.s.last)}${x.s.nameCheck ? ' <span class="pill E" title="Check this name">?</span>' : ''}</td><td>${esc(x.s.first)}</td><td class="em">${esc(x.s.email)}</td>
       <td class="act"><button type="button" class="btn" data-redit="${x.k}" aria-label="Edit ${esc(x.s.name)}">Edit</button> <button type="button" class="btn danger" data-rm="${x.k}" aria-label="Remove ${esc(x.s.name)}">Remove</button></td></tr>`).join('')}</tbody></table></div>
     <p class="small muted" style="margin:6px 0 0">Click <b>Edit</b> (or double-click a row) to change a student's name or email. <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. Seats are changed in Classroom → Edit seats.</p>`
-    : '<p class="muted small">No students yet. Add them in Edit seats or import a CSV.</p>';
+    : emptyPanel();
   if (dropped.length) h += `<h3 style="margin:18px 0 8px">Dropped students (${dropped.length})</h3>
     <p class="small muted" style="margin-top:0">Not on the chart, in attendance, or in emails. Their past attendance is kept here.</p>
     <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Dropped</th><th>Last attended</th><th class="c">Abs.</th><th></th></tr></thead><tbody>${
@@ -2610,7 +2633,7 @@ function renderHistory() {
       return `<option value="${d}" ${d === S.date ? 'selected' : ''}>${esc(dateObj(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }))}${n ? ` · ${n} absent` : ''}</option>`; }).join('');
   $('#hJump').disabled = !dates.length;
   if (!list.length || !dates.length) { const f = $('#hFocus'); f.innerHTML = ''; f.classList.remove('on'); }
-  if (!list.length) { box.innerHTML = hq && everyone.length ? `<p class="muted">No students match “${esc(histFilter.trim())}”. Press <kbd>Esc</kbd> to reset the view.</p>` : '<p class="muted">No students yet.</p>'; return; }
+  if (!list.length) { box.innerHTML = hq && everyone.length ? `<p class="muted">No students match “${esc(histFilter.trim())}”. Press <kbd>Esc</kbd> to reset the view.</p>` : emptyPanel('Attendance history appears here once the class has students and you take attendance.'); return; }
   if (!dates.length) { box.innerHTML = '<p class="muted">No dates recorded yet. Take attendance in the Classroom view, or add a date above.</p>'; return; }
   const so = S.histSort && HSORT[S.histSort.by] ? S.histSort : { by: 'seat', dir: 1 };
   const sh = (by, text, cls = '') => { const on = so.by === by, arrow = on ? (so.dir === 1 ? '▲' : '▼') : '';
@@ -2865,7 +2888,8 @@ function readCSV(text) {
   const col = key => h.findIndex(x => HDR[key].includes(x));
   const c = { cls: col('cls'), row: col('row'), seat: col('seat'), name: col('name'), first: col('first'), last: col('last'), sid: -1, email: col('email') };   // a student ID column is recognized but ignored
   if (c.name < 0 && c.first < 0 && c.last < 0) throw new Error('The header row needs a "name" column (or "first name" and "last name").');
-  const used = new Set(Object.values(c).filter(j => j >= 0));
+  const role = h.findIndex(x => x === 'role' || x === 'course role');   // Brightspace classlists: skip instructors and TAs
+  const used = new Set([...Object.values(c), role].filter(j => j >= 0));
   const dateCols = [], ignored = [], seen = new Map(), errs = [];
   header.forEach((x, j) => {
     if (used.has(j) || !x.trim()) return;
@@ -2875,7 +2899,7 @@ function readCSV(text) {
     else { seen.set(d, x.trim()); dateCols.push([j, d]); }
   });
   const tableHdr = h.some(x => ['table', 'table number', 'table no', 'pod', 'group'].includes(x));
-  return { meta, c, dateCols, ignored, errs, tableHdr, items: rows.slice(i + 1).map((row, n) => ({ row, line: i + n + 2 })) };
+  return { meta, c, role, dateCols, ignored, errs, tableHdr, items: rows.slice(i + 1).map((row, n) => ({ row, line: i + n + 2 })) };
 }
 const cellOf = (row, j) => j >= 0 ? (row[j] || '').trim() : '';
 /* Build one class's students, seats, and attendance from its rows. A date counts only if this class has a mark there. */
@@ -3035,13 +3059,21 @@ function mergeGroup(P, items, cls, room, removeMissing) {
 }
 /* Import: rows go to the class named in the "class" column (new names become new classes);
    a file without that column goes into the open class. */
+/* A plain list of names (one per line, no header) becomes a small CSV the importer understands. */
+function importable(text) {
+  try { readCSV(text); return text; } catch (e) {
+    let list; try { list = readRosterList(text); } catch (e2) { throw e; }
+    return 'name,email\n' + list.map(r => [r.raw || (r.last && r.first ? `${r.last}, ${r.first}` : r.name), r.email].map(csvCell).join(',')).join('\n');   // the importer splits names and flags unsure ones
+  }
+}
 function importCSV(text, targetId = null, removeOpt = null) {
-  const P = readCSV(text);
+  const P = readCSV(importable(text));
   if (P.errs.length) throw new Error(P.errs.join('\n'));
   syncStore();
   const groups = new Map();
   for (const it of P.items) {
     if (!it.row.some(x => String(x).trim())) continue;
+    if (P.role >= 0) { const r = cellOf(it.row, P.role).toLowerCase(); if (r && !/student|learner/.test(r)) continue; }
     const nm = targetId ? '' : cellOf(it.row, P.c.cls), key = fold(nm);   // importing into one class: ignore the class column
     if (!groups.has(key)) groups.set(key, { name: nm, items: [] });
     groups.get(key).items.push(it);
@@ -3223,7 +3255,7 @@ function renderDrafts() {
       <button type="button" class="btn primary" data-go-today>Go to today</button>
       <button type="button" class="btn" data-shift="-1">‹ Previous day</button><button type="button" class="btn" data-shift="1">Next day ›</button>`}</div>
     ${t ? `<p class="small muted" style="margin:0 0 8px">Message: “${esc(t.title)}”${t.edited ? ' <span style="color:var(--excused)">(edited, not saved to template)</span>' : ''}</p>` : ''}`;
-  if (!all.length) { box.innerHTML = h + '<p class="muted">No students yet.</p>'; return; }
+  if (!all.length) { box.innerHTML = h + emptyPanel('Add the class roster (with emails) to draft emails to students.'); return; }
   h += `<div class="rchips" role="group" aria-label="Show students">${groups.map(([id, lbl, list]) => {
       const chip = `<button type="button" class="chip" data-filter="${id}" aria-pressed="${id === view[0]}" title="${id === 'all' ? 'List every student (your selection is kept)' : 'List and select these students'}">${esc(lbl)}<b>${list.length}</b></button>`;
       return id !== 'repeat' ? chip : `<span class="stepchip">
@@ -3558,9 +3590,9 @@ $('#ncForm').addEventListener('submit', e => {
     const id = uid(), src = rid === '__copy' ? STORE.rooms[S.roomId] : { shape: 'rows', rows: 6, cols: 8, aisles: [], tablesAcross: 3 };
     STORE.rooms[id] = { ...src, id, aisles: [...(src.aisles || [])], name: `${name} room` }; rid = id;
   }
-  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays] };
+  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays], sheets: [], notes: {}, emailLog: [] };
   $('#ncDlg').close(); switchClass(cid);
-  toast(`Created “${name}”. Add students in Edit seats or import its CSV.`);
+  toast(`Created “${name}”.`); openImportFor(cid, true);
 });
 /* ---------- check for drops: compare a roster file (e.g. a Brightspace classlist) with the open class ----------
    Nothing changes until you press a button. Students are matched by email, then by name (accents, case, order,
@@ -3589,7 +3621,7 @@ function readRosterList(text) {
       let first = '', last = '';
       if (names.length === 1) ({ first, last } = splitName(names[0]));
       else if (names.length >= 2) { last = names[0]; first = names[1]; }
-      if (first || last || email) out.push({ first, last, email, name: fullName(first, last) || email });
+      if (first || last || email) out.push({ first, last, email, name: fullName(first, last) || email, raw: names.length === 1 ? names[0] : `${last}, ${first}` });
     }
   }
   if (!out.length) throw new Error('No student names were found in that file.');
@@ -3767,12 +3799,33 @@ function renderImportMode() {
 }
 /* Per-class Import… and Check for drops… (from the class list) */
 let impTarget = null;
-function openImportFor(cid) {
+function openImportFor(cid, setup = false) {
+  syncStore();
   const c = STORE.classes[cid]; if (!c) return;
-  impTarget = cid; $('#impTitle').textContent = `Import into “${c.className || 'Untitled class'}”`;
+  const empty = !Object.values(c.students || {}).some(st => !st.dropped);
+  impTarget = cid; $('#impTitle').textContent = setup || empty ? `Add students to “${c.className || 'Untitled class'}”` : `Import into “${c.className || 'Untitled class'}”`;
+  $('#impLead').textContent = empty ? 'Import a roster file or paste a list of names. You can also add students by hand, one seat at a time.' : 'Everything in the file goes into this class, even if the file names another class or has no class column. You\'ll see a summary before anything changes.';
+  $('#impHelp').open = empty; $('#impModeBox').hidden = empty;
+  $('#impByHand').hidden = !empty; $('#impSkip').hidden = !setup;
   $('#impDlgText').value = ''; $('#impDlgFile').value = ''; $('#impDlgRemove').checked = false;
   renderImportMode(); $('#impDlg').showModal(); $('#impDlgFile').focus();
 }
+$('#impTemplate').addEventListener('click', () => download('attendance-template.csv', '\uFEFF' + buildCSV('blank'), 'text/csv;charset=utf-8'));
+$('#impSkip').addEventListener('click', () => $('#impDlg').close());
+$('#impByHand').addEventListener('click', () => {
+  $('#impDlg').close(); if (impTarget !== S.classId) switchClass(impTarget);
+  Object.assign(S, { view: 'classroom', classView: 'chart', mode: 'edit' }); selected = null; commit();
+  toast('Select a seat, then type the student\'s name and email.');
+});
+/* Empty-class panels in every view point here. */
+function emptyPanel(what = '') { return `<div class="emptyp"><h3>No students in “${esc(S.className || 'this class')}” yet</h3>
+  <p class="small muted">${what || 'Import a roster to get started. A Brightspace classlist export works, or paste a list of names.'}</p>
+  <div class="row" style="justify-content:center"><button type="button" class="btn primary" data-emptyimp>Import a roster</button>
+  <button type="button" class="btn" data-emptyhand>Add students by hand</button></div></div>`; }
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-emptyimp]')) openImportFor(S.classId);
+  else if (e.target.closest('[data-emptyhand]')) { Object.assign(S, { view: 'classroom', classView: 'chart', mode: 'edit' }); selected = null; commit(); toast('Select a seat, then type the student\'s name and email.'); }
+});
 function runImportInto(text) {
   if (!text.trim()) return toast('Choose a file or paste CSV text first.', true);
   try { if (importCSV(text, impTarget, $('#impDlgRemove').checked)) $('#impDlg').close(); }
