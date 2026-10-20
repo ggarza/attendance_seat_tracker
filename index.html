@@ -681,7 +681,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <h4>Instructor view</h4>
     <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
     <h4>Backups, restoring, and recently deleted</h4>
-    <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
+    <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Students dropped in the backup are dropped here too (you can uncheck that), and students dropped here but active in the backup can be restored. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
     <h4>Checking for drops</h4>
     <p>Under <b>Manage data → Check for drops</b>, choose a new class list (a Brightspace classlist export works; only names are needed) or paste names, one per line, and press <b>Compare</b>. It's compared with the class that's open: students matched by email or name (accents, case, name order, and extra surnames don't matter) are fine; names that are close but not identical are listed under <b>Check these</b> for you to confirm; and anyone missing from the new list is listed with their absences and last day present. <b>Drop checked students</b> drops them as of the date you choose, keeping their attendance. Students in the new list who aren't in the class can be added to open seats, and anyone you'd marked dropped who is back on the list can be restored. Instructors and TAs in a Brightspace file are skipped.</p>
     <h4>Manage data</h4>
@@ -1403,7 +1403,7 @@ function renderBin() {
 function analyzeMerge(inc) {
   syncStore();
   const out = clone(STORE), nk = t => fold(t || '').replace(/\s+/g, ' ').trim();
-  const rep = { classesAdded: [], classesMerged: [], students: 0, dates: 0, marks: 0, notes: 0, emails: 0, sheets: 0, templates: 0, rooms: 0, unseated: 0, bin: 0, conflicts: [] };
+  const rep = { classesAdded: [], classesMerged: [], students: 0, dates: 0, marks: 0, notes: 0, emails: 0, sheets: 0, templates: 0, rooms: 0, unseated: 0, bin: 0, conflicts: [], drops: [], undrops: [] };
   for (const ic of Object.values(inc.classes)) {
     let lc = out.classes[ic.id];
     if (!lc) { const same = Object.values(out.classes).filter(c => nk(c.className) && nk(c.className) === nk(ic.className)); if (same.length === 1) lc = same[0]; }
@@ -1412,12 +1412,17 @@ function analyzeMerge(inc) {
       if (!out.rooms[c.roomId]) { const r = inc.rooms[c.roomId]; if (r) { out.rooms[r.id] = clone(r); rep.rooms++; } else c.roomId = Object.keys(out.rooms)[0]; }
       out.classes[c.id] = c; rep.classesAdded.push(c.className || 'Untitled class'); continue;
     }
-    const before = JSON.stringify([rep.students, rep.dates, rep.marks, rep.notes, rep.emails, rep.sheets, rep.conflicts.length]);
+    const before = JSON.stringify([rep.students, rep.dates, rep.marks, rep.notes, rep.emails, rep.sheets, rep.conflicts.length, rep.drops.length, rep.undrops.length]);
     const room = out.rooms[lc.roomId] || { rows: 0, cols: 0 }, map = {}, isNew = new Set(), byEmail = new Map(), byName = new Map();
     for (const [k, st] of Object.entries(lc.students)) { if (st.email) byEmail.set(st.email.toLowerCase(), k); const n = nk(st.name); byName.set(n, byName.has(n) ? null : k); }
     for (const [ik, ist] of Object.entries(ic.students)) {
       let k = lc.students[ik] ? ik : (ist.email && byEmail.get(ist.email.toLowerCase())) || byName.get(nk(ist.name)) || null;
-      if (k) { const st = lc.students[k]; if (!st.email && ist.email) st.email = ist.email; map[ik] = k; continue; }
+      if (k) {
+        const st = lc.students[k]; if (!st.email && ist.email) st.email = ist.email; map[ik] = k;
+        if (ist.dropped && !st.dropped) rep.drops.push({ cid: lc.id, cname: lc.className, k, name: st.name, on: ist.dropped.on });
+        else if (!ist.dropped && st.dropped) rep.undrops.push({ cid: lc.id, cname: lc.className, k, name: st.name, on: st.dropped.on, want: Object.keys(ic.seats).find(l => ic.seats[l] === ik) || null });
+        continue;
+      }
       k = ik; const st = clone(ist); delete st.nameCheck; lc.students[k] = st; map[ik] = k; isNew.add(k); rep.students++;
       if (!st.dropped) { const want = Object.keys(ic.seats).find(l => ic.seats[l] === ik) || null, lab = freeSeatIn(lc, room, want);
         if (lab) lc.seats[lab] = k; else { st.dropped = { on: todayStr(), seat: want }; rep.unseated++; } }
@@ -1447,7 +1452,7 @@ function analyzeMerge(inc) {
     lc.sheets ||= []; const sids = new Set(lc.sheets.map(x => x.id));
     for (const sh of ic.sheets || []) if (!sids.has(sh.id)) { lc.sheets.push(clone(sh)); rep.sheets++; }
     if (!(lc.days || []).length && (ic.days || []).length) lc.days = [...ic.days];
-    if (JSON.stringify([rep.students, rep.dates, rep.marks, rep.notes, rep.emails, rep.sheets, rep.conflicts.length]) !== before) rep.classesMerged.push(lc.className || 'Untitled class');
+    if (JSON.stringify([rep.students, rep.dates, rep.marks, rep.notes, rep.emails, rep.sheets, rep.conflicts.length, rep.drops.length, rep.undrops.length]) !== before) rep.classesMerged.push(lc.className || 'Untitled class');
   }
   const g = out.global, ig = inc.global, tids = new Set(g.templates.map(t => t.id)), titles = new Set(g.templates.map(t => t.title));
   for (const t of ig.templates || []) if (!tids.has(t.id) && !titles.has(t.title) && !(g.removedStarters || []).includes(t.id)) { g.templates.push(clone(t)); rep.templates++; }
@@ -1488,9 +1493,9 @@ function renderRestore() {
   if (rep.templates) lines.push(`${n(rep.templates, 'template')} added`);
   if (rep.rooms) lines.push(`${n(rep.rooms, 'room')} added`);
   if (rep.bin) lines.push(`${n(rep.bin, 'recently deleted item')} added to the bin`);
-  const nothing = !lines.length && !rep.conflicts.length;
+  const nothing = !lines.length && !rep.conflicts.length && !rep.drops.length && !rep.undrops.length;
   let h = nothing ? '<p class="small" style="margin:0">✓ Everything in this backup is already here. There is nothing to merge.</p>'
-    : `<p class="small" style="margin:0 0 4px">Nothing here is removed. From the backup this adds:</p>${lines.length ? `<ul class="small" style="margin:0;padding-left:18px">${lines.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p class="small muted" style="margin:0">No new students, dates, or notes.</p>'}`;
+    : `<p class="small" style="margin:0 0 4px">Nothing is deleted. From the backup this adds:</p>${lines.length ? `<ul class="small" style="margin:0;padding-left:18px">${lines.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p class="small muted" style="margin:0">No new students, dates, or notes.</p>'}`;
   if (rep.conflicts.length) {
     const c = rep.conflicts, show = c.slice(0, 12);
     h += `<div class="note" style="margin-top:10px"><b>${n(c.length, 'mark')} ${c.length === 1 ? 'differs' : 'differ'}</b> between this device and the backup:
@@ -1499,9 +1504,16 @@ function renderRestore() {
         <label class="switch"><input type="radio" name="mgWin" value="file" ${st.win !== 'here' ? 'checked' : ''}> Use the backup's marks</label>
         <label class="switch"><input type="radio" name="mgWin" value="here" ${st.win === 'here' ? 'checked' : ''}> Keep this device's marks</label></div></div>`;
   }
+  const multi = Object.keys(st.inc.classes).length > 1, who = l => l.slice(0, 10).map(x => `${esc(x.name)}${multi ? ` (${esc(x.cname)})` : ''}`).join(', ') + (l.length > 10 ? ` and ${l.length - 10} more` : '');
+  if (rep.drops.length) h += `<div class="note" style="margin-top:10px"><b>${n(rep.drops.length, 'student')} ${rep.drops.length === 1 ? 'was' : 'were'} dropped in the backup</b> but ${rep.drops.length === 1 ? 'is' : 'are'} active here: ${who(rep.drops)}.
+      <div><label class="switch"><input type="checkbox" id="mgDrop" ${st.dropOk !== false ? 'checked' : ''}> Drop ${rep.drops.length === 1 ? 'this student' : 'them'} here too (keeps attendance; uses the backup's drop date)</label></div></div>`;
+  if (rep.undrops.length) h += `<div class="note" style="margin-top:10px"><b>${n(rep.undrops.length, 'student')} ${rep.undrops.length === 1 ? 'is' : 'are'} dropped here</b> but active in the backup: ${who(rep.undrops)}.
+      <div><label class="switch"><input type="checkbox" id="mgUndrop" ${st.undropOk ? 'checked' : ''}> Restore ${rep.undrops.length === 1 ? 'this student' : 'them'} here (for example, if you restored them on the other device)</label></div></div>`;
   h += '<p class="small muted" style="margin:8px 0 0">What\'s here now is saved as an automatic copy first (Manage data → Recover data).</p>';
   body.innerHTML = h;
   body.querySelectorAll('[name=mgWin]').forEach(r => r.addEventListener('change', () => { st.win = r.value; }));
+  $('#mgDrop')?.addEventListener('change', e => { st.dropOk = e.target.checked; });
+  $('#mgUndrop')?.addEventListener('change', e => { st.undropOk = e.target.checked; });
   go.textContent = 'Merge'; go.className = 'btn primary'; go.disabled = nothing;
 }
 function applyRestore() {
@@ -1515,9 +1527,19 @@ function applyRestore() {
   } else {
     const { out, rep } = st.merge;
     if (st.win === 'here') for (const x of rep.conflicts) { const rec = out.classes[x.cid].attendance[x.d]; if (x.here === 'P') delete rec[x.k]; else rec[x.k] = x.here; }
+    let dropped = 0, back = 0, noSeat = 0;
+    if (st.dropOk !== false) for (const x of rep.drops) {
+      const c = out.classes[x.cid], lab = Object.keys(c.seats).find(l => c.seats[l] === x.k) || null;
+      if (lab) delete c.seats[lab]; c.students[x.k].dropped = { on: x.on || todayStr(), seat: lab }; dropped++;
+    }
+    if (st.undropOk) for (const x of rep.undrops) {
+      const c = out.classes[x.cid], r = out.rooms[c.roomId] || { rows: 0, cols: 0 }, s0 = c.students[x.k];
+      const lab = freeSeatIn(c, r, x.want || s0.dropped?.seat); if (!lab) { noSeat++; continue; }
+      delete s0.dropped; c.seats[lab] = x.k; back++;
+    }
     STORE = fixStore(out); if (STORE.classes[keepView.cid]) STORE.active = keepView.cid;
     S = flatten(STORE); S.view = keepView.view; selected = null; undoStack.length = 0; selDate = null; resetSession(); commit();
-    toast(`Merged the backup${rep.conflicts.length ? ` (${rep.conflicts.length} differing mark${rep.conflicts.length === 1 ? '' : 's'}: kept ${st.win === 'here' ? "this device's" : "the backup's"})` : ''}.`);
+    toast(`Merged the backup${rep.conflicts.length ? ` (${rep.conflicts.length} differing mark${rep.conflicts.length === 1 ? '' : 's'}: kept ${st.win === 'here' ? "this device's" : "the backup's"})` : ''}.${dropped ? ` Dropped ${dropped}.` : ''}${back ? ` Restored ${back}.` : ''}${noSeat ? ` ${noSeat} couldn't be restored: no open seat.` : ''}`, !!noSeat);
   }
   restoreState = null;
 }
