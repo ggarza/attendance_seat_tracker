@@ -65,8 +65,8 @@ This document describes the features and the main decisions behind them. It leav
 
 - **Recipients:** filters show All, Absent today, Excused today, or Absent N+ times (adjustable). The list shows only the filtered students. Students can be searched and selected individually or as a range.
 - **Sending:** either one email with all recipients in **BCC**, or **separate personal emails**. Drafts open in the mail app, download as .eml files, or copy to the clipboard. The app never sends anything itself.
-- **Message editor:** the editor is a live working draft that uses placeholders for first name, name, date, class, seat, and instructor. The instructor's name is set once in a field above Save template; templates put {instructor} under their closing, and when no name is set the line is left out. Templates are starting points: editing one changes only the current draft until it is saved as a template. Nineteen starter templates, written in an empathetic, supportive tone, cover:
-  missed class check-in · excused absence documentation · repeated absences · missed quiz or exam · several missed classes · excused absence confirmation · missed group work · nearing the attendance limit · missed exam review · welcome back after time away · missed announcement · eight general notes that suit a single missed day (a short note, easy ways to catch up, a no-reply-needed check-in, a how-are-things-going check-in, an office-hours invitation, where to find what was covered, a glad-you're-here note, and campus support if things are busy).
+- **Message editor:** the editor is a live working draft that uses placeholders for first name, name, date, class, seat, and instructor. The instructor's name is set once in a field above Save template; templates put {instructor} under their closing, and when no name is set the line is left out. Templates are starting points: editing one changes only the current draft until it is saved as a template. Twenty-three starter templates, written in an empathetic, supportive tone, cover:
+  missed class check-in · excused absence documentation · repeated absences · missed quiz or exam · several missed classes · excused absence confirmation · missed group work · nearing the attendance limit · missed exam review · welcome back after time away · missed announcement · eight general notes that suit a single missed day (a short note, easy ways to catch up, a no-reply-needed check-in, a how-are-things-going check-in, an office-hours invitation, where to find what was covered, a glad-you're-here note, and campus support if things are busy), plus four more gentle notes that say no reply is needed (a quick note, help is available, materials are posted, and see you next class). Templates keep a professional, course-focused tone with neutral closings, avoiding wording that could read as too personal.
 - **The library never shrinks by accident.** Starter templates are part of the app: every one stays in the library unless the instructor deletes it (deleted ones can be restored), new starters added in later versions appear automatically, and restoring older data keeps templates that exist only on this device.
 
 ## 6. Managing data
@@ -137,7 +137,7 @@ The answers in italics are the choices made for this build.
 16. Should history be editable? *Yes, synced with the classroom views.*
 17. How should email work: mailto, .eml files, or a sending service? *mailto, .eml, and copy; never sends automatically.*
 18. One BCC email, separate personal emails, or both? *Both.*
-19. Tone and content of the starter templates? *Empathetic and supportive; 19 templates, including eight general ones suitable for a single missed day.*
+19. Tone and content of the starter templates? *Empathetic and supportive; 23 templates, including twelve general ones suitable for a single missed day.*
 
 **Data**
 20. Which CSV columns and in what order? *class, last name, first name, email, seat, then dates.*
