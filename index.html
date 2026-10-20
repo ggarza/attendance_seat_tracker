@@ -236,6 +236,7 @@ td.c{text-align:center}
 #chartCard .emptyp{margin:0 0 14px}
 details.fmt{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
 details.fmt summary{cursor:pointer}
+.mydetails{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -555,8 +556,14 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
         <label class="fld"><span>Template title</span><input type="text" id="tplTitle"></label>
         <label class="fld"><span>Subject</span><input type="text" id="tplSubject"></label>
         <label class="fld"><span>Message</span><textarea id="tplBody" rows="10"></textarea></label>
-        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{instructor}</code></p>
-        <label class="fld"><span>Your name for <code>{instructor}</code> (used in every template; leave blank to leave it out)</span><input type="text" id="instrName" placeholder="e.g. Prof. García" autocomplete="name"></label>
+        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{instructor}</code> <code>{officehours}</code> <code>{office}</code></p>
+        <div class="mydetails">
+          <p class="small muted" style="margin:0">Your details fill these tags in every template. Leave one blank and the line that uses it is left out.</p>
+          <label class="fld"><span>Your name <code>{instructor}</code></span><input type="text" id="instrName" placeholder="e.g. Prof. García" autocomplete="name"></label>
+          <div class="row" style="flex-wrap:wrap">
+            <label class="fld" style="flex:1 1 200px"><span>Office hours <code>{officehours}</code></span><input type="text" id="offHours" placeholder="e.g. Mon & Wed 1:00–2:30 pm, or by appointment"></label>
+            <label class="fld" style="flex:1 1 160px"><span>Office <code>{office}</code></span><input type="text" id="offRoom" placeholder="e.g. Science Building, Room 3.142"></label></div>
+        </div>
         <div class="row">
           <button class="btn primary" id="tplSave" type="button">Save template</button>
           <button class="btn danger" id="tplDel" type="button">Delete</button>
@@ -734,7 +741,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <h4>Attendance history</h4>
     <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Last name</b>, <b>First name</b>, <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Classroom and history edit the same records, so a change in one shows up in the other immediately.</p>
     <h4>Emails</h4>
-    <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload. Type your name in <b>Your name for {instructor}</b> (above Save template) and it fills <code>{instructor}</code>, which the starter templates use under their closing; leave it blank and that line is simply left out.</p>
+    <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload. Type your name in <b>Your name for {instructor}</b> (above Save template) and it fills <code>{instructor}</code>, which the starter templates use under their closing; leave it blank and that line is simply left out. <b>Office hours</b> and <b>Office</b> next to it fill <code>{officehours}</code> and <code>{office}</code> the same way; the four office-hours templates list them on their own lines, so a blank one just disappears.</p>
     <p>Keep a library of response templates on the left. On the right, choose recipients. Students absent on the selected date are pre-selected. The filter buttons (<b>All</b>, <b>Absent</b>, <b>Excused</b>, <b>Absent 2+ times</b>) choose which students are listed, and only those students are shown. Picking Absent, Excused, or Absent 2+ times also selects everyone it lists, which you can then trim. Picking All shows the whole class without selecting anyone extra. Use the <b>−</b> and <b>+</b> beside “Absent 2+ times” to change the number (for example, 3+ or 4+); the list and selection update right away and the number is remembered. Search narrows the list further; <kbd>Shift</kbd>-click selects a range. If a selected student is hidden by your search, the count says so.</p>
     <ul>
       <li><b>One email (BCC)</b> writes a single message with every selected address on the BCC line, so students can't see each other's addresses. You can put your own address in To. Personal placeholders like <code>{first}</code> become “everyone”.</li>
@@ -896,6 +903,22 @@ function extraTemplatesV3() {   // added in template set v3
       body: "Hi {first},\n\nWe missed you in {class} on {date}. I shared an important announcement in class that day, and I didn't want you to miss it:\n\n[Write the announcement here, for example a changed due date, a new assignment, or an exam room change.]\n\nIf you have any questions about it, or about anything else from that day, just reply to this email or stop by office hours. I'm happy to help.\n\nHope to see you next class," }
   ];
 }
+function extraTemplatesV7() {   // added in template set v7: office hours and office, filled from your details
+  return [
+    { id: uid(), title: "Office hours — help catching up",
+      subject: "{class}: office hours",
+      body: "Hi {first},\n\nYou weren't in {class} on {date}. If you'd like help with the material from that day, you're welcome to come to office hours.\n\nOffice hours: {officehours}\nOffice: {office}\n\nNo appointment is needed during office hours. If office hours don't work for you, reply with a few times that do.\n\nBest regards," },
+    { id: uid(), title: "Office hours reminder — no reply needed",
+      subject: "{class}: office hours reminder",
+      body: "Hi {first},\n\nA quick reminder of when and where office hours are held for {class}, in case it's useful after missing class on {date}.\n\nOffice hours: {officehours}\nOffice: {office}\n\nThere's no need to reply to this email.\n\nBest," },
+    { id: uid(), title: "Where to get help with the material",
+      subject: "{class}: getting help with {date}",
+      body: "Hi {first},\n\nSince you missed {class} on {date}, here is where you can get help with that day's material:\n\n• Notes and materials: posted with the course materials\n• Office hours: {officehours}\n• Office: {office}\n• Email: reply to this message with any questions\n\nBest regards," },
+    { id: uid(), title: "Please stop by office hours",
+      subject: "{class}: please stop by office hours",
+      body: "Hi {first},\n\nI'd like to meet briefly about your absence from {class} on {date} and what you'll need to catch up. Please stop by during office hours, or reply with a time that works if you can't make it.\n\nOffice hours: {officehours}\nOffice: {office}\n\nThank you," }
+  ];
+}
 function extraTemplatesV6() {   // added in template set v6: gentle notes that say no reply is needed (appended so earlier ids stay the same)
   return [
     { id: uid(), title: "Quick note — no reply needed",
@@ -946,7 +969,7 @@ function extraTemplatesV4() {   // added in template set v4: general notes for a
 }
 /* Starter templates have stable ids ("st-01"…), so the app can always tell which ones a library is missing. */
 function starterTemplates() {
-  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
+  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6(), ...extraTemplatesV7()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
 }
 function defaultTemplates() { return starterTemplates(); }
 function defaultTemplatesBase() {
@@ -983,14 +1006,14 @@ function demo() {
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
     mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, notes: {}, emailLog: [], bin: [], templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
-    classView: 'list', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1 };
+    classView: 'list', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1, office: '', officeHours: '' };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
 const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets', 'notes', 'emailLog'];
-const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig', 'bin'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig', 'bin', 'office', 'officeHours'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 /* Every starter template is kept in the library unless the instructor deleted it (remembered in removedStarters),
    so restoring an older backup, importing old data, or opening an older copy never shrinks the library,
@@ -1541,7 +1564,7 @@ function analyzeMerge(inc) {
   const bids = new Set((g.bin || []).map(x => x.id));
   for (const x of ig.bin || []) if (!bids.has(x.id)) { (g.bin ||= []).push(clone(x)); rep.bin++; }
   g.bin.sort((a, b) => a.at < b.at ? 1 : -1);
-  if (!g.instructor && ig.instructor) g.instructor = ig.instructor;
+  for (const k of ['instructor', 'office', 'officeHours']) if (!g[k] && ig[k]) g[k] = ig[k];
   return { out, rep };
 }
 let restoreState = null;   // { inc, text, name, merge: {out, rep}, mode }
@@ -3172,15 +3195,23 @@ function renderTemplates(force) {
   if (ae !== $('#tplSubject')) $('#tplSubject').value = S.work.subject;
   if (ae !== $('#tplBody')) $('#tplBody').value = S.work.body;
   if (ae !== $('#instrName')) $('#instrName').value = S.instructor || '';
+  if (ae !== $('#offHours')) $('#offHours').value = S.officeHours || '';
+  if (ae !== $('#offRoom')) $('#offRoom').value = S.office || '';
   ['#tplTitle', '#tplDel', '#tplDup'].forEach(s => $(s).disabled = !t);
   $('#tplSave').textContent = t ? 'Save template' : 'Save as template';
   const missing = (S.removedStarters || []).length;
   $('#tplRestore').hidden = !missing; $('#tplRestore').textContent = `Restore ${missing} deleted starter template${missing === 1 ? '' : 's'}`;
   updateTplState();
 }
+/* Your details (name, office hours, office) are shared by every template. A line whose detail tag is blank is left out,
+   so "Office: {office}" disappears when no office is set; extra blank lines that leaves behind are tidied up. */
+const myDetails = () => ({ instructor: (S.instructor || '').trim(), officehours: (S.officeHours || '').trim(), office: (S.office || '').trim() });
+function fillWith(str, map) {
+  const lines = String(str).split('\n').filter(l => !(l.match(/\{(\w+)\}/g) || []).some(t => { const k = t.slice(1, -1).toLowerCase(); return k in myDetails() && !map[k]; }));
+  return lines.join('\n').replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m).replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '');
+}
 function fill(str, x) {
-  const map = { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: '', instructor: (S.instructor || '').trim() };
-  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m).replace(/[ \t]*\n?[ \t]*$/, '');   // an empty tag on the last line leaves no blank line
+  return fillWith(str, { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: '', ...myDetails() });
 }
 function b64(s) { const bytes = new TextEncoder().encode(s); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
 function eml(to, subject, body) {
@@ -3190,8 +3221,7 @@ function eml(to, subject, body) {
 let emailSel = new Set(), selDate = null, selAuto = true, lastPick = null, emailMode = 'group', emailFilter = '', emailView = 'absent';
 const absTotal = k => Object.values(S.attendance).filter(d => d[k] === 'A').length;
 function fillGroup(str) {
-  const map = { name: 'everyone', first: 'everyone', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class', instructor: (S.instructor || '').trim() };
-  return String(str).replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m).replace(/[ \t]*\n?[ \t]*$/, '');   // an empty tag on the last line leaves no blank line
+  return fillWith(str, { name: 'everyone', first: 'everyone', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class', ...myDetails() });
 }
 const mailAddr = e => encodeURIComponent(e).replace(/%40/g, '@');
 function groupMailto(to, list, subj, body) {
@@ -3883,6 +3913,8 @@ $('#tplSelect').addEventListener('change', e => {
 }));
 $('#tplTitle').addEventListener('input', () => { updateTplState(); renderDrafts(); });
 $('#instrName').addEventListener('input', e => { S.instructor = e.target.value; save(); renderDrafts(); });
+$('#offHours').addEventListener('input', e => { S.officeHours = e.target.value; save(); renderDrafts(); });
+$('#offRoom').addEventListener('input', e => { S.office = e.target.value; save(); renderDrafts(); });
 $('#tplSave').addEventListener('click', () => {
   let t = curTpl();
   if (!t) { t = { id: uid(), title: '', subject: '', body: '' }; S.templates.push(t); tplSel = t.id; }
