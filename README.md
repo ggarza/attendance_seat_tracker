@@ -73,7 +73,7 @@ This document describes the features and the main decisions behind them. It leav
 
 ## 6. Managing data
 
-- **Classes and rooms:** create, rename, and delete classes; set each class's meeting days; and assign, share, copy, or delete rooms.
+- **Classes and rooms:** create, rename, and delete classes; set each class's meeting days; and assign, share, copy, or delete rooms. Each class in the list has **Import…** (a CSV goes into that class, ignoring any class column) and **Check for drops…**; a separate **Import a CSV** card below handles files with several classes. The roster card is titled with the current class's name.
 - **Roster:**
   - **Edit** a student's first name, last name, and email in place, one row at a time. Changes are checked: a name is required and emails must look valid. Seats are changed only in Edit seats.
   - **Check for drops:** compare a new class list (for example, a Brightspace classlist export with only names) with the open class. Matches are by email, then name (ignoring accents, case, order, and extra surnames); near matches are shown for confirmation; missing students are listed with absences and last day present and can be dropped as of a chosen date, keeping their history. New names can be added to open seats, and dropped students who reappear can be restored. Nothing changes until the instructor confirms.

@@ -228,6 +228,9 @@ td.c{text-align:center}
 }
 #dcResult ul.plain li{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--line)}
 #dcResult .chip{cursor:default}
+#classMgr td.cact{white-space:normal;min-width:200px}
+#classMgr td.cact .btn{padding:4px 9px;font-size:12.5px;margin:2px 0}
+#classMgr td.cact .pill{margin-right:2px}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -444,34 +447,24 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
     <h3>Classes &amp; rooms</h3>
     <div id="classMgr"></div>
   </div>
+    <div class="card" id="importCard" style="margin-bottom:16px">
+      <h3>Import a CSV</h3>
+      <p class="small muted" style="margin-top:0">To bring a roster into <b>one class</b>, use <b>Import…</b> on that class above. This is for files with several classes: rows go to the class named in the file's <b>class</b> column, and a new name creates that class (a file without one goes into the class that's open). Other classes and the response templates aren't touched.</p>
+      <div class="stack">
+        <div class="fld"><span>For a class that already exists</span>
+          <div class="seg" role="group" aria-label="Import mode" style="align-self:flex-start">
+            <button type="button" data-imode="merge">Update roster</button>
+            <button type="button" data-imode="replace">Replace everything</button></div></div>
+        <p class="small impModeNote" id="impModeNote" style="margin:0"></p>
+        <label class="switch impRemoveWrap" id="impRemoveWrap"><input type="checkbox" id="impRemove"> Also remove students who aren't in the file (their attendance is deleted)</label>
+        <p class="small" style="margin:0">Drag a CSV file anywhere onto this page, or choose one:</p>
+        <label class="fld"><span>Choose a CSV file</span><input type="file" id="csvFile" accept=".csv,.tsv,.txt,.json,text/csv,application/json"></label>
+        <label class="fld"><span>…or paste CSV text</span><textarea id="csvText" rows="8" spellcheck="false" placeholder="class,name,email,row,seat"></textarea></label>
+        <div class="row"><button class="btn primary" id="importBtn" type="button">Import</button></div>
+      </div>
+  </div>
   <div class="two">
     <div>
-      <div class="card" id="dropCard">
-        <h3>Check for drops</h3>
-        <p class="small muted" style="margin-top:0">Compare a new class list (for example, a Brightspace classlist export) with <b>this class</b> to see who is no longer enrolled. Only names are needed; emails help. Nothing changes until you press a button.</p>
-        <div class="stack">
-          <label class="fld"><span>Choose the new roster (.csv or .txt)</span><input type="file" id="dcFile" accept=".csv,.tsv,.txt,text/csv,text/plain"></label>
-          <label class="fld"><span>…or paste names, one per line</span><textarea id="dcText" rows="4" spellcheck="false" placeholder="Garza, Ana&#10;Luis Pérez&#10;mia.thompson@utrgv.edu"></textarea></label>
-          <div class="row"><button class="btn primary" id="dcGo" type="button">Compare</button></div>
-        </div>
-        <div id="dcResult"></div>
-      </div>
-      <div class="card">
-        <h3>Restore from CSV</h3>
-        <p class="small muted">Rows go to the class named in the file's <b>class</b> column (a new name creates that class); a file without one goes into the class that's open. Other classes and the response templates aren't touched.</p>
-        <div class="stack">
-          <div class="fld"><span>For a class that already exists</span>
-            <div class="seg" role="group" aria-label="Import mode" style="align-self:flex-start">
-              <button type="button" data-imode="merge">Update roster</button>
-              <button type="button" data-imode="replace">Replace everything</button></div></div>
-          <p class="small" id="impModeNote" style="margin:0"></p>
-          <label class="switch" id="impRemoveWrap"><input type="checkbox" id="impRemove"> Also remove students who aren't in the file (their attendance is deleted)</label>
-          <p class="small" style="margin:0">Drag a CSV file anywhere onto this page, or choose one:</p>
-          <label class="fld"><span>Choose a CSV file</span><input type="file" id="csvFile" accept=".csv,.tsv,.txt,.json,text/csv,application/json"></label>
-          <label class="fld"><span>…or paste CSV text</span><textarea id="csvText" rows="8" spellcheck="false" placeholder="class,name,email,row,seat"></textarea></label>
-          <div class="row"><button class="btn primary" id="importBtn" type="button">Import</button></div>
-        </div>
-      </div>
       <div class="card">
         <h3>Export</h3>
         <div class="row">
@@ -523,7 +516,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       </div>
     </div>
     <div class="card">
-      <h3>Current roster</h3>
+      <h3 id="rosterTitle">Current roster</h3>
       <div id="roster"></div>
     </div>
   </div>
@@ -605,6 +598,32 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <button class="btn" type="button" id="shCancel">Cancel</button></div>
   </form>
 </dialog>
+<dialog id="impDlg" aria-labelledby="impTitle">
+  <div class="hd"><strong id="impTitle">Import into a class</strong><button class="btn" type="button" id="impClose">Close</button></div>
+  <div class="bd stack">
+    <p class="small muted" style="margin:0">Everything in the file goes into this class, even if the file names another class or has no class column. You'll see a summary before anything changes.</p>
+    <div class="seg" role="group" aria-label="Import mode" style="align-self:flex-start">
+      <button type="button" data-imode="merge">Update roster</button>
+      <button type="button" data-imode="replace">Replace everything</button></div>
+    <p class="small impModeNote" style="margin:0"></p>
+    <label class="switch impRemoveWrap"><input type="checkbox" id="impDlgRemove"> Also remove students who aren't in the file (their attendance is deleted)</label>
+    <label class="fld"><span>Choose a CSV file</span><input type="file" id="impDlgFile" accept=".csv,.tsv,.txt,text/csv"></label>
+    <label class="fld"><span>…or paste CSV text</span><textarea id="impDlgText" rows="6" spellcheck="false" placeholder="last_name,first_name,email"></textarea></label>
+    <div class="row"><button class="btn primary" id="impDlgGo" type="button">Import</button></div>
+  </div>
+</dialog>
+<dialog id="dropDlg" aria-labelledby="dropTitle">
+  <div class="hd"><strong id="dropTitle">Check for drops</strong><button class="btn" type="button" id="dropClose">Close</button></div>
+  <div class="bd" id="dropCard">
+    <p class="small muted" style="margin-top:0">Compare a new class list (for example, a Brightspace classlist export) with this class to see who is no longer enrolled. Only names are needed; emails help. Nothing changes until you press a button.</p>
+    <div class="stack">
+      <label class="fld"><span>Choose the new roster (.csv or .txt)</span><input type="file" id="dcFile" accept=".csv,.tsv,.txt,text/csv,text/plain"></label>
+      <label class="fld"><span>…or paste names, one per line</span><textarea id="dcText" rows="4" spellcheck="false" placeholder="Garza, Ana&#10;Luis Pérez&#10;mia.thompson@utrgv.edu"></textarea></label>
+      <div class="row"><button class="btn primary" id="dcGo" type="button">Compare</button></div>
+    </div>
+    <div id="dcResult"></div>
+  </div>
+</dialog>
 <dialog id="sumDlg" aria-labelledby="sumTitle">
   <div class="hd"><strong id="sumTitle">Student summary</strong>
     <span class="row" style="gap:6px"><button class="btn" type="button" id="sumEmail">Email this student</button><button class="btn" type="button" id="sumPrint">Print</button><button class="btn" type="button" id="sumClose">Close</button></span></div>
@@ -682,8 +701,10 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
     <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
     <h4>Backups, restoring, and recently deleted</h4>
     <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Students dropped in the backup are dropped here too (you can uncheck that), and students dropped here but active in the backup can be restored. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
+    <h4>Importing a roster</h4>
+    <p>Each class in <b>Manage data → Classes &amp; rooms</b> has <b>Import…</b>: choose a CSV (or paste one) and everything in it goes into that class, whatever class column the file has. <b>Update roster</b> (the default) matches students and keeps seats and history; <b>Replace everything</b> makes the file the class's whole roster. For a file with several classes, use <b>Import a CSV</b> just below the class list; rows go to the class named in each row.</p>
     <h4>Checking for drops</h4>
-    <p>Under <b>Manage data → Check for drops</b>, choose a new class list (a Brightspace classlist export works; only names are needed) or paste names, one per line, and press <b>Compare</b>. It's compared with the class that's open: students matched by email or name (accents, case, name order, and extra surnames don't matter) are fine; names that are close but not identical are listed under <b>Check these</b> for you to confirm; and anyone missing from the new list is listed with their absences and last day present. <b>Drop checked students</b> drops them as of the date you choose, keeping their attendance. Students in the new list who aren't in the class can be added to open seats, and anyone you'd marked dropped who is back on the list can be restored. Instructors and TAs in a Brightspace file are skipped.</p>
+    <p>In <b>Manage data → Classes &amp; rooms</b>, press <b>Check for drops…</b> on a class, choose a new class list (a Brightspace classlist export works; only names are needed) or paste names, one per line, and press <b>Compare</b>. It's compared with that class: students matched by email or name (accents, case, name order, and extra surnames don't matter) are fine; names that are close but not identical are listed under <b>Check these</b> for you to confirm; and anyone missing from the new list is listed with their absences and last day present. <b>Drop checked students</b> drops them as of the date you choose, keeping their attendance. Students in the new list who aren't in the class can be added to open seats, and anyone you'd marked dropped who is back on the list can be restored. Instructors and TAs in a Brightspace file are skipped.</p>
     <h4>Manage data</h4>
     <p>CSV is how you back up, restore, and move your data. With Manage data open, drag a CSV file anywhere onto the page, or choose one with the file picker; you'll see a summary to confirm before anything is replaced. Each row is one student: name, email, row, and seat, followed by one column per attendance date. Importing replaces the current roster, seating, and attendance. Students with no seat are placed in open seats, so a plain roster from another system imports directly. Download a full CSV from that page at any time as a backup.</p>
     <h4>Notes, the email log, and student summaries</h4>
@@ -1172,7 +1193,9 @@ function renderClassMgr() {
         <td>${dayPicker(c.days, `data-cday="${c.id}"`)}</td>
         <td><select data-croom="${c.id}" aria-label="Room for ${esc(c.className || 'class')}">${roomOpts(c.roomId)}</select></td>
         <td class="c">${Object.keys(c.seats).filter(l => c.students[c.seats[l]]).length}</td>
-        <td style="white-space:nowrap">${c.id === S.classId ? '<span class="pill P">Current</span>' : `<button type="button" class="btn" data-copen="${c.id}">Open</button>`}
+        <td class="cact">${c.id === S.classId ? '<span class="pill P">Current</span>' : `<button type="button" class="btn" data-copen="${c.id}">Open</button>`}
+          <button type="button" class="btn" data-cimp="${c.id}" title="Import a roster or attendance CSV into this class">Import…</button>
+          <button type="button" class="btn" data-cdrop="${c.id}" title="Compare a new class list with this class">Check for drops…</button>
           <button type="button" class="btn danger" data-cdel="${c.id}" ${classes.length < 2 ? 'disabled title="You need at least one class"' : ''}>Delete</button></td></tr>`).join('')}</tbody></table></div>
     <div class="table-wrap" style="max-height:none;margin-top:12px"><table>
       <thead><tr><th>Room</th><th>Layout</th><th>Used by</th><th></th></tr></thead><tbody>${rooms.map(r => { const used = classesInRoom(r.id); return `<tr>
@@ -1189,6 +1212,8 @@ function renderClassMgr() {
   }));
   box.querySelectorAll('[data-rname]').forEach(i => i.addEventListener('change', () => { STORE.rooms[i.dataset.rname].name = i.value.trim() || 'Room'; commit(); }));
   box.querySelectorAll('[data-copen]').forEach(b => b.addEventListener('click', () => switchClass(b.dataset.copen)));
+  box.querySelectorAll('[data-cimp]').forEach(b => b.addEventListener('click', () => openImportFor(b.dataset.cimp)));
+  box.querySelectorAll('[data-cdrop]').forEach(b => b.addEventListener('click', () => openDropCheck(b.dataset.cdrop)));
   box.querySelectorAll('[data-cdel]').forEach(b => b.addEventListener('click', () => {
     const c = STORE.classes[b.dataset.cdel], n = Object.keys(c.seats).length;
     if (!confirm(`Delete “${c.className || 'Untitled class'}” with ${n} student${n === 1 ? '' : 's'} and all of its attendance? Its room is kept. You can restore the class from Recently deleted for 30 days.`)) return;
@@ -2378,6 +2403,7 @@ function renderRoster() {
       <td class="act"><button type="button" class="btn" data-sum="${x.k}">Summary</button> <button type="button" class="btn" data-restore="${x.k}" aria-label="Restore ${esc(x.s.name)}">Restore</button>
       <button type="button" class="btn danger" data-purge="${x.k}" aria-label="Delete ${esc(x.s.name)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
   const box = $('#roster'); box.innerHTML = h;
+  $('#rosterTitle').innerHTML = `Current roster for <span style="text-transform:none;color:var(--text)">${esc(S.className || 'Untitled class')}</span>`;
   const saveName = k => { const st = S.students[k]; setNames(st, box.querySelector(`[data-nfirst="${k}"]`).value.trim(), box.querySelector(`[data-nlast="${k}"]`).value.trim()); };
   box.querySelectorAll('[data-nfirst],[data-nlast]').forEach(i => i.addEventListener('change', () => { saveName(i.dataset.nfirst || i.dataset.nlast); save(); }));
   box.querySelectorAll('[data-nok]').forEach(b => b.addEventListener('click', () => {
@@ -3009,14 +3035,14 @@ function mergeGroup(P, items, cls, room, removeMissing) {
 }
 /* Import: rows go to the class named in the "class" column (new names become new classes);
    a file without that column goes into the open class. */
-function importCSV(text) {
+function importCSV(text, targetId = null, removeOpt = null) {
   const P = readCSV(text);
   if (P.errs.length) throw new Error(P.errs.join('\n'));
   syncStore();
   const groups = new Map();
   for (const it of P.items) {
     if (!it.row.some(x => String(x).trim())) continue;
-    const nm = cellOf(it.row, P.c.cls), key = fold(nm);
+    const nm = targetId ? '' : cellOf(it.row, P.c.cls), key = fold(nm);   // importing into one class: ignore the class column
     if (!groups.has(key)) groups.set(key, { name: nm, items: [] });
     groups.get(key).items.push(it);
   }
@@ -3026,10 +3052,10 @@ function importCSV(text) {
   if (!groups.size) groups.set('', { name: '', items: [] });
   const single = groups.size === 1;
   const findClass = nm => Object.values(STORE.classes).find(c => fold(c.className) === fold(nm));
-  const plans = [], errs = [], merge = S.importMode !== 'replace', removeMissing = merge && $('#impRemove').checked;
+  const plans = [], errs = [], merge = S.importMode !== 'replace', removeMissing = merge && (removeOpt ?? $('#impRemove').checked);
   for (const [key, grp] of groups) {
-    const name = key ? grp.name : (P.meta.class || '');
-    const target = key ? findClass(grp.name) : STORE.classes[S.classId];
+    const name = targetId ? '' : key ? grp.name : (P.meta.class || '');
+    const target = targetId ? STORE.classes[targetId] : key ? findClass(grp.name) : STORE.classes[S.classId];
     if (target && merge) {                                  // update roster: keep seats and history
       const m = mergeGroup(P, grp.items, target, STORE.rooms[target.roomId], removeMissing);
       m.errs.forEach(e => errs.push((single ? '' : `${name}: `) + e));
@@ -3646,7 +3672,7 @@ function renderDropCheck() {
     dropCheck.res = compareRoster(dropCheck.rows); commit();
     toast(`Added ${n(added, 'student')} to open seats.${full ? ` ${full} didn't fit: add seats in Edit seats first.` : ''}`, !!full);
   });
-  $('#dcClear').addEventListener('click', () => { dropCheck = null; $('#dcText').value = ''; $('#dcFile').value = ''; renderDropCheck(); });
+  $('#dcClear').addEventListener('click', () => { dropCheck = null; $('#dcText').value = ''; $('#dcFile').value = ''; renderDropCheck(); $('#dropDlg').close(); });
 }
 function runDropCheck(text, file) {
   if (!text.trim()) return toast('Choose a roster file or paste names first.', true);
@@ -3733,11 +3759,35 @@ $('#importBtn').addEventListener('click', () => runImport($('#csvText').value));
 function renderImportMode() {
   const m = S.importMode === 'replace' ? 'replace' : 'merge';
   document.querySelectorAll('[data-imode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.imode === m)));
-  $('#impRemoveWrap').hidden = m !== 'merge';
-  $('#impModeNote').innerHTML = m === 'merge'
+  document.querySelectorAll('.impRemoveWrap').forEach(w => w.hidden = m !== 'merge');
+  const note = m === 'merge'
     ? 'Matches students by email, then name. Updates their details, adds new students in open seats, and applies any P/A/E marks in the file. <b>Seats and attendance history are kept</b>; blank cells change nothing.'
     : '<span style="color:var(--excused)">The file becomes the class\'s whole roster, seating, and attendance. Anything not in the file is removed.</span>';
+  document.querySelectorAll('.impModeNote').forEach(n => n.innerHTML = note);
 }
+/* Per-class Import… and Check for drops… (from the class list) */
+let impTarget = null;
+function openImportFor(cid) {
+  const c = STORE.classes[cid]; if (!c) return;
+  impTarget = cid; $('#impTitle').textContent = `Import into “${c.className || 'Untitled class'}”`;
+  $('#impDlgText').value = ''; $('#impDlgFile').value = ''; $('#impDlgRemove').checked = false;
+  renderImportMode(); $('#impDlg').showModal(); $('#impDlgFile').focus();
+}
+function runImportInto(text) {
+  if (!text.trim()) return toast('Choose a file or paste CSV text first.', true);
+  try { if (importCSV(text, impTarget, $('#impDlgRemove').checked)) $('#impDlg').close(); }
+  catch (err) { toast('Import failed:\n' + err.message, true); }
+}
+$('#impDlgGo').addEventListener('click', () => runImportInto($('#impDlgText').value));
+$('#impDlgFile').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { $('#impDlgText').value = r.result; runImportInto(String(r.result)); }; r.readAsText(f); });
+$('#impClose').addEventListener('click', () => $('#impDlg').close());
+function openDropCheck(cid) {
+  if (cid !== S.classId) { switchClass(cid); toast(`Switched to “${S.className || 'Untitled class'}”.`); }
+  if (dropCheck && dropCheck.cid !== S.classId) dropCheck = null;
+  $('#dropTitle').textContent = `Check for drops: “${S.className || 'Untitled class'}”`;
+  renderDropCheck(); $('#dropDlg').showModal(); (dropCheck ? $('#dropClose') : $('#dcFile')).focus();
+}
+$('#dropClose').addEventListener('click', () => $('#dropDlg').close());
 document.querySelectorAll('[data-imode]').forEach(b => b.addEventListener('click', () => { S.importMode = b.dataset.imode; save(); renderImportMode(); }));
 
 /* Drag a CSV anywhere onto the visible Manage data view. Seat drag-and-drop carries no files, so it's untouched. */
