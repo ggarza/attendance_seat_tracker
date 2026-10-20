@@ -383,8 +383,8 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
 <section class="view" id="view-classroom" aria-label="Classroom">
   <div class="toolbar">
     <div class="seg" role="group" aria-label="Classroom view">
-      <button type="button" data-cview="chart" title="Seating chart (L)">Seating chart</button>
       <button type="button" data-cview="list" title="List (L)">List</button>
+      <button type="button" data-cview="chart" title="Seating chart (L)">Seating chart</button>
     </div>
     <span class="row" id="chartTools">
       <span class="seg" role="group" aria-label="Mode">
@@ -718,7 +718,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <tr><td><kbd>I</kbd></td><td>Open that student's summary</td></tr>
       <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Cycle the focused seat (Edit seats: select it)</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last seat in the row (add <kbd>Shift</kbd> for the whole room)</td></tr>
-      <tr><td><kbd>L</kbd></td><td>Switch between Seating chart and List</td></tr>
+      <tr><td><kbd>L</kbd></td><td>Switch between List and Seating chart</td></tr>
       <tr><td><kbd>M</kbd></td><td>Switch between Take attendance and Edit seats</td></tr>
       <tr><td><kbd>V</kbd></td><td>Toggle Instructor view</td></tr>
       <tr><td><kbd>U</kbd></td><td>Unlock (or re-lock) a date that isn't today</td></tr>
@@ -940,7 +940,7 @@ function demo() {
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
     mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, notes: {}, emailLog: [], bin: [], templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
-    classView: 'chart', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1 };
+    classView: 'list', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1 };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
@@ -1973,9 +1973,9 @@ function makeSheet(pdf) {
   (S.sheets ||= []).push(sh); S.sheetSel = sh.id;
   S.sheetOpts = { dates: sheetDlgMode, cols: parseInt($('#shCols').value, 10) || 8, extra, orient: sheetDlgOrient, ev: 2, rowH: $('#shFit1').checked ? (S.sheetOpts?.rowH || SHEET.rowH) : rowH, fit1: $('#shFit1').checked };
   $('#sheetDlg').close();
-  if (S.view === 'classroom' && S.classView === 'list') S.listMode = 'sheet';
+  Object.assign(S, { view: 'classroom', classView: 'list', listMode: 'sheet', mode: 'take' }); listFocus.i = null;   // open the new sheet
   commit();
-  if (pdf) downloadSheet(sh); else toast(`Sheet ${n} is ready in Sheet view.`);
+  if (pdf) downloadSheet(sh); else toast(`Sheet ${n} is open in Sheet view.`);
 }
 $('#sheetPdfBtn').addEventListener('click', openSheetDialog);
 $('#sheetPdfBtn2').addEventListener('click', openSheetDialog);

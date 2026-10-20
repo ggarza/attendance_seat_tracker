@@ -31,6 +31,8 @@ This document describes the features and the main decisions behind them. It leav
 - **Edit seats** assigns students to seats, moves or swaps them (by dragging or by seat number), and changes the room layout. Layout changes that would leave students without a seat are refused, or the app offers to move only the students who don't fit. A shared room can't be changed in a way that unseats another class's students. Students can't be removed from this view.
 
 ### List
+- The list is the default view the first time the app opens; after that it reopens on whatever tab and view were last used. Its toggle sits to the left of Seating chart.
+- Creating a sign-in sheet (with or without a PDF) opens that sheet in Sheet mode.
 - The list shows the roster sorted by last name, the same order as the printed sign-in sheet, with P / A / E controls on each row.
 - **One date** mode is for the selected date. **Sheet** mode puts all the dates from one printed sheet side by side, so a filled-in sheet can be entered in one pass.
 - **Start everyone as Present or Absent** sets how an unrecorded date is treated. With Absent, the instructor marks only the students who signed in, and the first mark records the date.
