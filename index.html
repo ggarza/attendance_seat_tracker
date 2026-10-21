@@ -554,6 +554,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
           <button class="btn" id="tplDup" type="button">Duplicate</button>
         </div>
         <label class="fld"><span>Template title</span><input type="text" id="tplTitle"></label>
+        <p class="small muted" id="tplOrig" hidden style="margin:-4px 0 0">Edited starter · <button type="button" class="linkish" id="tplOrigBtn" style="color:var(--accent)">Restore original wording</button></p>
         <label class="fld"><span>Subject</span><input type="text" id="tplSubject"></label>
         <label class="fld"><span>Message</span><textarea id="tplBody" rows="10"></textarea></label>
         <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{instructor}</code> <code>{officehours}</code> <code>{office}</code></p>
@@ -741,7 +742,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <h4>Review history</h4>
     <p>One row per student and one column for every recorded date, with absence and excused totals. To go to a date, use <b>Jump to date</b>, the date bar, its calendar (<kbd>G</kbd>), or <kbd>[</kbd> / <kbd>]</kbd> to hop between recorded dates. The grid scrolls to that column, flashes it, and puts the cursor there. Type in <b>Find student</b> (or press <kbd>/</kbd>) to show only matching students. Click the <b>Last name</b>, <b>First name</b>, <b>Row</b> (seat order), <b>Absent</b>, or <b>Excused</b> header to sort; click it again to reverse. Absences and excused sort most-first, and the sort is remembered. While you mark cells, rows stay where they are so the cursor doesn't jump; press <b>↻ Re-sort</b> (or Esc) to refresh the order. It is editable: click any cell to cycle Present → Absent → Excused, or focus it and press <kbd>P</kbd>, <kbd>A</kbd>, or <kbd>E</kbd>. Use <b>Add date</b> to record a day where everyone was present, and × in a column header to delete that date. Take attendance and Review history edit the same records, so a change in one shows up in the other immediately.</p>
     <h4>Send emails</h4>
-    <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload. Type your name in <b>Your name for {instructor}</b> (above Save template) and it fills <code>{instructor}</code>, which the starter templates use under their closing; leave it blank and that line is simply left out. <b>Office hours</b> and <b>Office</b> next to it fill <code>{officehours}</code> and <code>{office}</code> the same way; the four office-hours templates list them on their own lines, so a blank one just disappears.</p>
+    <p>The <b>Subject</b> and <b>Message</b> on the left are the email being drafted, and the drafts on the right update as you type. Picking a template loads it as a starting point. Your edits are used right away without saving; an “Edited” note appears with <b>Revert</b> to go back. <b>Save template</b> keeps your edits in that template, and <b>Duplicate</b> saves them as a new one. Your draft is kept if you reload. A starter template you've changed and saved is marked <b>(edited)</b> in the template menu, with <b>Restore original wording</b> under its title; your edited version goes to Recently deleted, so it can be brought back as its own template. Type your name in <b>Your name for {instructor}</b> (above Save template) and it fills <code>{instructor}</code>, which the starter templates use under their closing; leave it blank and that line is simply left out. <b>Office hours</b> and <b>Office</b> next to it fill <code>{officehours}</code> and <code>{office}</code> the same way; the four office-hours templates list them on their own lines, so a blank one just disappears.</p>
     <p>Keep a library of response templates on the left. On the right, choose recipients. Students absent on the selected date are pre-selected. The filter buttons (<b>All</b>, <b>Absent</b>, <b>Excused</b>, <b>Absent 2+ times</b>) choose which students are listed, and only those students are shown. Picking Absent, Excused, or Absent 2+ times also selects everyone it lists, which you can then trim. Picking All shows the whole class without selecting anyone extra. Use the <b>−</b> and <b>+</b> beside “Absent 2+ times” to change the number (for example, 3+ or 4+); the list and selection update right away and the number is remembered. Search narrows the list further; <kbd>Shift</kbd>-click selects a range. If a selected student is hidden by your search, the count says so.</p>
     <ul>
       <li><b>One email (BCC)</b> writes a single message with every selected address on the BCC line, so students can't see each other's addresses. You can put your own address in To. Personal placeholders like <code>{first}</code> become “everyone”.</li>
@@ -1475,7 +1476,8 @@ function restoreFromBin(id) {
     const r = clone(x.data.room); if (STORE.rooms[r.id]) r.id = uid(); STORE.rooms[r.id] = r; msg = `Room “${r.name}” restored.`;
   } else if (x.kind === 'template') {
     const t = clone(x.data.t);
-    if (S.templates.some(y => y.id === t.id)) msg = `“${t.title}” is already in the library.`; else S.templates.push(t); S.removedStarters = (S.removedStarters || []).filter(y => y !== x.data.t.id); msg ||= `Template “${t.title}” restored.`;
+    if (x.data.edited && S.templates.some(y => y.id === t.id)) { t.id = uid(); t.title = `${t.title} (my version)`; S.templates.push(t); msg = `Your edited version is back as “${t.title}”.`; }
+    else if (S.templates.some(y => y.id === t.id)) msg = `“${t.title}” is already in the library.`; else S.templates.push(t); S.removedStarters = (S.removedStarters || []).filter(y => y !== x.data.t.id); msg ||= `Template “${t.title}” restored.`;
   }
   S.bin.splice(i, 1); commit();
   toast(msg + (rep.unseated ? ` ${rep.unseated} had no open seat and went to Dropped students.` : '') + (rep.skipped ? ` ${rep.skipped} mark${rep.skipped === 1 ? '' : 's'} were for dates that no longer exist.` : ''));
@@ -3183,13 +3185,20 @@ function curMsg() {                                    // what the drafts use
   if (!t && !S.work.subject && !S.work.body) return null;
   return { title: t?.title || 'Custom message', subject: S.work.subject, body: S.work.body, edited: isEdited() };
 }
+/* A starter template (st-NN) whose saved wording differs from the app's built-in version. */
+function editedStarter(t) {
+  if (!t || !/^st-\d+$/.test(t.id)) return null;
+  const nt = (editedStarter.cache ||= new Map(starterTemplates().map(x => [x.id, { ...x, sig: tplSig(x) }]))).get(t.id);
+  return nt && nt.sig !== tplSig(t) ? nt : null;
+}
 function updateTplState() {
   const ed = isEdited();
   $('#tplState').hidden = !ed; $('#tplRevert').hidden = !ed || !curTpl();
 }
 function renderTemplates(force) {
   const t = curTpl(); tplSel = t?.id || null; ensureWork();
-  $('#tplSelect').innerHTML = S.templates.map(x => `<option value="${x.id}" ${x.id === tplSel ? 'selected' : ''}>${esc(x.title || 'Untitled')}</option>`).join('') || '<option value="">No templates</option>';
+  $('#tplSelect').innerHTML = S.templates.map(x => `<option value="${x.id}" ${x.id === tplSel ? 'selected' : ''}>${esc(x.title || 'Untitled')}${editedStarter(x) ? ' (edited)' : ''}</option>`).join('') || '<option value="">No templates</option>';
+  $('#tplOrig').hidden = !editedStarter(t);
   const ae = force ? null : document.activeElement;  // never overwrite a field you're typing in (unless you just switched templates)
   if (ae !== $('#tplTitle')) $('#tplTitle').value = t?.title || '';
   if (ae !== $('#tplSubject')) $('#tplSubject').value = S.work.subject;
@@ -3941,6 +3950,13 @@ $('#tplDel').addEventListener('click', () => {
   if (/^st-\d+$/.test(t.id)) (S.removedStarters ||= []).includes(t.id) || S.removedStarters.push(t.id);   // don't bring it back on its own
   if (S.work?.tpl === t.id) { if (tplSel) loadWork(curTpl()); else S.work.tpl = null; }   // with no templates left, keep the text as a custom message
   commit(); renderTemplates(true);
+});
+$('#tplOrigBtn').addEventListener('click', () => {
+  const t = curTpl(), nt = editedStarter(t); if (!nt) return;
+  if (!confirm(`Restore the original wording of “${nt.title}”? Your edited version is kept in Manage data → Recently deleted for 30 days.`)) return;
+  binPut('template', `${t.title || 'Untitled'} (your edited version)`, { t, edited: true }, null);
+  Object.assign(t, { title: nt.title, subject: nt.subject, body: nt.body }); loadWork(t);
+  commit(); renderTemplates(true); toast(`Restored the original wording of “${nt.title}”.`);
 });
 $('#tplRestore').addEventListener('click', () => {
   const n = (S.removedStarters || []).length; S.removedStarters = []; fixTemplates(S); commit(); renderTemplates(true);
