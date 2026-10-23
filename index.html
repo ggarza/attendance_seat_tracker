@@ -384,6 +384,7 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
   <button type="button" id="kbdBtn" style="margin-left:auto" title="Keyboard shortcuts">⌨ Shortcuts <kbd>?</kbd></button>
 </nav>
 <div class="note" id="recoverBar" hidden style="margin:10px 16px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div>
+<div class="note" id="termBar" hidden style="margin:10px 16px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap" role="status"></div>
 <div class="datebar today" id="dateBar" role="group" aria-label="Class date">
   <button class="dnav" type="button" id="dPrev" aria-label="Previous day" title="Previous day ( [ )">‹</button>
   <div class="dmain">
@@ -806,7 +807,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <h4>Instructor view</h4>
     <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
     <h4>Storage</h4>
-    <p>Browsers give each site about 5 MB for this kind of data; a busy semester with several classes uses well under 1 MB. The backup card shows how much is used. If space runs out, the oldest automatic copies are removed first so your changes still save. The app also asks the browser to keep its data rather than clear it when the computer is low on space (in Safari, adding the app to the Dock or Home Screen does the same). At the end of a semester: download a backup, then delete the classes you've finished.</p>
+    <p>Browsers give each site about 5 MB for this kind of data; a busy semester with several classes uses well under 1 MB. The backup card shows how much is used. If space runs out, the oldest automatic copies are removed first so your changes still save. The app also asks the browser to keep its data rather than clear it when the computer is low on space (in Safari, adding the app to the Dock or Home Screen does the same). At the end of a semester: download a backup, then delete the classes you've finished. The app follows UTRGV's academic calendar: the day after grades are due (for Fall 2026, December 15), a reminder appears if a class was used that term and no class has been created since it ended. <b>Remind me next week</b> snoozes it; <b>Done</b> dismisses it for that term; creating a class for the new term ends it.</p>
     <h4>Backups, restoring, and recently deleted</h4>
     <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Students dropped in the backup are dropped here too (you can uncheck that), and students dropped here but active in the backup can be restored. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
     <h4>Importing a roster</h4>
@@ -1115,14 +1116,14 @@ function demo() {
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
     mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, notes: {}, emailLog: [], guide: null, topics: {}, bin: [], templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
-    classView: 'list', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1, office: '', officeHours: '' };
+    classView: 'list', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1, office: '', officeHours: '', cleanupSeen: {} };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
 const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets', 'notes', 'emailLog', 'guide', 'topics'];
-const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig', 'bin', 'office', 'officeHours'];
+const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig', 'bin', 'office', 'officeHours', 'cleanupSeen'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 /* Every starter template is kept in the library unless the instructor deleted it (remembered in removedStarters),
    so restoring an older backup, importing old data, or opening an older copy never shrinks the library,
@@ -1839,7 +1840,7 @@ function counts(date, stOf = k => getStatus(date, k)) {
 
 /* ---------- render ---------- */
 function render() {
-  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') { renderBackup(); renderBin(); renderDropCheck(); renderStorage(); }
+  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); renderTermBar(); if (S.view === 'import') { renderBackup(); renderBin(); renderDropCheck(); renderStorage(); }
   $('#instructorView').checked = !!S.instructorView;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
@@ -2698,6 +2699,60 @@ function describeCopy(c) {
   return { src, what };
 }
 let recoverDismissed = false;
+/* ---------- end-of-semester reminder ----------
+   UTRGV's academic calendar (2026–27, Office of the University Registrar). Each term's reminder starts the day after
+   grades are due, so attendance is still at hand while grades are finalized. Later years use the same pattern. */
+const TERMS_2026_27 = [
+  { id: 'fall-2026', name: 'Fall 2026', start: '2026-08-26', end: '2026-12-10', grades: '2026-12-14' },
+  { id: 'spring-2027', name: 'Spring 2027', start: '2027-01-19', end: '2027-05-13', grades: '2027-05-17' },
+  { id: 'mini-2027', name: 'Mini term 2027', start: '2027-05-17', end: '2027-06-04', grades: '2027-06-07' },
+  { id: 'summer1-2027', name: 'Summer I 2027', start: '2027-06-07', end: '2027-07-13', grades: '2027-07-14' },
+  { id: 'summer2-2027', name: 'Summer II 2027', start: '2027-07-15', end: '2027-08-20', grades: '2027-08-23' }
+];
+function termsFor(y) {   // approximate pattern for years not in the published calendar
+  return [
+    { id: `spring-${y}`, name: `Spring ${y}`, start: `${y}-01-15`, end: `${y}-05-14`, grades: `${y}-05-18` },
+    { id: `mini-${y}`, name: `Mini term ${y}`, start: `${y}-05-16`, end: `${y}-06-05`, grades: `${y}-06-08` },
+    { id: `summer1-${y}`, name: `Summer I ${y}`, start: `${y}-06-06`, end: `${y}-07-14`, grades: `${y}-07-15` },
+    { id: `summer2-${y}`, name: `Summer II ${y}`, start: `${y}-07-15`, end: `${y}-08-21`, grades: `${y}-08-24` },
+    { id: `fall-${y}`, name: `Fall ${y}`, start: `${y}-08-20`, end: `${y}-12-11`, grades: `${y}-12-15` }
+  ];
+}
+function allTerms(today) {
+  const y = +today.slice(0, 4), known = new Set(TERMS_2026_27.map(t => t.id));
+  return [...TERMS_2026_27, ...[y - 1, y].flatMap(termsFor).filter(t => !known.has(t.id))].sort((a, b) => a.grades < b.grades ? -1 : 1);
+}
+/* The term to remind about: the most recent one whose grades are in, if a class has attendance during it and no class
+   has been created since it ended. */
+function termToClean(today = todayStr()) {
+  const done = allTerms(today).filter(t => shiftDate(t.grades, 1) <= today && t.grades > shiftDate(today, -150));
+  syncStore();
+  const classes = Object.values(STORE.classes);
+  for (const t of done.reverse()) {
+    const used = classes.filter(c => Object.keys(c.attendance || {}).some(d => d >= t.start && d <= t.end));
+    if (!used.length) continue;
+    const newer = classes.some(c => c.created && c.created > t.end);
+    return newer ? null : { ...t, classes: used };
+  }
+  return null;
+}
+let termBarHidden = false;
+function renderTermBar() {
+  const bar = $('#termBar'); if (!bar) return;
+  const t = termBarHidden ? null : termToClean(), seen = S.cleanupSeen || {};
+  if (!t || seen[t.id] === 'done' || (seen[t.id] && seen[t.id] > todayStr())) { bar.hidden = true; return; }
+  const names = t.classes.map(c => `“${esc(c.className || 'Untitled class')}”`).join(', ');
+  bar.hidden = false;
+  bar.innerHTML = `<span style="flex:1 1 380px">🎓 <b>${esc(t.name)} is over</b> (grades were due ${esc(longDate(t.grades))}). Time for an end-of-semester cleanup of ${names}: download a backup, then delete the classes you've finished. Their rooms stay for next semester.</span>
+    <button type="button" class="btn primary" id="termBackup">Download backup</button>
+    <button type="button" class="btn" id="termManage">Go to Manage data</button>
+    <button type="button" class="btn ghost" id="termLater">Remind me next week</button>
+    <button type="button" class="btn ghost" id="termDone">Done</button>`;
+  $('#termBackup').onclick = () => backupAll();
+  $('#termManage').onclick = () => { S.view = 'import'; commit(); $('#classesCard')?.scrollIntoView({ block: 'start' }); };
+  $('#termLater').onclick = () => { S.cleanupSeen = { ...seen, [t.id]: shiftDate(todayStr(), 7) }; commit(); toast('I\'ll remind you again in a week.'); };
+  $('#termDone').onclick = () => { S.cleanupSeen = { ...seen, [t.id]: 'done' }; commit(); };
+}
 function renderRecover() {
   const copies = savedCopies(), box = $('#recoverBox');
   const real = copies.filter(c => (c.kind !== 'snapshot') && (!c.st || !c.demo));
@@ -3312,7 +3367,7 @@ function importCSV(text, targetId = null, removeOpt = null, quiet = false) {
     }
     const { g, plan } = x;
     let c = x.target;
-    if (!c) { const id = uid(); c = STORE.classes[id] = { id, className: x.name, days: [], roomId: null }; }
+    if (!c) { const id = uid(); c = STORE.classes[id] = { id, className: x.name, days: [], roomId: null, created: todayStr() }; }
     let rid = c.roomId;
     if (!rid || (plan.differs && x.shared)) { rid = uid(); STORE.rooms[rid] = { id: rid, name: `${c.className || x.name || 'Class'} room` }; }
     Object.assign(STORE.rooms[rid], { shape: plan.shp, rows: plan.R, cols: plan.C, aisles: plan.A, tablesAcross: plan.across });
@@ -3844,7 +3899,7 @@ $('#ncForm').addEventListener('submit', e => {
     STORE.rooms[id] = { ...src, id, aisles: [...(src.aisles || [])], name: `${name} room` }; rid = id;
   }
   if (!ncRoster && $('#ncRosterText').value.trim()) { toast('Check the pasted names: ' + ($('#ncRosterStatus').textContent || 'they could not be read.'), true); return; }
-  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays], sheets: [], notes: {}, emailLog: [], guide: ncGuide ? JSON.parse(JSON.stringify(ncGuide)) : null, topics: {} };
+  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays], sheets: [], notes: {}, emailLog: [], guide: ncGuide ? JSON.parse(JSON.stringify(ncGuide)) : null, topics: {}, created: todayStr() };
   $('#ncDlg').close(); switchClass(cid);
   let added = 0;
   if (ncRoster) {
@@ -4216,7 +4271,7 @@ $('#demoBtn').addEventListener('click', () => {
   syncStore();
   const d = demo(), rid = uid(), cid = uid();
   STORE.rooms[rid] = { id: rid, name: 'Demo room', ...pick(d, ROOM_KEYS) };
-  STORE.classes[cid] = { id: cid, roomId: rid, ...pick(d, CLASS_KEYS) };
+  STORE.classes[cid] = { id: cid, roomId: rid, ...pick(d, CLASS_KEYS), created: todayStr() };
   switchClass(cid); toast('Demo class added.');
 });
 const discardOk = () => !isEdited() || confirm('Discard your edits to this message?');
