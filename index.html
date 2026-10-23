@@ -237,6 +237,12 @@ td.c{text-align:center}
 details.fmt{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
 details.fmt summary{cursor:pointer}
 .mydetails{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.topicrow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.topicrow select{flex:1 1 260px;min-width:0;min-height:40px}
+.gdlist{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:320px;overflow:auto}
+.gdlist details{border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.gdlist summary{cursor:pointer}
+.gdlist li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-top:1px solid var(--line)}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -557,7 +563,7 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
         <p class="small muted" id="tplOrig" hidden style="margin:-4px 0 0">Edited starter · <button type="button" class="linkish" id="tplOrigBtn" style="color:var(--accent)">Restore original wording</button></p>
         <label class="fld"><span>Subject</span><input type="text" id="tplSubject"></label>
         <label class="fld"><span>Message</span><textarea id="tplBody" rows="10"></textarea></label>
-        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{instructor}</code> <code>{officehours}</code> <code>{office}</code></p>
+        <p class="small muted" style="margin:0">Placeholders: <code>{first}</code> <code>{name}</code> <code>{date}</code> <code>{class}</code> <code>{seat}</code> <code>{instructor}</code> <code>{officehours}</code> <code>{office}</code> <code>{topic}</code> <code>{focus}</code> <code>{videos}</code></p>
         <div class="mydetails">
           <p class="small muted" style="margin:0">Your details fill these tags in every template. Leave one blank and the line that uses it is left out.</p>
           <label class="fld"><span>Your name <code>{instructor}</code></span><input type="text" id="instrName" placeholder="e.g. Prof. García" autocomplete="name"></label>
@@ -610,6 +616,25 @@ Calculus I – Section 01,Mia Thompson,mia@example.edu,,,P,P</pre>
       <button class="btn" type="button" id="shNoPdf" title="Add the sheet to Sheet view without printing">Create without PDF</button>
       <button class="btn" type="button" id="shCancel">Cancel</button></div>
   </form>
+</dialog>
+<dialog id="guideDlg" aria-labelledby="gdTitle">
+  <div class="hd"><strong id="gdTitle">Video guide</strong><button class="btn" type="button" id="gdClose">Close</button></div>
+  <div class="bd stack">
+    <div id="gdStatus"></div>
+    <details class="fmt"><summary><b>What the app reads from the guide</b></summary>
+      <ul class="small" style="margin:6px 0;padding-left:18px">
+        <li>Each <code>###</code> heading is a topic, like <code>### §2.3 The Limit Laws</code>. It fills <code>{topic}</code>.</li>
+        <li>Each <code>##</code> heading (a chapter) groups topics in the menu.</li>
+        <li>A <code>**Focus:**</code> line under a topic fills <code>{focus}</code>.</li>
+        <li>Bulleted links under a topic, <code>- [Title](https://…)</code>, fill <code>{videos}</code>.</li>
+        <li>Everything else in the file is ignored.</li>
+      </ul></details>
+    <div id="gdAlso" class="stack" style="gap:4px"></div>
+    <input type="file" id="gdFile" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+    <div class="row"><button class="btn primary" id="gdUse" type="button" hidden>Use this guide</button>
+      <button class="btn" id="gdPick" type="button">Choose guide file…</button>
+      <button class="btn danger" id="gdRemove" type="button" hidden>Remove guide</button></div>
+  </div>
 </dialog>
 <dialog id="impDlg" aria-labelledby="impTitle">
   <div class="hd"><strong id="impTitle">Import into a class</strong><button class="btn" type="button" id="impClose">Close</button></div>
@@ -733,6 +758,8 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <h4>Importing a roster</h4>
     <p>Each class in <b>Manage data → Classes &amp; rooms</b> has <b>Import…</b>: choose a CSV (or paste one) and everything in it goes into that class, whatever class column the file has. <b>Update roster</b> (the default) matches students and keeps seats and history; <b>Replace everything</b> makes the file the class's whole roster. For a file with several classes, use <b>Import a CSV</b> just below the class list; rows go to the class named in each row.</p>
     <p>Creating a class opens <b>Add students</b> right away, with a short guide to the roster format: a Brightspace classlist export works as is, or a CSV with <code>last_name</code>, <code>first_name</code>, and <code>email</code>, or just a pasted list of names. You can also add students by hand or skip for now; a class with no students shows an <b>Import a roster</b> button in every view.</p>
+    <h4>Video guides and the day's topic</h4>
+    <p>Each class can have a <b>video guide</b>: a Markdown file listing your course topics with a focus line and video links. Load it with <b>Video guide…</b> on the class in <b>Manage data → Classes &amp; rooms</b> (you can use the same file for other sections). Each <code>###</code> heading is a topic, <code>##</code> headings group them, a <code>**Focus:**</code> line is the focus, and bulleted links are the videos. Then in <b>Send emails</b>, pick what was covered from the <b>Topic</b> menu under the date; it's remembered for that class and date. <code>{topic}</code>, <code>{focus}</code>, and <code>{videos}</code> fill in from it, and with no topic picked, any paragraph using them is left out. Two starter templates use them: “Videos for the day you missed” and “Videos to catch up — no reply needed”.</p>
     <h4>Checking for drops</h4>
     <p>In <b>Manage data → Classes &amp; rooms</b>, press <b>Check for drops…</b> on a class, choose a new class list (a Brightspace classlist export works; only names are needed) or paste names, one per line, and press <b>Compare</b>. It's compared with that class: students matched by email or name (accents, case, name order, and extra surnames don't matter) are fine; names that are close but not identical are listed under <b>Check these</b> for you to confirm; and anyone missing from the new list is listed with their absences and last day present. <b>Drop checked students</b> drops them as of the date you choose, keeping their attendance. Students in the new list who aren't in the class can be added to open seats, and anyone you'd marked dropped who is back on the list can be restored. Instructors and TAs in a Brightspace file are skipped.</p>
     <h4>Manage data</h4>
@@ -904,6 +931,16 @@ function extraTemplatesV3() {   // added in template set v3
       body: "Hi {first},\n\nWe missed you in {class} on {date}. I shared an important announcement in class that day, and I didn't want you to miss it:\n\n[Write the announcement here, for example a changed due date, a new assignment, or an exam room change.]\n\nIf you have any questions about it, or about anything else from that day, just reply to this email or stop by office hours. I'm happy to help.\n\nOffice hours: {officehours}\nOffice: {office}\n\nHope to see you next class," }
   ];
 }
+function extraTemplatesV8() {   // added in template set v8: the day's topic and videos from the class's video guide
+  return [
+    { id: uid(), title: "Videos for the day you missed",
+      subject: "{class}: catching up on {date}",
+      body: "Hi {first},\n\nYou weren't in {class} on {date}, so I wanted to share a few resources for catching up.\n\nThat day we covered {topic}: {focus}\n\nThese videos walk through the same material:\n{videos}\n\nAfter watching, try the examples for {topic} in the lecture notes.\n\nOffice hours: {officehours}\nOffice: {office}\n\nBest regards," },
+    { id: uid(), title: "Videos to catch up — no reply needed",
+      subject: "{class}: videos from {date}",
+      body: "Hi {first},\n\nYou weren't in {class} on {date}, so here are a few videos on what we covered, in case they help.\n\nTopic: {topic}\n{videos}\n\nThere's no need to reply to this email.\n\nOffice hours: {officehours}\nOffice: {office}\n\nBest," }
+  ];
+}
 function extraTemplatesV7() {   // added in template set v7: office hours and office, filled from your details
   return [
     { id: uid(), title: "Office hours — help catching up",
@@ -970,7 +1007,7 @@ function extraTemplatesV4() {   // added in template set v4: general notes for a
 }
 /* Starter templates have stable ids ("st-01"…), so the app can always tell which ones a library is missing. */
 function starterTemplates() {
-  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6(), ...extraTemplatesV7()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
+  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6(), ...extraTemplatesV7(), ...extraTemplatesV8()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
 }
 function defaultTemplates() { return starterTemplates(); }
 function defaultTemplatesBase() {
@@ -1006,14 +1043,14 @@ function demo() {
 }
 function base() {
   return { v: 1, className: '', date: todayStr(), rows: 6, cols: 8, aisles: [4], shape: 'rows', tablesAcross: 3, instructorView: false,
-    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, notes: {}, emailLog: [], bin: [], templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
+    mode: 'take', view: 'classroom', students: {}, seats: {}, attendance: {}, notes: {}, emailLog: [], guide: null, topics: {}, bin: [], templates: defaultTemplates(), tplVersion: 4, removedStarters: [], bccTo: '', work: null, absMin: 2, importMode: 'merge', embedSeen: '',
     classView: 'list', listMode: 'one', listStart: 'P', sheetSel: '', sheetOpts: { dates: 'print', cols: 8, extra: 0, ev: 2 }, histSort: { by: 'seat', dir: 1 }, lastBackup: '', backupSig: '', instructor: '', instrSig: 1, office: '', officeHours: '' };
 }
 /* ---------- storage: classes + rooms ----------
    Saved as { v:2, active, classes:{id:{className,students,seats,attendance,roomId}}, rooms:{id:{name,shape,rows,cols,aisles,tablesAcross}}, global:{…} }.
    While the app runs, S is a flat view of the active class + its room + shared settings, so the rest of the code is unchanged. */
 const ROOM_KEYS = ['shape', 'rows', 'cols', 'aisles', 'tablesAcross'];
-const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets', 'notes', 'emailLog'];
+const CLASS_KEYS = ['className', 'students', 'seats', 'attendance', 'days', 'sheets', 'notes', 'emailLog', 'guide', 'topics'];
 const GLOBAL_KEYS = ['date', 'view', 'mode', 'instructorView', 'templates', 'tplVersion', 'bccTo', 'work', 'absMin', 'importMode', 'embedSeen', 'removedStarters', 'classView', 'listMode', 'listStart', 'sheetSel', 'sheetOpts', 'histSort', 'lastBackup', 'backupSig', 'instructor', 'instrSig', 'bin', 'office', 'officeHours'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 /* Every starter template is kept in the library unless the instructor deleted it (remembered in removedStarters),
@@ -1100,7 +1137,9 @@ function fixClass(c) {
   if (!Array.isArray(c.days)) c.days = [];                 // meeting weekdays, 0 = Sunday; empty = any day
   if (!Array.isArray(c.sheets)) c.sheets = [];             // printed sign-in sheets
   if (!c.notes || typeof c.notes !== 'object' || Array.isArray(c.notes)) c.notes = {};   // { date: { student: "note" } }
-  if (!Array.isArray(c.emailLog)) c.emailLog = [];         // [{ id, at, date, tpl, subject, to:[students], mode, via }]
+  if (!Array.isArray(c.emailLog)) c.emailLog = [];
+  if (!c.guide || typeof c.guide !== 'object' || !Array.isArray(c.guide.chapters)) c.guide = null;   // video guide (topics, focus, links)
+  if (!c.topics || typeof c.topics !== 'object' || Array.isArray(c.topics)) c.topics = {};           // { date: topic id }         // [{ id, at, date, tpl, subject, to:[students], mode, via }]
   for (const st of Object.values(c.students)) {            // first and last names are stored separately
     delete st.sid;                                         // student IDs are no longer kept
     if (typeof st.first === 'string' && typeof st.last === 'string') continue;
@@ -1242,6 +1281,7 @@ function renderClassMgr() {
         <td class="cact">${c.id === S.classId ? '<span class="pill P">Current</span>' : `<button type="button" class="btn" data-copen="${c.id}">Open</button>`}
           <button type="button" class="btn" data-cimp="${c.id}" title="Import a roster or attendance CSV into this class">Import…</button>
           <button type="button" class="btn" data-cdrop="${c.id}" title="Compare a new class list with this class">Check for drops…</button>
+          <button type="button" class="btn" data-cguide="${c.id}" title="${c.guide ? esc(c.guide.title) + ': ' + guideCount(c.guide).topics + ' topics' : 'Load a video guide of topics and links for emails'}">${c.guide ? `Video guide (${guideCount(c.guide).topics})` : 'Video guide…'}</button>
           <button type="button" class="btn danger" data-cdel="${c.id}" ${classes.length < 2 ? 'disabled title="You need at least one class"' : ''}>Delete</button></td></tr>`).join('')}</tbody></table></div>
     <div class="table-wrap" style="max-height:none;margin-top:12px"><table>
       <thead><tr><th>Room</th><th>Layout</th><th>Used by</th><th></th></tr></thead><tbody>${rooms.map(r => { const used = classesInRoom(r.id); return `<tr>
@@ -1260,6 +1300,7 @@ function renderClassMgr() {
   box.querySelectorAll('[data-copen]').forEach(b => b.addEventListener('click', () => switchClass(b.dataset.copen)));
   box.querySelectorAll('[data-cimp]').forEach(b => b.addEventListener('click', () => openImportFor(b.dataset.cimp)));
   box.querySelectorAll('[data-cdrop]').forEach(b => b.addEventListener('click', () => openDropCheck(b.dataset.cdrop)));
+  box.querySelectorAll('[data-cguide]').forEach(b => b.addEventListener('click', () => openGuide(b.dataset.cguide)));
   box.querySelectorAll('[data-cdel]').forEach(b => b.addEventListener('click', () => {
     const c = STORE.classes[b.dataset.cdel], n = Object.keys(c.seats).length;
     if (!confirm(`Delete “${c.className || 'Untitled class'}” with ${n} student${n === 1 ? '' : 's'} and all of its attendance? Its room is kept. You can restore the class from Recently deleted for 30 days.`)) return;
@@ -1559,6 +1600,8 @@ function analyzeMerge(inc) {
     lc.sheets ||= []; const sids = new Set(lc.sheets.map(x => x.id));
     for (const sh of ic.sheets || []) if (!sids.has(sh.id)) { lc.sheets.push(clone(sh)); rep.sheets++; }
     if (!(lc.days || []).length && (ic.days || []).length) lc.days = [...ic.days];
+    if (!lc.guide && ic.guide) lc.guide = clone(ic.guide);
+    lc.topics ||= {}; for (const [d, id] of Object.entries(ic.topics || {})) if (!lc.topics[d]) { lc.topics[d] = id; rep.topics = (rep.topics || 0) + 1; }
     if (JSON.stringify([rep.students, rep.dates, rep.marks, rep.notes, rep.emails, rep.sheets, rep.conflicts.length, rep.drops.length, rep.undrops.length]) !== before) rep.classesMerged.push(lc.className || 'Untitled class');
   }
   const g = out.global, ig = inc.global, tids = new Set(g.templates.map(t => t.id)), titles = new Set(g.templates.map(t => t.title));
@@ -1597,6 +1640,7 @@ function renderRestore() {
   if (rep.notes) lines.push(`${n(rep.notes, 'note')} added`);
   if (rep.emails) lines.push(`${n(rep.emails, 'email log entry', )} added`.replace('entrys', 'entries'));
   if (rep.sheets) lines.push(`${n(rep.sheets, 'sign-in sheet')} added`);
+  if (rep.topics) lines.push(`${n(rep.topics, 'class-day topic')} added`);
   if (rep.templates) lines.push(`${n(rep.templates, 'template')} added`);
   if (rep.rooms) lines.push(`${n(rep.rooms, 'room')} added`);
   if (rep.bin) lines.push(`${n(rep.bin, 'recently deleted item')} added to the bin`);
@@ -3216,11 +3260,16 @@ function renderTemplates(force) {
    so "Office: {office}" disappears when no office is set; extra blank lines that leaves behind are tidied up. */
 const myDetails = () => ({ instructor: (S.instructor || '').trim(), officehours: (S.officeHours || '').trim(), office: (S.office || '').trim() });
 function fillWith(str, map) {
+  if (!map.topic) {                                        // no topic for the date: drop whole paragraphs that use a topic tag
+    const t = String(str);
+    str = t.includes('\n') ? t.split(/\n[ \t]*\n/).filter(p => !usesTopicTags(p)).join('\n\n')
+      : t.replace(/\{(topic|focus|videos)\}/gi, '').replace(/[ \t]+([,.;:!?])/g, '$1').replace(/[ \t]{2,}/g, ' ').replace(/[\s:,–—-]+$/, '');
+  }
   const lines = String(str).split('\n').filter(l => !(l.match(/\{(\w+)\}/g) || []).some(t => { const k = t.slice(1, -1).toLowerCase(); return k in myDetails() && !map[k]; }));
   return lines.join('\n').replace(/\{(\w+)\}/g, (m, k) => map[k.toLowerCase()] ?? m).replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '');
 }
 function fill(str, x) {
-  return fillWith(str, { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: '', ...myDetails() });
+  return fillWith(str, { name: x.s.name, first: x.s.first || x.s.last || x.s.name, last: x.s.last || '', date: longDate(S.date), class: S.className || 'class', seat: seatName(x.lab), sid: '', ...myDetails(), ...topicVals(topicFor(S.date)) });
 }
 function b64(s) { const bytes = new TextEncoder().encode(s); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
 function eml(to, subject, body) {
@@ -3231,8 +3280,8 @@ let emailSel = new Set(), selDate = null, selAuto = true, lastPick = null, email
 const absTotal = k => Object.values(S.attendance).filter(d => d[k] === 'A').length;
 /* One email to the whole group: name tags are left blank, and the space they leave is tidied ("Hi {first}," → "Hi,"). */
 function fillGroup(str) {
-  return fillWith(str, { name: '', first: '', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class', ...myDetails() })
-    .replace(/[ \t]+([,.;:!?])/g, '$1').replace(/[ \t]{2,}/g, ' ').replace(/^[ \t]+/gm, '');
+  return fillWith(str, { name: '', first: '', last: '', seat: '', sid: '', date: longDate(S.date), class: S.className || 'class', ...myDetails(), ...topicVals(topicFor(S.date)) })
+    .replace(/[ \t]+([,.;:!?])/g, '$1').replace(/(\S)[ \t]{2,}/g, '$1 ').replace(/^[ \t]+(?![ \t]|https?:)/gm, '');   // keeps the indent before video links
 }
 const mailAddr = e => encodeURIComponent(e).replace(/%40/g, '@');
 function groupMailto(to, list, subj, body) {
@@ -3295,6 +3344,10 @@ function renderDrafts() {
     ${dd === 0 ? '' : `<span class="small" style="flex-basis:100%">Absences and drafts below are for this date, not today.</span>
       <button type="button" class="btn primary" data-go-today>Go to today</button>
       <button type="button" class="btn" data-shift="-1">‹ Previous day</button><button type="button" class="btn" data-shift="1">Next day ›</button>`}</div>
+    ${S.guide ? `<div class="topicrow"><label for="topicSel">Topic on ${esc(shortDate(S.date))}</label>
+      <select id="topicSel"><option value="">No topic</option>${S.guide.chapters.map(ch => `<optgroup label="${esc(ch.name || 'Topics')}">${ch.topics.map(tp => `<option value="${esc(tp.id)}" ${S.topics?.[S.date] === tp.id ? 'selected' : ''}>${esc(topicLabel(tp))}</option>`).join('')}</optgroup>`).join('')}</select>
+      <span class="small muted" style="flex-basis:100%">${topicFor(S.date) ? `Remembered for this class and date. Fills {topic}, {focus}, and {videos} (${topicFor(S.date).videos.length} video${topicFor(S.date).videos.length === 1 ? '' : 's'}).` : t && (usesTopicTags(t.body) || usesTopicTags(t.subject)) ? '<span style="color:var(--excused)">This message uses {topic} or {videos}. With no topic, those paragraphs are left out.</span>' : 'Pick what was covered on this date to fill {topic}, {focus}, and {videos}.'}</span></div>`
+      : t && (usesTopicTags(t.body) || usesTopicTags(t.subject)) ? `<p class="note small" style="margin:0 0 8px">This message uses {topic} or {videos}, but “${esc(S.className || 'this class')}” has no video guide yet. Load one in Manage data → <b>Video guide…</b> on the class.</p>` : ''}
     ${t ? `<p class="small muted" style="margin:0 0 8px">Message: “${esc(t.title)}”${t.edited ? ' <span style="color:var(--excused)">(edited, not saved to template)</span>' : ''}</p>` : ''}`;
   if (!all.length) { box.innerHTML = h + emptyPanel('Add the class roster (with emails) to draft emails to students.'); return; }
   h += `<div class="rchips" role="group" aria-label="Show students">${groups.map(([id, lbl, list]) => {
@@ -3358,6 +3411,7 @@ function renderDrafts() {
   else if (fId) { const el = box.querySelector('#' + fId); if (el) { el.focus(); try { el.setSelectionRange(caret, caret); } catch (e) {} } }
 
   box.querySelector('[data-go-today]')?.addEventListener('click', goToday);
+  $('#topicSel')?.addEventListener('change', e => { S.topics ||= {}; if (e.target.value) S.topics[S.date] = e.target.value; else delete S.topics[S.date]; save(); renderDrafts(); });
   box.querySelectorAll('[data-shift]').forEach(b => b.addEventListener('click', () => setDate(stepDay(S.date, +b.dataset.shift))));
   // selection
   box.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
@@ -3496,7 +3550,7 @@ $('#dChips').addEventListener('click', e => { const c = e.target.closest('[data-
 const typing = el => !!el.closest?.('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]');
 window.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') { e.preventDefault(); backupAll(); return; }   // anywhere: download a backup
-  if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || $('#sheetDlg').open || $('#noteDlg').open || $('#sumDlg').open || $('#mergeDlg').open || calIsOpen()) return;
+  if (e.defaultPrevented || $('#help').open || $('#ncDlg').open || $('#rmDlg').open || $('#sheetDlg').open || $('#noteDlg').open || $('#sumDlg').open || $('#mergeDlg').open || $('#guideDlg').open || calIsOpen()) return;
   if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'z' && !e.shiftKey) {
     if (typing(e.target)) return;                // let text fields keep their own undo
     e.preventDefault(); undo(); return;
@@ -3631,7 +3685,7 @@ $('#ncForm').addEventListener('submit', e => {
     const id = uid(), src = rid === '__copy' ? STORE.rooms[S.roomId] : { shape: 'rows', rows: 6, cols: 8, aisles: [], tablesAcross: 3 };
     STORE.rooms[id] = { ...src, id, aisles: [...(src.aisles || [])], name: `${name} room` }; rid = id;
   }
-  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays], sheets: [], notes: {}, emailLog: [] };
+  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays], sheets: [], notes: {}, emailLog: [], guide: null, topics: {} };
   $('#ncDlg').close(); switchClass(cid);
   toast(`Created “${name}”.`); openImportFor(cid, true);
 });
@@ -3754,6 +3808,86 @@ function runDropCheck(text, file) {
 }
 $('#dcGo').addEventListener('click', () => runDropCheck($('#dcText').value, 'pasted roster'));
 $('#dcFile').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => runDropCheck(String(r.result), f.name); r.readAsText(f); });
+
+/* ---------- video guide: a class's list of topics, with a focus line and video links for each ----------
+   Read from a Markdown guide: "## Chapter …" headings group topics, "### §2.3 The Limit Laws" headings are topics,
+   a "**Focus:**" line is the topic's focus, and bulleted [title](link) lines are its videos. Everything else is ignored.
+   Each class keeps its own guide; the topic for a class date is remembered in that class's `topics`. */
+const TOPIC_TAGS = ['topic', 'focus', 'videos'];
+const stripMath = t => String(t || '').replace(/\\\((.*?)\\\)/g, '$1').replace(/\\([\\`*_{}\[\]()#+\-.!])/g, '$1').replace(/\*\*|__/g, '').trim();
+function parseGuide(text, fileName) {
+  const lines = String(text).replace(/\r/g, '').split('\n');
+  const title = (lines.find(l => /^#\s+\S/.test(l)) || '').replace(/^#\s+/, '').trim() || String(fileName || 'Video guide').replace(/\.[^.]+$/, '');
+  const topicLevel = lines.some(l => /^###\s+\S/.test(l)) ? 3 : 2;      // a guide without ### headings uses ## headings as topics
+  const chapters = []; let ch = null, tp = null; const seen = new Set();
+  for (const raw of lines) {
+    const m = raw.match(/^(#{2,3})\s+(.*\S)\s*$/);
+    if (m && m[1].length === 2 && topicLevel === 3) { ch = { name: stripMath(m[2]), topics: [] }; chapters.push(ch); tp = null; continue; }
+    if (m && m[1].length === topicLevel) {
+      const head = stripMath(m[2]), s = head.match(/^(§\s?[\w.]+)\s+(.*)$/);
+      if (!ch) { ch = { name: '', topics: [] }; chapters.push(ch); }
+      let id = fold(head).replace(/[^a-z0-9§.]+/g, '-'); while (seen.has(id)) id += '-2'; seen.add(id);
+      tp = { id, sec: s ? s[1] : '', title: s ? s[2] : head, focus: '', videos: [] }; ch.topics.push(tp); continue;
+    }
+    if (!tp) continue;
+    const f = raw.match(/^\s*\*\*Focus:?\*\*:?\s*(.*)$/i);
+    if (f) { tp.focus = stripMath(f[1]); continue; }
+    const v = raw.match(/^\s*[-*+]\s*\[(.+)\]\((https?:\/\/[^)\s]+)\)/);
+    if (v) tp.videos.push({ title: stripMath(v[1]), url: v[2] });
+  }
+  const out = chapters.filter(c => c.topics.length);
+  const n = out.reduce((a, c) => a + c.topics.length, 0);
+  if (!n) throw new Error('No topics were found. Each topic needs its own heading line, like "### §2.3 The Limit Laws".');
+  return { title, file: fileName || '', loaded: todayStr(), chapters: out };
+}
+const guideTopics = g => (g?.chapters || []).flatMap(c => c.topics);
+const guideCount = g => { const ts = guideTopics(g); return { topics: ts.length, chapters: (g?.chapters || []).length, videos: ts.reduce((a, t) => a + t.videos.length, 0) }; };
+const topicLabel = t => [t.sec, t.title].filter(Boolean).join(' ');
+function topicFor(d) { const id = S.topics?.[d]; return id ? guideTopics(S.guide).find(t => t.id === id) || null : null; }
+function topicVals(t) {
+  if (!t) return { topic: '', focus: '', videos: '' };
+  const f = t.focus.replace(/\.\s*$/, '');
+  return { topic: topicLabel(t), focus: f ? f.charAt(0).toUpperCase() + f.slice(1) + '.' : '', videos: t.videos.map(v => `• ${v.title}\n  ${v.url}`).join('\n') };
+}
+const usesTopicTags = s => TOPIC_TAGS.some(k => new RegExp('\\{' + k + '\\}', 'i').test(String(s || '')));
+/* Video guide dialog (Manage data → a class's Video guide…) */
+let guideTarget = null, guidePending = null;
+function openGuide(cid) {
+  syncStore(); guideTarget = cid; guidePending = null;
+  const c = STORE.classes[cid]; $('#gdTitle').textContent = `Video guide: “${c.className || 'Untitled class'}”`;
+  $('#gdFile').value = ''; renderGuideDlg(); $('#guideDlg').showModal();
+}
+function renderGuideDlg() {
+  const c = STORE.classes[guideTarget], g = guidePending || c.guide, n = guideCount(g);
+  const others = Object.values(STORE.classes).filter(x => x.id !== guideTarget).sort(byName);
+  $('#gdStatus').innerHTML = !g ? '<p class="small muted" style="margin:0">No video guide for this class yet. Choose your guide file (Markdown, .md).</p>'
+    : `<div class="note" style="margin:0;${guidePending ? 'border-color:#2b5c43;background:#14241c' : ''}">${guidePending ? '✓ Found' : 'Current guide:'} <b>${esc(g.title)}</b>${g.file ? ` <span class="muted">(${esc(g.file)})</span>` : ''}: <b>${n.topics} topic${n.topics === 1 ? '' : 's'}</b> in ${n.chapters} chapter${n.chapters === 1 ? '' : 's'}, ${n.videos} video link${n.videos === 1 ? '' : 's'}.${guidePending ? ' Open a chapter to check it.' : ''}</div>
+      <div class="gdlist">${g.chapters.map(ch => `<details><summary><b>${esc(ch.name || 'Topics')}</b> <span class="muted small">${ch.topics.length} topic${ch.topics.length === 1 ? '' : 's'}</span></summary>
+        <ul class="plain small">${ch.topics.map(t => `<li><span>${esc(topicLabel(t))}</span><span class="muted">${t.videos.length} video${t.videos.length === 1 ? '' : 's'}${t.focus ? '' : ' · no focus line'}</span></li>`).join('')}</ul></details>`).join('')}</div>`;
+  $('#gdAlso').innerHTML = guidePending && others.length ? `<div class="small muted">Also use this guide for:</div>${others.map(o => `<label class="switch"><input type="checkbox" data-gdalso="${o.id}"> ${esc(o.className || 'Untitled class')}${o.guide ? ' <span class="muted small">(replaces its guide)</span>' : ''}</label>`).join('')}` : '';
+  $('#gdUse').hidden = !guidePending; $('#gdRemove').hidden = !!guidePending || !c.guide;
+  $('#gdPick').textContent = g ? 'Choose another file…' : 'Choose guide file…';
+}
+$('#gdPick').addEventListener('click', () => $('#gdFile').click());
+$('#gdFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { try { guidePending = parseGuide(String(r.result), f.name); renderGuideDlg(); } catch (err) { toast(err.message, true); } };
+  r.readAsText(f);
+});
+$('#gdUse').addEventListener('click', () => {
+  if (!guidePending) return;
+  const ids = [guideTarget, ...[...document.querySelectorAll('[data-gdalso]:checked')].map(x => x.dataset.gdalso)];
+  syncStore();
+  for (const id of ids) { const c = STORE.classes[id]; c.guide = JSON.parse(JSON.stringify(guidePending)); c.topics ||= {}; if (id === S.classId) { S.guide = c.guide; S.topics = c.topics; } }
+  const n = guideCount(guidePending).topics; guidePending = null; $('#guideDlg').close(); commit();
+  toast(`Video guide loaded: ${n} topics${ids.length > 1 ? ` for ${ids.length} classes` : ''}. Pick a day's topic in Send emails.`);
+});
+$('#gdRemove').addEventListener('click', () => {
+  const c = STORE.classes[guideTarget]; if (!c?.guide || !confirm(`Remove the video guide from “${c.className || 'this class'}”? Topics already picked for its dates are kept and come back if you load a guide with the same headings.`)) return;
+  syncStore(); c.guide = null; if (guideTarget === S.classId) S.guide = null; $('#guideDlg').close(); commit(); toast('Video guide removed.');
+});
+$('#gdClose').addEventListener('click', () => $('#guideDlg').close());
 
 $('#backupBtn').addEventListener('click', backupAll);
 document.querySelectorAll('[data-mg]').forEach(b => b.addEventListener('click', () => { if (restoreState) { restoreState.mode = b.dataset.mg; renderRestore(); } }));
