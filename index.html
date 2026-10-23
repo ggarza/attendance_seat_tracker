@@ -246,6 +246,10 @@ details.fmt summary{cursor:pointer}
 fieldset.ncsec{border:1px solid var(--line);border-radius:10px;padding:10px 12px 12px;margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
 fieldset.ncsec legend{font-weight:700;padding:0 4px}
 .privacy{margin:12px 0 4px;padding:10px 12px;border:1px solid #2b5c43;background:#14241c;border-radius:10px;font-size:14px}
+#storageMeter{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.meter{height:6px;border-radius:99px;background:var(--panel3);overflow:hidden;max-width:420px}
+.meter span{display:block;height:100%;border-radius:99px}
+details.eos summary{cursor:pointer;color:var(--text)}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -444,6 +448,7 @@ kbd{background:var(--panel3);border:1px solid var(--line);border-radius:4px;padd
     <div class="bk-text">
       <h3 style="margin:0">Back up your data</h3>
       <p class="small" id="backupStatus" style="margin:4px 0 0"></p>
+      <div class="small" id="storageMeter"></div>
       <p class="small muted" style="margin:4px 0 0">One .json file with every class, room, student, attendance record, sign-in sheet, and template. If something gets deleted, restore it here. Keep it private: it has student names, emails, and attendance.</p>
     </div>
     <div class="bk-btns">
@@ -800,6 +805,8 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     </ul>
     <h4>Instructor view</h4>
     <p>Turns the chart 180° so it matches what you see from the front of the room. Seat labels and attendance don't change.</p>
+    <h4>Storage</h4>
+    <p>Browsers give each site about 5 MB for this kind of data; a busy semester with several classes uses well under 1 MB. The backup card shows how much is used. If space runs out, the oldest automatic copies are removed first so your changes still save. The app also asks the browser to keep its data rather than clear it when the computer is low on space (in Safari, adding the app to the Dock or Home Screen does the same). At the end of a semester: download a backup, then delete the classes you've finished.</p>
     <h4>Backups, restoring, and recently deleted</h4>
     <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Students dropped in the backup are dropped here too (you can uncheck that), and students dropped here but active in the backup can be restored. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
     <h4>Importing a roster</h4>
@@ -911,6 +918,7 @@ try {
   }
 } catch (e) {}
 /* Offline: when served from a web address (e.g. GitHub Pages), a service worker keeps a copy so the app opens without internet. */
+setTimeout(() => askPersist(), 1500);   // ask the browser to keep this app's data (no prompt in most browsers)
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
@@ -1288,10 +1296,57 @@ function syncStore() {
   const r = STORE.rooms[S.roomId]; Object.assign(r, pick(S, ROOM_KEYS)); r.aisles = [...(S.aisles || [])];
   STORE.active = S.classId;
 }
+/* Automatic copies (oldest first): this address's daily copies, then copies kept from other addresses on this site. */
+function snapshotKeys() {
+  const mine = [], other = [];
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!k || !k.startsWith(SNAP_PREFIX)) continue; (k.startsWith(SNAP_PREFIX + HERE + ':') ? mine : other).push(k); }
+  return [...other.sort(), ...mine.sort()];
+}
 function save() {
   syncStore();
-  try { localStorage.setItem(KEY, JSON.stringify(STORE)); }
-  catch (e) { toast('Could not save to browser storage. Download a backup to keep your data.', true); }
+  const text = JSON.stringify(STORE);
+  let trimmed = 0;
+  for (;;) {
+    try { localStorage.setItem(KEY, text); break; }
+    catch (e) {
+      const snaps = snapshotKeys();
+      if (!snaps.length) { toast('Could not save: browser storage is full. Download a backup, then delete finished classes in Manage data to free space.', true); return false; }
+      localStorage.removeItem(snaps[0]); trimmed++;               // free space by dropping the oldest automatic copy, then try again
+    }
+  }
+  if (trimmed) setTimeout(() => toast(`Storage was nearly full, so the ${trimmed === 1 ? 'oldest automatic copy was' : trimmed + ' oldest automatic copies were'} removed to make room. Your data is saved.`, true), 1200);   // after the action's own message
+  return true;
+}
+/* Storage meter for Manage data. Browsers give each site about 5 MB for this kind of storage. */
+const STORAGE_LIMIT = 5 * 1024 * 1024;
+function storageUse() {
+  let data = 0, copies = 0, other = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i), n = k.length + (localStorage.getItem(k) || '').length;   // browsers count this limit in characters
+    if (k === KEY) data += n; else if (k.startsWith(SNAP_PREFIX) || k.startsWith(BAD_PREFIX)) copies += n; else other += n;
+  }
+  return { data, copies, other, total: data + copies + other };
+}
+let persistState = 'unknown';   // 'yes' | 'no' | 'unsupported'
+async function askPersist() {
+  try {
+    if (!navigator.storage?.persist) { persistState = 'unsupported'; return; }
+    persistState = (await navigator.storage.persisted()) || (await navigator.storage.persist()) ? 'yes' : 'no';
+  } catch (e) { persistState = 'unsupported'; }
+  if (S.view === 'import') renderStorage();
+}
+function renderStorage() {
+  const el = $('#storageMeter'); if (!el) return;
+  const u = storageUse(), mb = n => (n / 1048576).toFixed(n < 104858 ? 2 : 1), pct = Math.min(100, Math.round(100 * u.total / STORAGE_LIMIT));
+  const bin = JSON.stringify(S.bin || []).length;
+  const keep = persistState === 'yes' ? '✓ The browser has agreed not to clear this data on its own.'
+    : persistState === 'no' ? 'The browser may clear this data if the computer runs low on space; regular backups protect you. In Safari, adding the app to the Dock or Home Screen helps.'
+    : persistState === 'unsupported' ? 'This browser can\'t promise to keep the data; regular backups protect you.' : '';
+  el.innerHTML = `<div class="meter" role="img" aria-label="Storage ${pct}% used"><span style="width:${Math.max(pct, 1)}%;background:${pct >= 80 ? 'var(--absent)' : pct >= 60 ? 'var(--excused)' : 'var(--present)'}"></span></div>
+    <span>Storage: <b>${mb(u.total)} MB</b> of about 5 MB (${pct}%) · your data ${mb(u.data)} MB · automatic copies ${mb(u.copies)} MB${bin > 20000 ? ` · recently deleted ${mb(bin)} MB` : ''}</span>
+    ${pct >= 60 ? `<span style="color:var(--excused)">Getting full. Download a backup, then delete classes you've finished (and empty Recently deleted) to free space. The oldest automatic copies are removed first if space runs out.</span>` : ''}
+    ${keep ? `<span class="muted">${keep}</span>` : ''}
+    <details class="eos"><summary>End of the semester</summary><ol class="small" style="margin:6px 0 0;padding-left:18px"><li>Download a backup and keep it somewhere private; it holds every class.</li><li>Delete the classes you've finished in <b>Classes &amp; rooms</b>. Their rooms stay for next semester.</li><li>After 30 days they leave Recently deleted on their own, or use <b>Empty the bin</b> right away.</li></ol></details>`;
 }
 const classesInRoom = rid => Object.values(STORE.classes).filter(c => c.roomId === rid);
 const otherClassesInRoom = rid => classesInRoom(rid).filter(c => c.id !== S.classId);
@@ -1784,7 +1839,7 @@ function counts(date, stOf = k => getStatus(date, k)) {
 
 /* ---------- render ---------- */
 function render() {
-  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') { renderBackup(); renderBin(); renderDropCheck(); }
+  renderClassSel(); renderClassMgr(); renderImportMode(); renderRecover(); if (S.view === 'import') { renderBackup(); renderBin(); renderDropCheck(); renderStorage(); }
   $('#instructorView').checked = !!S.instructorView;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'view-' + S.view);
