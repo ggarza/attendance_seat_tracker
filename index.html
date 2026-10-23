@@ -3814,7 +3814,13 @@ $('#dcFile').addEventListener('change', e => { const f = e.target.files[0]; if (
    a "**Focus:**" line is the topic's focus, and bulleted [title](link) lines are its videos. Everything else is ignored.
    Each class keeps its own guide; the topic for a class date is remembered in that class's `topics`. */
 const TOPIC_TAGS = ['topic', 'focus', 'videos'];
-const stripMath = t => String(t || '').replace(/\\\((.*?)\\\)/g, '$1').replace(/\\([\\`*_{}\[\]()#+\-.!])/g, '$1').replace(/\*\*|__/g, '').trim();
+/* Turn the LaTeX in a guide line into plain text for an email: \(\ln x\) → ln x, \infty → ∞, \sqrt{x} → √x. */
+const TEX = { infty: '∞', pi: 'π', theta: 'θ', alpha: 'α', beta: 'β', Delta: 'Δ', delta: 'δ', to: '→', cdot: '·', times: '×', le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠', neq: '≠', pm: '±', approx: '≈', int: '∫', sum: 'Σ', lim: 'lim', ln: 'ln', log: 'log', sin: 'sin', cos: 'cos', tan: 'tan', sec: 'sec', csc: 'csc', cot: 'cot', arcsin: 'arcsin', arccos: 'arccos', arctan: 'arctan', exp: 'exp', dx: 'dx', quad: ' ', qquad: ' ', left: '', right: '', displaystyle: '' };
+function texToText(m) {
+  return m.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)').replace(/\\sqrt\{([^{}]*)\}/g, '√($1)').replace(/\\(?:text|mathrm|operatorname)\{([^{}]*)\}/g, '$1')
+    .replace(/\\,|\;|\\!/g, m2 => m2 === '\\!' ? '' : ' ').replace(/\\([A-Za-z]+)/g, (x, w) => TEX[w] ?? w).replace(/[{}]/g, '').replace(/\s{2,}/g, ' ');
+}
+const stripMath = t => String(t || '').replace(/\\\((.*?)\\\)|\\\[(.*?)\\\]|\$([^$]+)\$/g, (m, a, b, c) => texToText(a ?? b ?? c)).replace(/\\([\\`*_{}\[\]()#+\-.!])/g, '$1').replace(/\*\*|__/g, '').trim();
 function parseGuide(text, fileName) {
   const lines = String(text).replace(/\r/g, '').split('\n');
   const title = (lines.find(l => /^#\s+\S/.test(l)) || '').replace(/^#\s+/, '').trim() || String(fileName || 'Video guide').replace(/\.[^.]+$/, '');
