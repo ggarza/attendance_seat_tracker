@@ -987,6 +987,13 @@ function extraTemplatesV3() {   // added in template set v3
       body: "Hi {first},\n\nWe missed you in {class} on {date}. I shared an important announcement in class that day, and I didn't want you to miss it:\n\n[Write the announcement here, for example a changed due date, a new assignment, or an exam room change.]\n\nIf you have any questions about it, or about anything else from that day, just reply to this email or stop by office hours. I'm happy to help.\n\nIf it helps, these videos cover what we worked on that day ({topic}):\n{videos}\n\nOffice hours: {officehours}\nOffice: {office}\n\nHope to see you next class," }
   ];
 }
+function extraTemplatesV10() {   // added in template set v10: excused for a university-sponsored activity
+  return [
+    { id: uid(), title: "Excused for a university activity — catching up",
+      subject: "{class}: catching up after {date}",
+      body: "Hi {first},\n\nThank you for letting me know about your university-sponsored activity on {date}. Your absence is excused, so there's nothing more you need to do for it. I hope it went well!\n\nTo catch up on {class}, please look over the notes and materials posted for that day. If anything was due or assessed that day, let me know and we'll arrange a time for you to complete it.\n\nIf it helps, these videos cover what we worked on that day ({topic}):\n{videos}\n\nIf anything is unclear, feel free to reply to this email or stop by office hours.\n\nOffice hours: {officehours}\nOffice: {office}\n\nBest regards," }
+  ];
+}
 function extraTemplatesV9() {   // added in template set v9: more topic-and-video notes, worded differently
   return [
     { id: uid(), title: "Summary and videos for the day you missed",
@@ -1079,7 +1086,7 @@ function extraTemplatesV4() {   // added in template set v4: general notes for a
 }
 /* Starter templates have stable ids ("st-01"…), so the app can always tell which ones a library is missing. */
 function starterTemplates() {
-  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6(), ...extraTemplatesV7(), ...extraTemplatesV8(), ...extraTemplatesV9()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
+  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6(), ...extraTemplatesV7(), ...extraTemplatesV8(), ...extraTemplatesV9(), ...extraTemplatesV10()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
 }
 function defaultTemplates() { return starterTemplates(); }
 function defaultTemplatesBase() {
