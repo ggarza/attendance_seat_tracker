@@ -759,7 +759,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <p>Each class in <b>Manage data → Classes &amp; rooms</b> has <b>Import…</b>: choose a CSV (or paste one) and everything in it goes into that class, whatever class column the file has. <b>Update roster</b> (the default) matches students and keeps seats and history; <b>Replace everything</b> makes the file the class's whole roster. For a file with several classes, use <b>Import a CSV</b> just below the class list; rows go to the class named in each row.</p>
     <p>Creating a class opens <b>Add students</b> right away, with a short guide to the roster format: a Brightspace classlist export works as is, or a CSV with <code>last_name</code>, <code>first_name</code>, and <code>email</code>, or just a pasted list of names. You can also add students by hand or skip for now; a class with no students shows an <b>Import a roster</b> button in every view.</p>
     <h4>Video guides and the day's topic</h4>
-    <p>Each class can have a <b>video guide</b>: a Markdown file listing your course topics with a focus line and video links. Load it with <b>Video guide…</b> on the class in <b>Manage data → Classes &amp; rooms</b> (you can use the same file for other sections). Each <code>###</code> heading is a topic, <code>##</code> headings group them, a <code>**Focus:**</code> line is the focus, and bulleted links are the videos. Then in <b>Send emails</b>, pick what was covered from the <b>Topic</b> menu under the date; it's remembered for that class and date. <code>{topic}</code>, <code>{focus}</code>, and <code>{videos}</code> fill in from it, and with no topic picked, any paragraph using them is left out. Two starter templates use them: “Videos for the day you missed” and “Videos to catch up — no reply needed”.</p>
+    <p>Each class can have a <b>video guide</b>: a Markdown file listing your course topics with a focus line and video links. Load it with <b>Video guide…</b> on the class in <b>Manage data → Classes &amp; rooms</b> (you can use the same file for other sections). Each <code>###</code> heading is a topic, <code>##</code> headings group them, a <code>**Focus:**</code> line is the focus, and bulleted links are the videos. Then in <b>Send emails</b>, pick what was covered from the <b>Topic</b> menu under the date; it's remembered for that class and date. <code>{topic}</code>, <code>{focus}</code>, and <code>{videos}</code> fill in from it, and with no topic picked, any paragraph using them is left out. Six starter templates use them, starting with “Videos for the day you missed”.</p>
     <h4>Checking for drops</h4>
     <p>In <b>Manage data → Classes &amp; rooms</b>, press <b>Check for drops…</b> on a class, choose a new class list (a Brightspace classlist export works; only names are needed) or paste names, one per line, and press <b>Compare</b>. It's compared with that class: students matched by email or name (accents, case, name order, and extra surnames don't matter) are fine; names that are close but not identical are listed under <b>Check these</b> for you to confirm; and anyone missing from the new list is listed with their absences and last day present. <b>Drop checked students</b> drops them as of the date you choose, keeping their attendance. Students in the new list who aren't in the class can be added to open seats, and anyone you'd marked dropped who is back on the list can be restored. Instructors and TAs in a Brightspace file are skipped.</p>
     <h4>Manage data</h4>
@@ -931,6 +931,22 @@ function extraTemplatesV3() {   // added in template set v3
       body: "Hi {first},\n\nWe missed you in {class} on {date}. I shared an important announcement in class that day, and I didn't want you to miss it:\n\n[Write the announcement here, for example a changed due date, a new assignment, or an exam room change.]\n\nIf you have any questions about it, or about anything else from that day, just reply to this email or stop by office hours. I'm happy to help.\n\nOffice hours: {officehours}\nOffice: {office}\n\nHope to see you next class," }
   ];
 }
+function extraTemplatesV9() {   // added in template set v9: more topic-and-video notes, worded differently
+  return [
+    { id: uid(), title: "Summary and videos for the day you missed",
+      subject: "{class}: what we covered on {date}",
+      body: "Hi {first},\n\nWe missed you in {class} on {date}, when we worked on {topic}. Here's a short summary and a few videos in case they're helpful.\n\nMain ideas: {focus}\n\nVideos:\n{videos}\n\nIf you have questions after watching, you're welcome to bring them to office hours or reply to this email.\n\nOffice hours: {officehours}\nOffice: {office}\n\nBest regards," },
+    { id: uid(), title: "Getting ready for next class",
+      subject: "{class}: before our next class",
+      body: "Hi {first},\n\nSince you weren't in {class} on {date}, it may help to look over {topic} before our next class, because we'll be building on it.\n\nThese videos are a good place to start:\n{videos}\n\nAfterward, try a few of the examples for {topic} in the lecture notes.\n\nOffice hours: {officehours}\nOffice: {office}\n\nBest," },
+    { id: uid(), title: "A simple plan to catch up",
+      subject: "{class}: a plan for catching up on {date}",
+      body: "Hi {first},\n\nI noticed you weren't in {class} on {date}. Here's a simple plan for catching up on {topic}:\n\n1. Read that section in the lecture notes.\n2. Watch the videos below and take brief notes.\n3. Work the examples in the notes on your own, pausing to try each step first.\n\n{videos}\n\nIf you get stuck, I'm happy to help.\n\nOffice hours: {officehours}\nOffice: {office}\n\nBest regards," },
+    { id: uid(), title: "Quick recap — no reply needed",
+      subject: "{class}: a quick recap of {date}",
+      body: "Hi {first},\n\nHere's a quick recap of {class} on {date}: we covered {topic}.\n\nMain ideas: {focus}\n\nIf it helps, these videos cover the same material:\n{videos}\n\nThere's no need to reply to this email.\n\nBest," }
+  ];
+}
 function extraTemplatesV8() {   // added in template set v8: the day's topic and videos from the class's video guide
   return [
     { id: uid(), title: "Videos for the day you missed",
@@ -1007,7 +1023,7 @@ function extraTemplatesV4() {   // added in template set v4: general notes for a
 }
 /* Starter templates have stable ids ("st-01"…), so the app can always tell which ones a library is missing. */
 function starterTemplates() {
-  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6(), ...extraTemplatesV7(), ...extraTemplatesV8()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
+  return [...defaultTemplatesBase(), ...extraTemplates(), ...extraTemplatesV3(), ...extraTemplatesV4(), ...extraTemplatesV5(), ...extraTemplatesV6(), ...extraTemplatesV7(), ...extraTemplatesV8(), ...extraTemplatesV9()].map((t, i) => ({ ...t, body: withSignature(t.body), id: 'st-' + String(i + 1).padStart(2, '0') }));
 }
 function defaultTemplates() { return starterTemplates(); }
 function defaultTemplatesBase() {
