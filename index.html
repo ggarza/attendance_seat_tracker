@@ -243,6 +243,9 @@ details.fmt summary{cursor:pointer}
 .gdlist details{border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .gdlist summary{cursor:pointer}
 .gdlist li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-top:1px solid var(--line)}
+fieldset.ncsec{border:1px solid var(--line);border-radius:10px;padding:10px 12px 12px;margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+fieldset.ncsec legend{font-weight:700;padding:0 4px}
+.privacy{margin:12px 0 4px;padding:10px 12px;border:1px solid #2b5c43;background:#14241c;border-radius:10px;font-size:14px}
 th.date button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-transform:none;letter-spacing:0}
 th.date.cur button{text-decoration:underline}
 th.date .del{color:var(--muted);margin-left:6px;font-size:13px}
@@ -715,18 +718,62 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
   </form>
 </dialog>
 <dialog id="ncDlg" aria-labelledby="ncTitle">
-  <form id="ncForm" class="stack" style="padding:18px">
+  <form id="ncForm" class="stack" style="padding:18px;max-height:calc(100vh - 60px);overflow:auto;box-sizing:border-box">
     <strong id="ncTitle" style="font-size:17px">New class</strong>
     <label class="fld"><span>Class name</span><input type="text" id="ncName" placeholder="e.g. Calculus II — Section 03" autocomplete="off"></label>
     <div class="fld"><span>Meets on (optional)</span><div id="ncDays"></div></div>
-    <label class="fld"><span>Take attendance</span><select id="ncRoom"></select></label>
+    <label class="fld"><span>Classroom</span><select id="ncRoom"></select></label>
     <p class="small muted" style="margin:0">Sections that meet in the same room can share its layout. Pick “New room” to set up a different one in <b>Edit seats</b>.</p>
+
+    <fieldset class="ncsec">
+      <legend>1. Students <span class="muted small">(optional)</span></legend>
+      <p class="small muted" style="margin:0">A roster file with each student's name and email. Everyone starts in open seats, front row first.</p>
+      <div class="row"><button class="btn" type="button" id="ncRosterPick">Choose roster file…</button><span class="small" id="ncRosterStatus"></span></div>
+      <input type="file" id="ncRosterFile" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>
+      <details class="fmt"><summary>Or paste names</summary>
+        <textarea id="ncRosterText" rows="4" spellcheck="false" placeholder="Garza, Ana, ana.garza@utrgv.edu&#10;Luis Pérez, luis.perez@utrgv.edu" style="width:100%;box-sizing:border-box;margin-top:6px"></textarea></details>
+      <details class="fmt"><summary>How to format the roster</summary>
+        <ul class="small" style="margin:6px 0;padding-left:18px">
+          <li>A <b>Brightspace classlist export</b> works as is (instructors and TAs are skipped).</li>
+          <li>Or a CSV with a header row and one row per student: <code>last_name,first_name,email</code>. A single <code>name</code> column also works (“Ana Garza” or “Garza, Ana”).</li>
+          <li>Or just names, one per line, each optionally followed by an email.</li>
+        </ul>
+        <pre class="code small" style="margin:4px 0">last_name,first_name,email
+Garza,Ana,ana.garza@utrgv.edu
+Pérez,Luis,luis.perez@utrgv.edu</pre>
+        <button type="button" class="btn ghost" id="ncTemplate" style="padding:3px 10px;font-size:12.5px">Download a blank roster template</button></details>
+    </fieldset>
+
+    <fieldset class="ncsec">
+      <legend>2. Video guide <span class="muted small">(optional)</span></legend>
+      <p class="small muted" style="margin:0">A Markdown (.md) file of your course topics, each with a short focus and video links. Emails can then include the day's topic and videos.</p>
+      <div class="row"><button class="btn" type="button" id="ncGuidePick">Choose guide file…</button><span class="small" id="ncGuideStatus"></span></div>
+      <input type="file" id="ncGuideFile" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+      <details class="fmt"><summary>How to format the guide</summary>
+        <ul class="small" style="margin:6px 0;padding-left:18px">
+          <li><code>##</code> headings are chapters; they group topics in the menu.</li>
+          <li><code>###</code> headings are topics, like <code>### §2.3 The Limit Laws</code>.</li>
+          <li>A <code>**Focus:**</code> line under a topic gives a one-sentence summary.</li>
+          <li>Bulleted links under a topic are its videos: <code>- [Title](https://…)</code>.</li>
+          <li>Anything else (introductions, notes) is ignored.</li>
+        </ul>
+        <pre class="code small" style="margin:4px 0">## Chapter 2 — Limits
+
+### §2.3 The Limit Laws
+**Focus:** direct substitution, factoring and cancellation, and the Squeeze Theorem.
+- [UTRGV: Limit Laws (video lesson)](https://www.utrgv.edu/…)
+- [Another video on limit laws](https://www.youtube.com/…)</pre>
+        <button type="button" class="btn ghost" id="ncGuideTemplate" style="padding:3px 10px;font-size:12.5px">Download a sample guide</button></details>
+    </fieldset>
+
+    <p class="small muted" style="margin:0">Both are optional: you can add students or a video guide later in <b>Manage data</b>.</p>
     <div class="row"><button class="btn primary" type="submit">Create class</button><button class="btn" type="button" id="ncCancel">Cancel</button></div>
   </form>
 </dialog>
 <dialog id="help" aria-labelledby="helpTitle">
   <div class="hd"><strong id="helpTitle">How Attendance works</strong><button class="btn" type="button" id="helpClose">Close</button></div>
   <div class="bd">
+    <p class="privacy">🔒 Nothing is saved online: attendance records stay in this browser and are never uploaded, keeping student records private under FERPA.</p>
     <h4>Getting started</h4>
     <p>Type the class name and pick a class date at the top. Then switch to <b>Edit seats</b> to arrange the room and fill in the roster, or use <b>Manage data</b> to load a CSV. Demo data is included so you can try things out; replace it by editing, importing, or choosing <b>Start an empty class</b>.</p>
     <h4>Several classes in one file</h4>
@@ -757,7 +804,7 @@ Pérez,Luis,luis.perez@utrgv.edu</pre>
     <p><b>Download backup</b> saves everything in one .json file. <b>Restore a backup…</b> (or dropping a .json on Manage data) offers <b>Merge with what's here</b> (the default) or <b>Replace everything</b>. Merge never removes anything: it adds the classes, students, dates, marks, notes, emails sent, sign-in sheets, and templates that the backup has and this device doesn't, so you can go back and forth between a computer and an iPad. If both have a different mark for the same student and date, you choose whose marks win. Students dropped in the backup are dropped here too (you can uncheck that), and students dropped here but active in the backup can be restored. Either way, what's here is saved as an automatic copy first. Deleted students, dates, classes, rooms, and templates, and cleared classes, go to <b>Recently deleted</b> for 30 days, where <b>Restore</b> puts them back (with their attendance, notes, and seat when it's still free) and <b>Delete forever</b> removes them for good.</p>
     <h4>Importing a roster</h4>
     <p>Each class in <b>Manage data → Classes &amp; rooms</b> has <b>Import…</b>: choose a CSV (or paste one) and everything in it goes into that class, whatever class column the file has. <b>Update roster</b> (the default) matches students and keeps seats and history; <b>Replace everything</b> makes the file the class's whole roster. For a file with several classes, use <b>Import a CSV</b> just below the class list; rows go to the class named in each row.</p>
-    <p>Creating a class opens <b>Add students</b> right away, with a short guide to the roster format: a Brightspace classlist export works as is, or a CSV with <code>last_name</code>, <code>first_name</code>, and <code>email</code>, or just a pasted list of names. You can also add students by hand or skip for now; a class with no students shows an <b>Import a roster</b> button in every view.</p>
+    <p><b>＋ New class</b> asks for the class name, meeting days, and room, and, optionally, a <b>roster file</b> (a Brightspace classlist export, a CSV with <code>last_name</code>, <code>first_name</code>, and <code>email</code>, or pasted names) and a <b>video guide</b> (.md). Each has a short formatting guide and a check mark showing what was found before you create the class. A class with no students shows an <b>Import a roster</b> button in every view.</p>
     <h4>Video guides and the day's topic</h4>
     <p>Each class can have a <b>video guide</b>: a Markdown file listing your course topics with a focus line and video links. Load it with <b>Video guide…</b> on the class in <b>Manage data → Classes &amp; rooms</b> (you can use the same file for other sections). Each <code>###</code> heading is a topic, <code>##</code> headings group them, a <code>**Focus:**</code> line is the focus, and bulleted links are the videos. Then in <b>Send emails</b>, pick what was covered from the <b>Topic</b> menu under the date; it's remembered for that class and date. <code>{topic}</code>, <code>{focus}</code>, and <code>{videos}</code> fill in from it, and with no topic picked, any paragraph using them is left out. Six starter templates are built around them, starting with “Videos for the day you missed”, and every other starter has an optional “If it helps, these videos cover…” paragraph that only appears when a topic is picked.</p>
     <h4>Checking for drops</h4>
@@ -3151,7 +3198,7 @@ function importable(text) {
     return 'name,email\n' + list.map(r => [r.raw || (r.last && r.first ? `${r.last}, ${r.first}` : r.name), r.email].map(csvCell).join(',')).join('\n');   // the importer splits names and flags unsure ones
   }
 }
-function importCSV(text, targetId = null, removeOpt = null) {
+function importCSV(text, targetId = null, removeOpt = null, quiet = false) {
   const P = readCSV(importable(text));
   if (P.errs.length) throw new Error(P.errs.join('\n'));
   syncStore();
@@ -3200,7 +3247,7 @@ function importCSV(text, targetId = null, removeOpt = null) {
   if (merge && plans.some(x => x.merge) && single && ['rows', 'seats_per_row', 'tables', 'seats_per_table', 'aisles', 'shape'].some(k => P.meta[k] !== undefined)) notes.push('Update roster keeps the room as it is, so the file\'s layout lines are ignored.');
   plans.forEach(x => { if (x.target && x.plan && x.plan.differs && x.shared) notes.push(`${x.target.className}: its room is shared and this file needs a different layout, so it gets its own copy of the room.`); });
   if (P.ignored.length) notes.push(`Ignored column${P.ignored.length === 1 ? '' : 's'}: ${P.ignored.slice(0, 6).join(', ')}${P.ignored.length > 6 ? '…' : ''}.`);
-  if (!confirm(`Import this file?\n\n${lines.join('\n')}` + (notes.length ? '\n\n' + notes.join('\n') : '') + '\n\nOther classes stay as they are.')) return false;
+  if (!quiet && !confirm(`Import this file?\n\n${lines.join('\n')}` + (notes.length ? '\n\n' + notes.join('\n') : '') + '\n\nOther classes stay as they are.')) return false;
   let lastId = null;
   plans.forEach(x => {
     if (x.merge) {
@@ -3682,10 +3729,50 @@ $('#newClassBtn').addEventListener('click', () => {
   $('#ncRoom').innerHTML = Object.values(STORE.rooms).sort(byName).map(r => `<option value="${r.id}" ${r.id === S.roomId ? 'selected' : ''}>${esc(r.name)} — ${esc(roomSummary(r))}</option>`).join('')
     + `<option value="__copy">Copy of ${esc(cur.name)} (separate layout)</option><option value="__new">New room (6 rows × 8 seats)</option>`;
   $('#ncName').value = ''; ncDays = []; $('#ncDays').innerHTML = dayPicker(ncDays, 'data-ncday');
+  ncRoster = null; ncGuide = null; $('#ncRosterText').value = ''; $('#ncRosterStatus').textContent = ''; $('#ncGuideStatus').textContent = '';
+  document.querySelectorAll('#ncForm details').forEach(d => d.open = false);
   $('#ncDlg').showModal(); $('#ncName').focus();
 });
 $('#ncCancel').addEventListener('click', () => $('#ncDlg').close());
-let ncDays = [];
+let ncDays = [], ncRoster = null, ncGuide = null;   // roster: { text, name }; guide: parsed guide
+/* How many students a roster holds (same rules as importing), for the check mark next to the file. */
+function rosterPreview(text) {
+  const P = readCSV(importable(text)); if (P.errs.length) throw new Error(P.errs[0]);
+  let n = 0, mail = 0;
+  for (const it of P.items) {
+    if (!it.row.some(x => String(x).trim())) continue;
+    if (P.role >= 0) { const r = cellOf(it.row, P.role).toLowerCase(); if (r && !/student|learner/.test(r)) continue; }
+    const nm = rowNames(it.row, P.c); if (!nm.first && !nm.last) continue;
+    n++; if (cellOf(it.row, P.c.email)) mail++;
+  }
+  if (!n) throw new Error('No student names were found.');
+  return { n, mail };
+}
+function setRoster(text, name) {
+  const st = $('#ncRosterStatus');
+  if (!text.trim()) { ncRoster = null; st.textContent = ''; return; }
+  try { const r = rosterPreview(text); ncRoster = { text, name }; st.innerHTML = `<span style="color:var(--present)">✓ ${r.n} student${r.n === 1 ? '' : 's'}${r.n ? `, ${r.mail === r.n ? 'all' : r.mail} with email` : ''}</span>${name ? ` <span class="muted">· ${esc(name)}</span>` : ''}`; }
+  catch (err) { ncRoster = null; st.innerHTML = `<span style="color:var(--absent)">${esc(err.message)}</span>`; }
+}
+$('#ncRosterPick').addEventListener('click', () => $('#ncRosterFile').click());
+$('#ncRosterFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const r = new FileReader(); r.onload = () => { $('#ncRosterText').value = ''; setRoster(String(r.result), f.name); }; r.readAsText(f); });
+$('#ncRosterText').addEventListener('input', e => setRoster(e.target.value, ''));
+$('#ncGuidePick').addEventListener('click', () => $('#ncGuideFile').click());
+$('#ncGuideFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try { ncGuide = parseGuide(String(r.result), f.name); const c = guideCount(ncGuide); $('#ncGuideStatus').innerHTML = `<span style="color:var(--present)">✓ ${c.topics} topics in ${c.chapters} chapter${c.chapters === 1 ? '' : 's'}, ${c.videos} video links</span> <span class="muted">· ${esc(f.name)}</span>`; }
+    catch (err) { ncGuide = null; $('#ncGuideStatus').innerHTML = `<span style="color:var(--absent)">${esc(err.message)}</span>`; }
+  };
+  r.readAsText(f);
+});
+$('#ncTemplate').addEventListener('click', () => download('roster-template.csv', '\uFEFFlast_name,first_name,email\n', 'text/csv;charset=utf-8'));
+$('#ncGuideTemplate').addEventListener('click', () => download('video-guide-sample.md', [
+  '# Course Video Guide', '', 'Anything outside the headings, Focus lines, and video links is ignored, so notes like this are fine.', '',
+  '## Chapter 1 — First chapter', '', '### §1.1 First topic', '**Focus:** one sentence on what this section covers.', '- [Video title](https://www.example.com/video-1)', '- [Another video](https://www.example.com/video-2)', '',
+  '### §1.2 Second topic', '**Focus:** one sentence on what this section covers.', '- [Video title](https://www.example.com/video-3)', '',
+  '## Chapter 2 — Next chapter', '', '### §2.1 Third topic', '**Focus:** one sentence on what this section covers.', '- [Video title](https://www.example.com/video-4)', ''].join('\n'), 'text/markdown;charset=utf-8'));
 $('#ncDays').addEventListener('click', e => {
   const b = e.target.closest('[data-wd]'); if (!b) return;
   const d = +b.dataset.wd; ncDays = ncDays.includes(d) ? ncDays.filter(x => x !== d) : [...ncDays, d].sort();
@@ -3701,9 +3788,17 @@ $('#ncForm').addEventListener('submit', e => {
     const id = uid(), src = rid === '__copy' ? STORE.rooms[S.roomId] : { shape: 'rows', rows: 6, cols: 8, aisles: [], tablesAcross: 3 };
     STORE.rooms[id] = { ...src, id, aisles: [...(src.aisles || [])], name: `${name} room` }; rid = id;
   }
-  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays], sheets: [], notes: {}, emailLog: [], guide: null, topics: {} };
+  if (!ncRoster && $('#ncRosterText').value.trim()) { toast('Check the pasted names: ' + ($('#ncRosterStatus').textContent || 'they could not be read.'), true); return; }
+  const cid = uid(); STORE.classes[cid] = { id: cid, roomId: rid, className: name, students: {}, seats: {}, attendance: {}, days: [...ncDays], sheets: [], notes: {}, emailLog: [], guide: ncGuide ? JSON.parse(JSON.stringify(ncGuide)) : null, topics: {} };
   $('#ncDlg').close(); switchClass(cid);
-  toast(`Created “${name}”.`); openImportFor(cid, true);
+  let added = 0;
+  if (ncRoster) {
+    try { importCSV(ncRoster.text, cid, false, true); added = Object.keys(STORE.classes[cid].students).length; }
+    catch (err) { toast(`Created “${name}”, but the roster couldn't be imported: ${err.message}`, true); openImportFor(cid, true); return; }
+  }
+  const bits = [added ? `${added} student${added === 1 ? '' : 's'}` : '', ncGuide ? `a video guide (${guideCount(ncGuide).topics} topics)` : ''].filter(Boolean);
+  toast(`Created “${name}”${bits.length ? ' with ' + bits.join(' and ') : ''}.`);
+  ncRoster = null; ncGuide = null;
 });
 /* ---------- check for drops: compare a roster file (e.g. a Brightspace classlist) with the open class ----------
    Nothing changes until you press a button. Students are matched by email, then by name (accents, case, order,
